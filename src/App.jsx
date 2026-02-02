@@ -9,6 +9,7 @@ import ReservationEnv from "./pages/reservationEnv";
 import RefundEnv from "./pages/refundEnv";
 import Components from "./pages/components";
 import RoomManagement from "./pages/roomManagement";
+import OptionManagement from "./pages/optionMangement";
 
 function App() {
   const navigate = useNavigate();
@@ -75,6 +76,9 @@ function App() {
               <Link to="/room_management">객실관리</Link>
             </li>
             <li>
+              <Link to="/option_management">옵션관리</Link>
+            </li>
+            <li>
               <Link to="/refund_env">환불정책 설정</Link>
             </li>
             <li>
@@ -134,6 +138,7 @@ function App() {
           <Route path="/reservation_env" element={<ReservationEnv />} />
           <Route path="/refund_env" element={<RefundEnv />} />
           <Route path="/room_management" element={<RoomManagement />} />
+          <Route path="/option_management" element={<OptionManagement />} />
           <Route path="/components" element={<Components />} />
         </Routes>
         <button className="logout" onClick={logout}></button>
