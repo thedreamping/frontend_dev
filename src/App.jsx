@@ -10,6 +10,10 @@ import RefundEnv from "./pages/refundEnv";
 import Components from "./pages/components";
 import RoomManagement from "./pages/roomManagement";
 import OptionManagement from "./pages/optionMangement";
+import MainBnManagement from "./pages/mainBnManagement";
+import MainRoomsManagement from "./pages/mainRoomsManagement";
+import MainDiningManagement from "./pages/mainDiningManagement";
+import SpecialOfferManagement from "./pages/specialOfferManagement";
 
 function App() {
   const navigate = useNavigate();
@@ -91,16 +95,20 @@ function App() {
               <Link to="/dfds">결제내역 관리</Link>
             </li>
             <li>
-              <Link to="/dfds">메인배너 관리</Link>
+              <Link to="/main_bn_management">메인배너 관리</Link>
             </li>
             <li>
-              <Link to="/dfds">메인 ROOMS 디자인 관리</Link>
+              <Link to="/main_romms_bn_management">메인 ROOMS 디자인 관리</Link>
             </li>
             <li>
-              <Link to="/dfds">메인 DINING 디자인 관리</Link>
+              <Link to="/main_dining_management">메인 DINING 디자인 관리</Link>
             </li>
             <li>
-              <Link to="/dfds">SPECIAL OFFER관리</Link>
+              <Link to="/special_offer_management">SPECIAL OFFER관리</Link>
+            </li>
+
+            <li>
+              <Link to="/event_pop_management">이벤트팝업 관리</Link>
             </li>
             {/* <li>
               <Link to="">메뉴 2</Link>
@@ -140,6 +148,19 @@ function App() {
           <Route path="/room_management" element={<RoomManagement />} />
           <Route path="/option_management" element={<OptionManagement />} />
           <Route path="/components" element={<Components />} />
+          <Route path="/main_bn_management" element={<MainBnManagement />} />
+          <Route
+            path="/special_offer_management"
+            element={<SpecialOfferManagement />}
+          />
+          <Route
+            path="/main_dining_management"
+            element={<MainDiningManagement />}
+          />
+          <Route
+            path="/main_romms_bn_management"
+            element={<MainRoomsManagement />}
+          />
         </Routes>
         <button className="logout" onClick={logout}></button>
       </div>

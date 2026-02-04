@@ -818,3 +818,21 @@ table {
 .room_cell:hover:after {
   background: black;
 }
+
+td.day_active {
+  background: #9ff4f7 !important;
+  font-size: bolder;
+}
+th button.selectAllSameDays {
+  width: auto;
+  height: 24px;
+  background: #fff;
+  border: 1px solid #d4d4d4;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: black;
+  margin-left: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}

@@ -10,6 +10,9 @@ function ReservationEnv() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [calendarData, setCalendarData] = useState(null);
 
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [isPop, setIsPop] = useState(false);
+
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
     const jsMonth = month - 1;
@@ -55,6 +58,7 @@ function ReservationEnv() {
 
   useEffect(() => {
     console.log(calendarData);
+    console.log(buildCalendarRows(calendarData));
   }, [calendarData]);
 
   const buildCalendarRows = (dates) => {
@@ -89,17 +93,47 @@ function ReservationEnv() {
     return rows;
   };
 
+  const getDaysByWeekday = (data, targetWeekday) => {
+    return data.flat().filter((item) => item?.weekday === targetWeekday);
+  };
+
   return (
     <>
       <div className="workspace">
         <div className="title">예약환경 설정</div>
         <div className="content">
+          <div className="btn_area">
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  return;
+                }
+                setIsPop(true);
+              }}
+            >
+              선택한 날짜 객실 가격 설정
+            </button>
+          </div>
           <div className="rooms_calendar_info">
-            <button className="prev" onClick={prevMonth}>
+            <button
+              className="prev"
+              onClick={() => {
+                prevMonth();
+                setSelectedDays([]);
+              }}
+            >
               Prev
             </button>
             {year}.{month}
-            <button className="next" onClick={nextMonth}>
+            <button
+              className="next"
+              onClick={() => {
+                nextMonth();
+                setSelectedDays([]);
+              }}
+            >
               Next
             </button>
           </div>
@@ -107,28 +141,148 @@ function ReservationEnv() {
             <table>
               <thead>
                 <tr>
-                  <th>일</th>
-                  <th>월</th>
-                  <th>화</th>
-                  <th>수</th>
-                  <th>목</th>
-                  <th>금</th>
-                  <th>토</th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          0,
+                        );
+                      });
+                    }}
+                  >
+                    일 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          1,
+                        );
+                      });
+                    }}
+                  >
+                    월 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          2,
+                        );
+                      });
+                    }}
+                  >
+                    화 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          3,
+                        );
+                      });
+                    }}
+                  >
+                    수 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          4,
+                        );
+                      });
+                    }}
+                  >
+                    목 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          5,
+                        );
+                      });
+                    }}
+                  >
+                    금 <button className="selectAllSameDays">전체선택</button>
+                  </th>
+                  <th
+                    onClick={() => {
+                      setSelectedDays(() => {
+                        return getDaysByWeekday(
+                          buildCalendarRows(calendarData),
+                          6,
+                        );
+                      });
+                    }}
+                  >
+                    토 <button className="selectAllSameDays">전체선택</button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {buildCalendarRows(calendarData).map((week, rowIndex) => (
                   <tr key={rowIndex}>
                     {week.map((date, colIndex) => (
-                      <td key={colIndex}>{date ? date.day : ""}</td>
+                      <td
+                        key={colIndex}
+                        className={
+                          selectedDays.includes(date) ? "day_active" : ""
+                        }
+                        onClick={() => {
+                          setSelectedDays((data) =>
+                            data.includes(date)
+                              ? data.filter((d) => d !== date)
+                              : [...data, date],
+                          );
+                        }}
+                      >
+                        {date ? date.day : ""}
+                      </td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <div className="btn_area">
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  return;
+                }
+                setIsPop(true);
+              }}
+            >
+              선택한 날짜 객실 가격 설정
+            </button>
+          </div>
         </div>
       </div>
+      {isPop && (
+        <div className="popup_wrap">
+          <div className="popup">
+            <div className="popup_title">객실가격 설정</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsPop(false);
+              }}
+            >
+              X
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
