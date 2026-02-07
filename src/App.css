@@ -800,6 +800,8 @@ table {
   padding-right: 64px;
   margin-bottom: 10px;
   border: 1px solid #d4d4d4;
+  vertical-align: top;
+  cursor: pointer;
 }
 .room_cell:after {
   content: "x";
@@ -811,14 +813,17 @@ table {
   right: 4px;
   top: 50%;
   margin-top: -14px;
-  display: block;
+  display: none;
+  cursor: pointer;
   line-height: 25px;
   border-radius: 50%;
 }
-.room_cell:hover:after {
+.room_cell:after:hover {
   background: black;
 }
-
+.room_cell:hover {
+  border: 1px solid rgb(41, 130, 202);
+}
 td.day_active {
   background: #9ff4f7 !important;
   font-size: bolder;
@@ -835,4 +840,52 @@ th button.selectAllSameDays {
   margin-left: 10px;
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.room_cell {
+  white-space: nowrap;
+}
+
+.workspace .content table td h4 {
+  display: block;
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  background: #f4f4f4;
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.td_scroll {
+  width: 100%;
+  height: 500px;
+  position: relative;
+  overflow: auto;
+  white-space: nowrap;
+  padding-right: 14px;
+}
+
+.room_cell_active {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 10px;
+  background: red;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 20px;
+}
+.room_cell_active.active {
+  background: rgb(22, 184, 57);
+}
+.btn_area .room_cell_active {
+  margin-right: 10px;
+}
+
+.hor_scroll {
+  width: 100%;
+  height: auto;
+  position: Relative;
+  overflow: Auto;
+  max-width: 100%;
 }
