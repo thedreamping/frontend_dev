@@ -6,6 +6,7 @@ import api from "../api/api";
 
 function RoomManagement() {
   const [isPop, setIsPop] = useState(false);
+  const [isDetailPop, setIsDetailPop] = useState(false);
   const [groups, setGroups] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [result, setResult] = useState([]);
@@ -96,6 +97,9 @@ function RoomManagement() {
                                       ? { opacity: "1" }
                                       : { opacity: "0.3" }
                                   }
+                                  onClick={() => {
+                                    setIsDetailPop(true);
+                                  }}
                                 >
                                   {data2.name}{" "}
                                   <div
@@ -132,6 +136,21 @@ function RoomManagement() {
               className="popup_x"
               onClick={() => {
                 setIsPop(false);
+              }}
+            >
+              X
+            </div>
+          </div>
+        </div>
+      )}
+      {isDetailPop && (
+        <div className="popup_wrap">
+          <div className="popup">
+            <div className="popup_title">객실 디테일</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsDetailPop(false);
               }}
             >
               X

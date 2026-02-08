@@ -7,11 +7,18 @@ import api from "../api/api";
 function OptionManagement() {
   const [isPop, setIsPop] = useState(false);
 
+  const [options, setOtions] = useState([]);
+
   useEffect(() => {
-    api.get("/api/room_group").then((response) => {
-      console.log(response);
-    });
+    getOptions();
   }, []);
+
+  const getOptions = () => {
+    api.get("/api/options").then((response) => {
+      console.log(response);
+      setOtions(response.data.data);
+    });
+  };
 
   return (
     <>
@@ -29,33 +36,35 @@ function OptionManagement() {
             </button>
           </div>
           <div className="options_scroll_wrap">
-            <div className="option_cell">
-              옵션 1 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 2 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 3 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 4 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 5 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 6 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 7 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 8 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
-            <div className="option_cell">
-              옵션 9 (100,000 원)<div className="option_cell_x">X</div>
-            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>옵션명</th>
+                  <th>가격</th>
+                  <th>기간</th>
+                  <th>이용가능</th>
+                  <th>삭제</th>
+                </tr>
+              </thead>
+              <tbody>
+                {options.map((data, i) => {
+                  return (
+                    <tr key={`ta${i}`}>
+                      <td>{data.name}</td>
+                      <td>{data.price} 원</td>
+                      <td>
+                        {data.start_date.split("T")[0]} ~{" "}
+                        {data.end_date.split("T")[0]}
+                      </td>
+                      <td>{data.is_use === 1 ? "가능" : "이용불가"}</td>
+                      <td>
+                        <button>삭제</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
