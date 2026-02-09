@@ -73,9 +73,6 @@ function RoomManagement() {
             <div className="room_cell_active active"></div> 숙박가능
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <div className="room_cell_active"></div> 손님 있음
-            <div className="right_button">
-              <button className="green">수정사항 저장</button>
-            </div>
           </div>
           <div className="hor_scroll">
             <table>
@@ -140,6 +137,41 @@ function RoomManagement() {
             >
               X
             </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>그룹</th>
+                  <td>
+                    <select>
+                      <option>선택</option>
+                      {groups.map((data, i) => {
+                        return (
+                          <option id={data.id} key={`kjhk${i}`}>
+                            {data.name}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>객실 이름</th>
+                  <td>
+                    <input type="text" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <button className="green">저장</button>
+              <button
+                onClick={() => {
+                  setIsPop(false);
+                }}
+              >
+                취소
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -154,6 +186,42 @@ function RoomManagement() {
               }}
             >
               X
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>객실명</th>
+                  <td>큐브글램핑 &gt; 큐1</td>
+                </tr>
+                <tr>
+                  <th>이름(수정시)</th>
+                  <td>
+                    <input type="text" value={"큐1"} />
+                  </td>
+                </tr>
+                <tr>
+                  <th>활성화여부</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="active"
+                        defaultChecked
+                      />
+                      <label htmlFor="active">Active</label>
+                    </div>
+                    <div className="checks">
+                      <input type="radio" name="ac" id="non-active" />
+                      <label htmlFor="non-active">비활성화</label>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <button className="green">수정내역 저장</button>
+              <button className="red">이 객실 삭제</button>
             </div>
           </div>
         </div>

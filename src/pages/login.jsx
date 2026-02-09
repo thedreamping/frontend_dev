@@ -69,6 +69,7 @@ function Login() {
           <button onClick={login} id="button_for_login">
             로그인
           </button>
+          <button>새 관리자 등록</button>
         </div>
       </div>
     </>

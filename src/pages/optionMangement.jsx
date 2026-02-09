@@ -6,7 +6,10 @@ import api from "../api/api";
 
 function OptionManagement() {
   const [isPop, setIsPop] = useState(false);
+  const [isPopModify, setIsPopModify] = useState(false);
 
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [options, setOtions] = useState([]);
 
   useEffect(() => {
@@ -18,6 +21,14 @@ function OptionManagement() {
       console.log(response);
       setOtions(response.data.data);
     });
+  };
+
+  const handleDateChange1 = (formattedDate) => {
+    setStartDate(formattedDate);
+  };
+
+  const handleDateChange2 = (formattedDate) => {
+    setEndDate(formattedDate);
   };
 
   return (
@@ -44,6 +55,7 @@ function OptionManagement() {
                   <th>기간</th>
                   <th>이용가능</th>
                   <th>삭제</th>
+                  <th>수정</th>
                 </tr>
               </thead>
               <tbody>
@@ -60,6 +72,15 @@ function OptionManagement() {
                       <td>
                         <button>삭제</button>
                       </td>
+                      <td>
+                        <button
+                          onClick={() => {
+                            setIsPopModify(true);
+                          }}
+                        >
+                          수정
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -70,7 +91,7 @@ function OptionManagement() {
       </div>
       {isPop && (
         <div className="popup_wrap">
-          <div className="popup">
+          <div className="popup" style={{ height: "460px" }}>
             <div className="popup_title">옵션추가</div>
             <div
               className="popup_x"
@@ -79,6 +100,102 @@ function OptionManagement() {
               }}
             >
               X
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>옵션명</th>
+                  <td>
+                    <input type="text" />
+                  </td>
+                </tr>
+                <tr>
+                  <th>단가</th>
+                  <td>
+                    <input type="number" value={0} /> 원
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>시작일</th>
+                  <td>
+                    <MyDatePicker
+                      value={startDate}
+                      onDateChange={handleDateChange1}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>끝나는 일</th>
+                  <td>
+                    <MyDatePicker
+                      value={endDate}
+                      onDateChange={handleDateChange2}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <div className="right_button">
+                <button className="green">저장</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPopModify && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ height: "460px" }}>
+            <div className="popup_title">옵션수정</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsPopModify(false);
+              }}
+            >
+              X
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>옵션명</th>
+                  <td>
+                    <input type="text" />
+                  </td>
+                </tr>
+                <tr>
+                  <th>단가</th>
+                  <td>
+                    <input type="number" value={0} /> 원
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>시작일</th>
+                  <td>
+                    <MyDatePicker
+                      value={startDate}
+                      onDateChange={handleDateChange1}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>끝나는 일</th>
+                  <td>
+                    <MyDatePicker
+                      value={endDate}
+                      onDateChange={handleDateChange2}
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <div className="right_button">
+                <button className="green">수정</button>
+              </div>
             </div>
           </div>
         </div>

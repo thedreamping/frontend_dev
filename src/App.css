@@ -177,6 +177,7 @@ table {
   background: #444;
   color: white;
   border: 0px solid #d4d4d4;
+  margin-bottom: 10px;
 }
 .login_pannel button:hover {
   background: black;
@@ -700,7 +701,7 @@ table {
 }
 
 .options_scroll_wrap {
-  width: 900px;
+  width: 100%;
   height: 600px;
   overflow: auto;
   position: relative;
@@ -737,6 +738,10 @@ table {
 }
 .options_scroll_wrap .option_cell .option_cell_x:hover {
   background: black;
+}
+
+.options_scroll_wrap tr {
+  cursor: pointer;
 }
 
 .popup_wrap {
@@ -919,4 +924,182 @@ th button.selectAllSameDays {
 }
 .options_scroll_wrap table {
   margin-top: 0px;
+}
+
+.popup table {
+  border-collapse: collapse;
+  width: 100%;
+  height: auto;
+  border: 1px solid #d4d4d4;
+}
+
+.popup table th {
+  padding: 10px;
+  border: 1px solid #d4d4d4;
+  background: #f4f4f4;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+}
+.popup table td {
+  padding: 10px;
+  border: 1px solid #d4d4d4;
+  text-align: left;
+  font-size: 14px;
+  font-weight: normal;
+  color: black;
+}
+
+.checks {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 0px;
+  height: 20px;
+  margin-top: 0px;
+  line-height: 20px;
+}
+.checks input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.checks input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.checks input[type="radio"] + label {
+  display: inline;
+  position: relative;
+  padding-left: 33px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  color: #000;
+  font-weight: 600;
+  font-size: 15px;
+  text-align: left;
+
+  padding-top: 4px;
+  margin-right: 40px;
+}
+.checks input[type="checkbox"] + label {
+  display: inline;
+  position: relative;
+  padding-left: 33px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  color: #000;
+  font-weight: 600;
+  font-size: 15px;
+  text-align: left;
+
+  padding-top: 4px;
+  margin-right: 40px;
+}
+.checks input[type="radio"] + label:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  background: url("./assets/cc.png") no-repeat;
+  background-size: 100% 100%;
+  border: 0px solid #d3d5e1;
+  border-radius: 5px;
+  box-shadow: none;
+  display: block;
+}
+.checks input[type="checkbox"] + label:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  background: url("./assets/cc2.png") no-repeat;
+  background-size: 100% 100%;
+  border: 0px solid #d3d5e1;
+  border-radius: 5px;
+  box-shadow: none;
+}
+.checks input[type="radio"] + label:active:before,
+.checks input[type="checkbox"]:checked + label:active:before {
+  box-shadow: none;
+}
+.checks input[type="radio"] + label {
+  margin-top: 0px;
+}
+.checks input[type="checkbox"] + label {
+  margin-top: 0px;
+}
+.checks input[type="radio"]:checked + label:before {
+  background: url("./assets/Checkbox.png") no-repeat;
+  background-size: 100% 100%;
+}
+.checks input[type="checkbox"]:checked + label:before {
+  background: url("./assets/Checkbox2.png") no-repeat;
+  background-size: 100% 100%;
+}
+.checks input[type="radio"]:checked + label:after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: none;
+  border-radius: 50%;
+  box-shadow: none;
+  display: block;
+}
+.checks input[type="checkbox"]:checked + label:after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  background: none;
+  border-radius: 50%;
+  box-shadow: none;
+  display: block;
+}
+.popup table {
+  margin-bottom: 20px;
+}
+.popup table td input[type="text"] {
+  border: 1px solid #d4d4d4;
+  width: 100%;
+  height: 40px;
+  padding-left: 12px;
+}
+.popup table td select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #d4d4d4;
+  padding-left: 12px;
+}
+.popup table td input[type="number"] {
+  border: 1px solid #d4d4d4;
+  height: 40px;
+  padding-left: 12px;
 }
