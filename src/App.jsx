@@ -14,6 +14,7 @@ import MainBnManagement from "./pages/mainBnManagement";
 import MainRoomsManagement from "./pages/mainRoomsManagement";
 import MainDiningManagement from "./pages/mainDiningManagement";
 import SpecialOfferManagement from "./pages/specialOfferManagement";
+import DkSchedule from "./pages/dkSchedule";
 
 function App() {
   const navigate = useNavigate();
@@ -89,6 +90,9 @@ function App() {
               <Link to="/dfds">객실예약 조회</Link>
             </li>
             <li>
+              <Link to="/dk_schedule">대관일정</Link>
+            </li>
+            <li>
               <Link to="/dfds">관리자 추가 및 관리</Link>
             </li>
             <li>
@@ -144,6 +148,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/reservation_env" element={<ReservationEnv />} />
+          <Route path="/dk_schedule" element={<DkSchedule />} />
           <Route path="/refund_env" element={<RefundEnv />} />
           <Route path="/room_management" element={<RoomManagement />} />
           <Route path="/option_management" element={<OptionManagement />} />

@@ -45,7 +45,7 @@ function MainBnManagement() {
                   <div className="file_uploader">
                     <input
                       type="text"
-                      placeholder="파일을 업로드해주세요"
+                      placeholder="1920 x 1080 사이즈 이상의 이미지를 사용해 주세요. 더 커도 무방하나 비율을 유지해주면서 큰 이미지로 사용해주세요"
                       disabled
                       value={fileName}
                     />
@@ -76,7 +76,7 @@ function MainBnManagement() {
                   <div className="file_uploader">
                     <input
                       type="text"
-                      placeholder="파일을 업로드해주세요"
+                      placeholder="1920 x 1080 사이즈 이상의 이미지를 사용해 주세요. 더 커도 무방하나 비율을 유지해주면서 큰 이미지로 사용해주세요"
                       disabled
                       value={fileName}
                     />
@@ -107,7 +107,7 @@ function MainBnManagement() {
                   <div className="file_uploader">
                     <input
                       type="text"
-                      placeholder="파일을 업로드해주세요"
+                      placeholder="1920 x 1080 사이즈 이상의 이미지를 사용해 주세요. 더 커도 무방하나 비율을 유지해주면서 큰 이미지로 사용해주세요"
                       disabled
                       value={fileName}
                     />
@@ -138,7 +138,7 @@ function MainBnManagement() {
                   <div className="file_uploader">
                     <input
                       type="text"
-                      placeholder="파일을 업로드해주세요"
+                      placeholder="1920 x 1080 사이즈 이상의 이미지를 사용해 주세요. 더 커도 무방하나 비율을 유지해주면서 큰 이미지로 사용해주세요"
                       disabled
                       value={fileName}
                     />

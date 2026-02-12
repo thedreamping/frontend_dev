@@ -53,7 +53,7 @@ function OptionManagement() {
                   <th>옵션명</th>
                   <th>가격</th>
                   <th>기간</th>
-                  <th>이용가능</th>
+                  <th>사용 가능 여부</th>
                   <th>삭제</th>
                   <th>수정</th>
                 </tr>
@@ -68,7 +68,22 @@ function OptionManagement() {
                         {data.start_date.split("T")[0]} ~{" "}
                         {data.end_date.split("T")[0]}
                       </td>
-                      <td>{data.is_use === 1 ? "가능" : "이용불가"}</td>
+                      <td>
+                        {(() => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+
+                          const start = new Date(data.start_date);
+                          start.setHours(0, 0, 0, 0);
+
+                          const end = new Date(data.end_date);
+                          end.setHours(0, 0, 0, 0);
+
+                          return today >= start && today <= end
+                            ? "가능"
+                            : "이용불가";
+                        })()}
+                      </td>
                       <td>
                         <button>삭제</button>
                       </td>

@@ -6,10 +6,14 @@ import api from "../api/api";
 
 function RoomManagement() {
   const [isPop, setIsPop] = useState(false);
+  const [isPop2, setIsPop2] = useState(false);
   const [isDetailPop, setIsDetailPop] = useState(false);
+  const [isDetailPopGroup, setIsDetailPopGroup] = useState(false);
   const [groups, setGroups] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [result, setResult] = useState([]);
+  const [isActive, setIsActive] = useState(true);
+  const [isActiveGroup, setIsActiveGroup] = useState(true);
 
   useEffect(() => {
     getAllRooms();
@@ -65,6 +69,13 @@ function RoomManagement() {
           <div className="btn_area">
             <button
               onClick={() => {
+                setIsPop2(true);
+              }}
+            >
+              그룹추가
+            </button>
+            <button
+              onClick={() => {
                 setIsPop(true);
               }}
             >
@@ -80,8 +91,23 @@ function RoomManagement() {
                 <tr>
                   {result?.map((data, i) => {
                     return (
-                      <td key={`kjbk${i}`} style={{ verticalAlign: "top" }}>
-                        <h4>{data?.name}</h4>
+                      <td
+                        key={`kjbk${i}`}
+                        style={{ verticalAlign: "top" }}
+                        className={data.is_active !== 1 ? "dimed_td" : ""}
+                      >
+                        <h4
+                          onClick={() => {
+                            setIsDetailPopGroup(true);
+                          }}
+                        >
+                          {data?.name}{" "}
+                          {data.is_active === 1 ? (
+                            <span className="green">Active</span>
+                          ) : (
+                            <span className="red">비활성화</span>
+                          )}
+                        </h4>
                         <div className="td_scroll">
                           {data?.rooms?.map((data2, ii) => {
                             return (
@@ -175,14 +201,51 @@ function RoomManagement() {
           </div>
         </div>
       )}
-      {isDetailPop && (
+
+      {isPop2 && (
         <div className="popup_wrap">
           <div className="popup">
+            <div className="popup_title">그룹추가</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsPop2(false);
+              }}
+            >
+              X
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>그룹명</th>
+                  <td>
+                    <input type="text" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <button className="green">저장</button>
+              <button
+                onClick={() => {
+                  setIsPop2(false);
+                }}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isDetailPop && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ height: "auto" }}>
             <div className="popup_title">객실 디테일</div>
             <div
               className="popup_x"
               onClick={() => {
                 setIsDetailPop(false);
+                setIsActive(true);
               }}
             >
               X
@@ -208,15 +271,117 @@ function RoomManagement() {
                         name="ac"
                         id="active"
                         defaultChecked
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActive(true);
+                          }
+                        }}
+                        checked={isActive}
                       />
                       <label htmlFor="active">Active</label>
                     </div>
                     <div className="checks">
-                      <input type="radio" name="ac" id="non-active" />
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="non-active"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActive(false);
+                          }
+                        }}
+                        checked={!isActive}
+                      />
                       <label htmlFor="non-active">비활성화</label>
                     </div>
                   </td>
                 </tr>
+                {isActive === false && (
+                  <>
+                    <tr>
+                      <th>비활성화 사유</th>
+                      <td>
+                        <textarea></textarea>
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <button className="green">수정내역 저장</button>
+              <button className="red">이 객실 삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDetailPopGroup && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ height: "auto" }}>
+            <div className="popup_title">그룹 디테일</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsDetailPopGroup(false);
+                setIsActiveGroup(true);
+              }}
+            >
+              X
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <th>그룹명</th>
+                  <td>
+                    <input type="text" value={"한글글램핑"} />
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>활성화여부</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="active"
+                        defaultChecked
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActiveGroup(true);
+                          }
+                        }}
+                        checked={isActiveGroup}
+                      />
+                      <label htmlFor="active">Active</label>
+                    </div>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="non-active"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActiveGroup(false);
+                          }
+                        }}
+                        checked={!isActiveGroup}
+                      />
+                      <label htmlFor="non-active">비활성화</label>
+                    </div>
+                  </td>
+                </tr>
+                {isActiveGroup === false && (
+                  <>
+                    <tr>
+                      <th>비활성화 사유</th>
+                      <td>
+                        <textarea></textarea>
+                      </td>
+                    </tr>
+                  </>
+                )}
               </tbody>
             </table>
             <div className="btn_area">
