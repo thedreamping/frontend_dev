@@ -80,11 +80,14 @@ function MainBnManagement() {
 
     const formData = new FormData();
 
-    basicArray.forEach((item) => {
+    basicArray.forEach((item, index) => {
+      // 새 파일이 있으면 file과 file_index 같이 전송
       if (item.file) {
-        formData.append("file", item.file); // 새 파일 있을 때만
+        formData.append("file", item.file);
+        formData.append("file_index", index); // 새 파일의 슬라이드 위치
       }
 
+      // 나머지 값은 항상 전송
       formData.append("file_name", item.file_name);
       formData.append("text", item.text);
       formData.append("link", item.link);
@@ -97,6 +100,12 @@ function MainBnManagement() {
       })
       .then((response) => {
         console.log(response);
+        alert("메인배너 설정이 저장되었습니다.");
+        getBanners();
+      })
+      .catch((err) => {
+        console.error("save error:", err);
+        alert("배너 저장 중 오류가 발생했습니다.");
       });
   };
 
