@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import MyDatePicker from "../component/datepicker";
+import api from "../api/api";
 
 function ReservationEnv() {
   const now = new Date();
@@ -12,6 +13,8 @@ function ReservationEnv() {
 
   const [selectedDays, setSelectedDays] = useState([]);
   const [isPop, setIsPop] = useState(false);
+  const [roomGroup, setRoomGroup] = useState([]);
+  const [checkedId, setCheckedId] = useState([]);
 
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
@@ -30,12 +33,6 @@ function ReservationEnv() {
       };
     });
   }
-
-  // const dates = getMonthDates(2026, 1); // 2026년 1월
-
-  // const wednesdays = dates.filter(d => d.weekday === 3);
-
-  // console.log(wednesdays);
 
   useEffect(() => {
     if (month > 12) {
@@ -96,6 +93,61 @@ function ReservationEnv() {
   const getDaysByWeekday = (data, targetWeekday) => {
     return data.flat().filter((item) => item?.weekday === targetWeekday);
   };
+
+  useEffect(() => {
+    getRoomGroup();
+  }, []);
+
+  const getRoomGroup = () => {
+    api.get("/api/room_group").then((response) => {
+      const newData = response.data.data.map((item) => ({
+        ...item,
+        price: 0,
+      }));
+
+      setRoomGroup(newData);
+      setCheckedId(newData.map((data) => data.id));
+    });
+  };
+
+  const saveRoomPrice = async () => {
+    try {
+      const formattedDates = selectedDays.map((d) => {
+        const month = d.month < 10 ? "0" + d.month : d.month;
+        const day = d.day < 10 ? "0" + d.day : d.day;
+        return `${d.year}-${month}-${day}`;
+      });
+
+      // ✅ 체크된 룸만 필터링
+      const rooms = roomGroup
+        .filter((room) => checkedId.includes(room.id))
+        .map((room) => ({
+          room_group_id: room.id,
+          room_group_name: room.name,
+          price: Number(room.price),
+        }));
+
+      if (rooms.length === 0) {
+        alert("선택된 객실이 없습니다.");
+        return;
+      }
+
+      await api.post("/api/room-price", {
+        dates: formattedDates,
+        rooms: rooms,
+      });
+
+      alert("가격 저장 완료");
+      setIsPop(false);
+    } catch (err) {
+      console.error(err);
+      alert("저장 중 오류 발생");
+    }
+  };
+
+  useEffect(() => {
+    console.log(checkedId);
+  }, [checkedId]);
 
   return (
     <>
@@ -270,7 +322,7 @@ function ReservationEnv() {
       </div>
       {isPop && (
         <div className="popup_wrap">
-          <div className="popup">
+          <div className="popup" style={{ width: "1200px", height: "600px" }}>
             <div className="popup_title">객실가격 설정</div>
             <div
               className="popup_x"
@@ -279,6 +331,94 @@ function ReservationEnv() {
               }}
             >
               X
+            </div>
+            <div className="btn_area">
+              <button className="green" onClick={saveRoomPrice}>
+                저장
+              </button>
+            </div>
+            <div className="ovf_scroll_for_pop">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>선택된 날짜</th>
+                    <td>
+                      {selectedDays.map((data, i) => {
+                        return (
+                          <span
+                            className="date_span"
+                            key={`khkj$${i}`}
+                          >{`${data.year}-${data.month < 10 ? "0" + data.month : data.month}-${data.day < 10 ? "0" + data.day : data.day}`}</span>
+                        );
+                      })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}>
+                      <table>
+                        <tbody>
+                          {roomGroup.map((data, i) => {
+                            return (
+                              <tr key={`kgjdf${i}`}>
+                                <th style={{ textAlign: "left" }}>
+                                  <div className="checks">
+                                    <input
+                                      type="checkbox"
+                                      id={data.id}
+                                      checked={checkedId.includes(data.id)}
+                                      onChange={(e) => {
+                                        const isChecked = e.target.checked;
+
+                                        setCheckedId((prev) => {
+                                          if (isChecked) {
+                                            return prev.includes(data.id)
+                                              ? prev
+                                              : [...prev, data.id];
+                                          } else {
+                                            return prev.filter(
+                                              (id) => id !== data.id,
+                                            );
+                                          }
+                                        });
+                                      }}
+                                    />
+                                    <label htmlFor={data.id}></label>
+                                  </div>{" "}
+                                  {data.name}
+                                </th>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={data.price}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+
+                                      setRoomGroup((prev) =>
+                                        prev.map((item, index) =>
+                                          index === i
+                                            ? { ...item, price: value }
+                                            : item,
+                                        ),
+                                      );
+                                    }}
+                                    disabled={!checkedId.includes(data.id)}
+                                  />{" "}
+                                  원
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="btn_area">
+                <button className="green" onClick={saveRoomPrice}>
+                  저장
+                </button>
+              </div>
             </div>
           </div>
         </div>
