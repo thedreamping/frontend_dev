@@ -15,6 +15,7 @@ function ReservationEnv() {
   const [isPop, setIsPop] = useState(false);
   const [roomGroup, setRoomGroup] = useState([]);
   const [checkedId, setCheckedId] = useState([]);
+  const [priceInfos, setPriceInfos] = useState([]);
 
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
@@ -48,6 +49,7 @@ function ReservationEnv() {
     }
 
     setCalendarData(getMonthDates(year, month));
+    loadData();
   }, [month, year]);
 
   const nextMonth = () => setMonth((prev) => prev + 1);
@@ -148,6 +150,24 @@ function ReservationEnv() {
   useEffect(() => {
     console.log(checkedId);
   }, [checkedId]);
+
+  const loadData = () => {
+    api.get(`/api/room-price?year=${year}&month=${month}`).then((response) => {
+      console.log(response);
+      setPriceInfos(response.data.data);
+    });
+  };
+
+  const getPricesByDate = (date) => {
+    if (!date || !priceInfos) return [];
+
+    const month = date.month < 10 ? "0" + date.month : date.month;
+    const day = date.day < 10 ? "0" + date.day : date.day;
+
+    const formatted = `${date.year}-${month}-${day}`;
+
+    return priceInfos.filter((item) => item.date === formatted);
+  };
 
   return (
     <>
@@ -296,7 +316,15 @@ function ReservationEnv() {
                           );
                         }}
                       >
-                        {date ? date.day : ""}
+                        <div>{date ? date.day : ""}</div>
+                        <div className="day_prices">
+                          {getPricesByDate(date).map((price, idx) => (
+                            <div key={idx} className="price_item">
+                              {price.room_group_name} :{" "}
+                              {price.price.toLocaleString()}원
+                            </div>
+                          ))}
+                        </div>
                       </td>
                     ))}
                   </tr>

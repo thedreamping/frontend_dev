@@ -1158,3 +1158,25 @@ th button.selectAllSameDays {
   width: 100%;
   position: relative;
 }
+.day_number {
+  font-weight: bold;
+}
+
+.day_prices {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.price_item {
+  line-height: 1.3;
+}
+.rooms_calendar {
+  height: 600px;
+  overflow: auto;
+  position: relative;
+}
+.rooms_calendar thead {
+  position: sticky;
+  top: 0px;
+  left: 0px;
+}
