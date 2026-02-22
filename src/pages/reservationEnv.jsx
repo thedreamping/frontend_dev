@@ -16,6 +16,7 @@ function ReservationEnv() {
   const [roomGroup, setRoomGroup] = useState([]);
   const [checkedId, setCheckedId] = useState([]);
   const [priceInfos, setPriceInfos] = useState([]);
+  const [isOneDayEdit, setIsOneDayEdit] = useState(false);
 
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
@@ -169,6 +170,28 @@ function ReservationEnv() {
     return priceInfos.filter((item) => item.date === formatted);
   };
 
+  const editOnlyOne = (date, rooms) => {
+    console.log(date, rooms);
+    if (!date) return;
+    setSelectedDays([date]);
+    setIsOneDayEdit(true);
+    if (!rooms || rooms.length === 0) {
+      setIsPop(true);
+      return;
+    }
+    setRoomGroup((data) => {
+      return data.map((item) => {
+        const matchedRoom = rooms.find((r) => r.room_group_name === item.name);
+        return {
+          ...item,
+          price: matchedRoom ? matchedRoom.price : 0,
+        };
+      });
+    });
+    setCheckedId(rooms.map((r) => r.room_group_id));
+    setIsPop(true);
+  };
+
   return (
     <>
       <div className="workspace">
@@ -316,7 +339,18 @@ function ReservationEnv() {
                           );
                         }}
                       >
-                        <div>{date ? date.day : ""}</div>
+                        <div>
+                          {date ? date.day : ""}{" "}
+                          <button
+                            style={{ float: "right" }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              editOnlyOne(date, getPricesByDate(date));
+                            }}
+                          >
+                            수정
+                          </button>
+                        </div>
                         <div className="day_prices">
                           {getPricesByDate(date).map((price, idx) => (
                             <div key={idx} className="price_item">
