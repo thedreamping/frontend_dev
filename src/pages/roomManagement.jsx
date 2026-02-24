@@ -14,6 +14,13 @@ function RoomManagement() {
   const [result, setResult] = useState([]);
   const [isActive, setIsActive] = useState(true);
   const [isActiveGroup, setIsActiveGroup] = useState(true);
+  const [roomReason, setRoomReason] = useState("");
+  const [roomDetailName, setRoomDetailName] = useState("");
+  const [roomDetailGroupName, setRoomDetailGroupName] = useState("");
+  const [roomId, setRoomId] = useState("");
+  const [groupName, setGroupName] = useState("");
+  const [groupReason, setGroupReason] = useState("");
+  const [groupId, setGroupId] = useState("");
 
   useEffect(() => {
     getAllRooms();
@@ -61,6 +68,92 @@ function RoomManagement() {
     }));
   };
 
+  const modifyRoom = () => {
+    if (!isActive && !roomReason?.trim()) {
+      alert("사유를 입력해주세요");
+      return;
+    }
+    const data = {
+      name: roomDetailName,
+      is_active: isActive ? 1 : 0,
+      reason: isActive ? null : roomReason,
+    };
+
+    api
+      .put(`/api/room/${roomId}`, data)
+      .then((response) => {
+        console.log(response);
+        setIsDetailPop(false);
+        getAllRooms();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("수정 중 오류가 발생했습니다.");
+      });
+  };
+
+  const modifyGroup = () => {
+    if (!isActiveGroup && !groupReason?.trim()) {
+      alert("사유를 입력해주세요");
+      return;
+    }
+    const data = {
+      name: groupName,
+      is_active: isActiveGroup ? 1 : 0,
+      reason: isActiveGroup ? null : groupReason,
+    };
+
+    api
+      .put(`/api/room-group/${groupId}`, data)
+      .then((response) => {
+        console.log(response);
+        setIsDetailPopGroup(false);
+        getAllRooms();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("수정 중 오류가 발생했습니다.");
+      });
+  };
+
+  const roomDelete = () => {
+    const isOk = confirm("삭제하시겠습니까?");
+
+    if (!isOk) return;
+
+    api
+      .delete(`/api/room/${roomId}`)
+      .then((response) => {
+        console.log(response);
+        alert("삭제되었습니다.");
+        setIsDetailPop(false);
+        getAllRooms();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("삭제 중 오류가 발생했습니다.");
+      });
+  };
+
+  const groupDelete = () => {
+    const isOk = confirm("삭제하시겠습니까?");
+
+    if (!isOk) return;
+
+    api
+      .delete(`//api/room-group/${groupId}`)
+      .then((response) => {
+        console.log(response);
+        alert("삭제되었습니다.");
+        setIsDetailPopGroup(false);
+        getAllRooms();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("삭제 중 오류가 발생했습니다.");
+      });
+  };
+
   return (
     <>
       <div className="workspace">
@@ -99,6 +192,12 @@ function RoomManagement() {
                         <h4
                           onClick={() => {
                             setIsDetailPopGroup(true);
+                            setGroupName(data?.name);
+                            setGroupId(data?.id);
+                            setGroupReason(data?.reason);
+                            setIsActiveGroup(
+                              data.is_active === 1 ? true : false,
+                            );
                           }}
                         >
                           {data?.name}{" "}
@@ -122,6 +221,13 @@ function RoomManagement() {
                                   }
                                   onClick={() => {
                                     setIsDetailPop(true);
+                                    setRoomDetailName(data2.name);
+                                    setRoomId(data2.id);
+                                    setRoomReason(data2.reason);
+                                    setRoomDetailGroupName(data.name);
+                                    setIsActive(
+                                      data2.is_active === 1 ? true : false,
+                                    );
                                   }}
                                 >
                                   {data2.name}{" "}
@@ -254,12 +360,20 @@ function RoomManagement() {
               <tbody>
                 <tr>
                   <th>객실명</th>
-                  <td>큐브글램핑 &gt; 큐1</td>
+                  <td>
+                    {roomDetailGroupName} &gt; {roomDetailName}
+                  </td>
                 </tr>
                 <tr>
                   <th>이름(수정시)</th>
                   <td>
-                    <input type="text" value={"큐1"} />
+                    <input
+                      type="text"
+                      value={roomDetailName}
+                      onChange={(e) => {
+                        setRoomDetailName(e.target.value);
+                      }}
+                    />
                   </td>
                 </tr>
                 <tr>
@@ -301,7 +415,12 @@ function RoomManagement() {
                     <tr>
                       <th>비활성화 사유</th>
                       <td>
-                        <textarea></textarea>
+                        <textarea
+                          value={roomReason}
+                          onChange={(e) => {
+                            setRoomReason(e.target.value);
+                          }}
+                        ></textarea>
                       </td>
                     </tr>
                   </>
@@ -309,8 +428,12 @@ function RoomManagement() {
               </tbody>
             </table>
             <div className="btn_area">
-              <button className="green">수정내역 저장</button>
-              <button className="red">이 객실 삭제</button>
+              <button className="green" onClick={modifyRoom}>
+                수정내역 저장
+              </button>
+              <button className="red" onClick={roomDelete}>
+                이 객실 삭제
+              </button>
             </div>
           </div>
         </div>
@@ -334,7 +457,11 @@ function RoomManagement() {
                 <tr>
                   <th>그룹명</th>
                   <td>
-                    <input type="text" value={"한글글램핑"} />
+                    <input
+                      type="text"
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                    />
                   </td>
                 </tr>
 
@@ -377,7 +504,12 @@ function RoomManagement() {
                     <tr>
                       <th>비활성화 사유</th>
                       <td>
-                        <textarea></textarea>
+                        <textarea
+                          value={groupReason}
+                          onChange={(e) => {
+                            setGroupReason(e.target.value);
+                          }}
+                        ></textarea>
                       </td>
                     </tr>
                   </>
@@ -385,8 +517,12 @@ function RoomManagement() {
               </tbody>
             </table>
             <div className="btn_area">
-              <button className="green">수정내역 저장</button>
-              <button className="red">이 객실 삭제</button>
+              <button className="green" onClick={modifyGroup}>
+                수정내역 저장
+              </button>
+              <button className="red" onClick={groupDelete}>
+                이 그룹 삭제
+              </button>
             </div>
           </div>
         </div>

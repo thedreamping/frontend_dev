@@ -142,6 +142,8 @@ function ReservationEnv() {
 
       alert("가격 저장 완료");
       setIsPop(false);
+      getRoomGroup();
+      setSelectedDays([]);
     } catch (err) {
       console.error(err);
       alert("저장 중 오류 발생");
