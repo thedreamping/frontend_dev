@@ -11,6 +11,9 @@ function OptionManagement() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [options, setOtions] = useState([]);
+  const [optionName, setOptionName] = useState("");
+  const [optionPrice, setOptionPrice] = useState(0);
+  const [optionId, setOptionId] = useState("");
 
   useEffect(() => {
     getOptions();
@@ -29,6 +32,36 @@ function OptionManagement() {
 
   const handleDateChange2 = (formattedDate) => {
     setEndDate(formattedDate);
+  };
+
+  const modifyOption = async () => {
+    if (!optionName || !optionPrice || !startDate || !endDate) {
+      alert("모든 값을 입력해주세요.");
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("시작일은 종료일보다 늦을 수 없습니다.");
+      return;
+    }
+
+    try {
+      const response = await api.put(`/api/options/${optionId}`, {
+        name: optionName,
+        price: Number(optionPrice),
+        start_date: startDate,
+        end_date: endDate,
+      });
+
+      if (response.data.ok) {
+        alert("옵션 수정 완료");
+        getOptions();
+        setIsPopModify(false);
+      }
+    } catch (error) {
+      console.error("옵션 수정 실패:", error);
+      alert(error.response?.data?.message || "수정 중 오류 발생");
+    }
   };
 
   return (
@@ -91,6 +124,11 @@ function OptionManagement() {
                         <button
                           onClick={() => {
                             setIsPopModify(true);
+                            setOptionName(data.name);
+                            setOptionPrice(data.price);
+                            setStartDate(data.start_date.split("T")[0]);
+                            setEndDate(data.end_date.split("T")[0]);
+                            setOptionId(data.id);
                           }}
                         >
                           수정
@@ -177,13 +215,26 @@ function OptionManagement() {
                 <tr>
                   <th>옵션명</th>
                   <td>
-                    <input type="text" />
+                    <input
+                      type="text"
+                      value={optionName}
+                      onChange={(e) => {
+                        setOptionName(e.target.value);
+                      }}
+                    />
                   </td>
                 </tr>
                 <tr>
                   <th>단가</th>
                   <td>
-                    <input type="number" value={0} /> 원
+                    <input
+                      type="number"
+                      value={optionPrice}
+                      onChange={(e) => {
+                        setOptionPrice(e.target.value);
+                      }}
+                    />{" "}
+                    원
                   </td>
                 </tr>
 
@@ -209,7 +260,9 @@ function OptionManagement() {
             </table>
             <div className="btn_area">
               <div className="right_button">
-                <button className="green">수정</button>
+                <button className="green" onClick={modifyOption}>
+                  수정
+                </button>
               </div>
             </div>
           </div>
