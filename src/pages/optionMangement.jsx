@@ -10,6 +10,8 @@ function OptionManagement() {
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startDateAble, setStartDateAble] = useState("");
+  const [endDateAble, setEndDateAble] = useState("");
   const [options, setOtions] = useState([]);
   const [optionName, setOptionName] = useState("");
   const [optionPrice, setOptionPrice] = useState(0);
@@ -33,10 +35,33 @@ function OptionManagement() {
   const handleDateChange2 = (formattedDate) => {
     setEndDate(formattedDate);
   };
+  const handleDateChange3 = (formattedDate) => {
+    setStartDateAble(formattedDate);
+  };
+
+  const handleDateChange4 = (formattedDate) => {
+    setEndDateAble(formattedDate);
+  };
 
   const modifyOption = async () => {
-    if (!optionName || !optionPrice || !startDate || !endDate) {
+    if (
+      !optionName ||
+      optionPrice === undefined ||
+      optionPrice === null ||
+      optionPrice === "" ||
+      !startDate ||
+      !endDate ||
+      !startDateAble ||
+      !endDateAble
+    ) {
       alert("모든 값을 입력해주세요.");
+      return;
+    }
+
+    const numericPrice = Number(optionPrice);
+
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      alert("가격은 0 이상 숫자여야 합니다.");
       return;
     }
 
@@ -45,12 +70,19 @@ function OptionManagement() {
       return;
     }
 
+    if (new Date(startDateAble) > new Date(endDateAble)) {
+      alert("시작일은 종료일보다 늦을 수 없습니다.");
+      return;
+    }
+
     try {
       const response = await api.put(`/api/options/${optionId}`, {
         name: optionName,
-        price: Number(optionPrice),
+        price: numericPrice,
         start_date: startDate,
         end_date: endDate,
+        start_date_able: startDateAble,
+        end_date_able: endDateAble,
       });
 
       if (response.data.ok) {
@@ -64,6 +96,76 @@ function OptionManagement() {
     }
   };
 
+  const createOption = async () => {
+    if (
+      !optionName ||
+      optionPrice === undefined ||
+      optionPrice === null ||
+      optionPrice === "" ||
+      !startDate ||
+      !endDate ||
+      !startDateAble ||
+      !endDateAble
+    ) {
+      alert("모든 값을 입력해주세요.");
+      return;
+    }
+
+    const numericPrice = Number(optionPrice);
+
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      alert("가격은 0 이상 숫자여야 합니다.");
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("시작일은 종료일보다 늦을 수 없습니다.");
+      return;
+    }
+
+    if (new Date(startDateAble) > new Date(endDateAble)) {
+      alert("시작일은 종료일보다 늦을 수 없습니다.");
+      return;
+    }
+
+    try {
+      const response = await api.post(`/api/options`, {
+        name: optionName,
+        price: numericPrice,
+        start_date: startDate,
+        end_date: endDate,
+        start_date_able: startDateAble,
+        end_date_able: endDateAble,
+      });
+
+      if (response.data.ok) {
+        alert("옵션 저장 완료");
+        getOptions();
+        setIsPop(false);
+      }
+    } catch (error) {
+      console.error("옵션 수정 실패:", error);
+      alert(error.response?.data?.message || "수정 중 오류 발생");
+    }
+  };
+
+  const deleteOption = async (id) => {
+    const confirmDelete = window.confirm("정말 삭제하시겠습니까?");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await api.delete(`/api/options/${id}`);
+
+      if (response.data.ok) {
+        alert("옵션 삭제 완료");
+        getOptions(); // 목록 다시 조회
+      }
+    } catch (error) {
+      console.error("옵션 삭제 실패:", error);
+      alert(error.response?.data?.message || "삭제 중 오류 발생");
+    }
+  };
+
   return (
     <>
       <div className="workspace">
@@ -74,6 +176,12 @@ function OptionManagement() {
               className="green"
               onClick={() => {
                 setIsPop(true);
+                setOptionName("");
+                setOptionPrice(0);
+                setStartDate("");
+                setEndDate("");
+                setStartDateAble("");
+                setEndDateAble("");
               }}
             >
               옵션추가
@@ -86,7 +194,8 @@ function OptionManagement() {
                   <th>옵션명</th>
                   <th>가격</th>
                   <th>기간</th>
-                  <th>사용 가능 여부</th>
+                  <th>예약가능기간</th>
+                  <th>사용(예약) 가능 여부</th>
                   <th>삭제</th>
                   <th>수정</th>
                 </tr>
@@ -102,6 +211,10 @@ function OptionManagement() {
                         {data.end_date.split("T")[0]}
                       </td>
                       <td>
+                        {data.start_date_able.split("T")[0]} ~{" "}
+                        {data.end_date_able.split("T")[0]}
+                      </td>
+                      <td>
                         {(() => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
@@ -112,13 +225,26 @@ function OptionManagement() {
                           const end = new Date(data.end_date);
                           end.setHours(0, 0, 0, 0);
 
-                          return today >= start && today <= end
+                          const startAble = new Date(data.start_date_able);
+                          startAble.setHours(0, 0, 0, 0);
+
+                          const endAble = new Date(data.end_date_able);
+                          endAble.setHours(0, 0, 0, 0);
+
+                          const isInOptionPeriod =
+                            today >= start && today <= end;
+                          const isInAblePeriod =
+                            today >= startAble && today <= endAble;
+
+                          return isInOptionPeriod && isInAblePeriod
                             ? "가능"
                             : "이용불가";
                         })()}
                       </td>
                       <td>
-                        <button>삭제</button>
+                        <button onClick={() => deleteOption(data.id)}>
+                          삭제
+                        </button>
                       </td>
                       <td>
                         <button
@@ -128,6 +254,10 @@ function OptionManagement() {
                             setOptionPrice(data.price);
                             setStartDate(data.start_date.split("T")[0]);
                             setEndDate(data.end_date.split("T")[0]);
+                            setStartDateAble(
+                              data.start_date_able.split("T")[0],
+                            );
+                            setEndDateAble(data.end_date_able.split("T")[0]);
                             setOptionId(data.id);
                           }}
                         >
@@ -144,7 +274,7 @@ function OptionManagement() {
       </div>
       {isPop && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "460px" }}>
+          <div className="popup" style={{ height: "560px" }}>
             <div className="popup_title">옵션추가</div>
             <div
               className="popup_x"
@@ -159,13 +289,26 @@ function OptionManagement() {
                 <tr>
                   <th>옵션명</th>
                   <td>
-                    <input type="text" />
+                    <input
+                      type="text"
+                      value={optionName}
+                      onChange={(e) => {
+                        setOptionName(e.target.value);
+                      }}
+                    />
                   </td>
                 </tr>
                 <tr>
                   <th>단가</th>
                   <td>
-                    <input type="number" value={0} /> 원
+                    <input
+                      type="number"
+                      value={optionPrice}
+                      onChange={(e) => {
+                        setOptionPrice(e.target.value);
+                      }}
+                    />{" "}
+                    원
                   </td>
                 </tr>
 
@@ -187,11 +330,31 @@ function OptionManagement() {
                     />
                   </td>
                 </tr>
+                <tr>
+                  <th>예약가능 시작일</th>
+                  <td>
+                    <MyDatePicker
+                      value={startDateAble}
+                      onDateChange={handleDateChange3}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>예약가능 끝나는 일</th>
+                  <td>
+                    <MyDatePicker
+                      value={endDateAble}
+                      onDateChange={handleDateChange4}
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
             <div className="btn_area">
               <div className="right_button">
-                <button className="green">저장</button>
+                <button className="green" onClick={createOption}>
+                  저장
+                </button>
               </div>
             </div>
           </div>
@@ -200,7 +363,7 @@ function OptionManagement() {
 
       {isPopModify && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "460px" }}>
+          <div className="popup" style={{ height: "560px" }}>
             <div className="popup_title">옵션수정</div>
             <div
               className="popup_x"
@@ -253,6 +416,24 @@ function OptionManagement() {
                     <MyDatePicker
                       value={endDate}
                       onDateChange={handleDateChange2}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>예약가능 시작일</th>
+                  <td>
+                    <MyDatePicker
+                      value={startDateAble}
+                      onDateChange={handleDateChange3}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>예약가능 끝나는 일</th>
+                  <td>
+                    <MyDatePicker
+                      value={endDateAble}
+                      onDateChange={handleDateChange4}
                     />
                   </td>
                 </tr>
