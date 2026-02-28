@@ -21,6 +21,12 @@ function RoomManagement() {
   const [groupName, setGroupName] = useState("");
   const [groupReason, setGroupReason] = useState("");
   const [groupId, setGroupId] = useState("");
+  const [groupNameForCreate, setGroupNameForCreate] = useState("");
+  const [isDay, setIsDay] = useState(0);
+  const [capacityMin, setCapacityMin] = useState(0);
+  const [capacityMax, setCapacityMax] = useState(0);
+  const [roomNameForCreate, setRoomNameForCreate] = useState("");
+  const [roomGroupId, setRoomGroupId] = useState("");
 
   useEffect(() => {
     getAllRooms();
@@ -73,10 +79,14 @@ function RoomManagement() {
       alert("사유를 입력해주세요");
       return;
     }
+
     const data = {
       name: roomDetailName,
       is_active: isActive ? 1 : 0,
-      reason: isActive ? null : roomReason,
+      reason: isActive ? null : roomReason?.trim(),
+      capacity_max: Number(capacityMax),
+      capacity_min: Number(capacityMin),
+      day_use: Number(isDay), // 1 or 0 구조라면
     };
 
     api
@@ -141,7 +151,7 @@ function RoomManagement() {
     if (!isOk) return;
 
     api
-      .delete(`//api/room-group/${groupId}`)
+      .delete(`/api/room-group/${groupId}`)
       .then((response) => {
         console.log(response);
         alert("삭제되었습니다.");
@@ -151,6 +161,88 @@ function RoomManagement() {
       .catch((err) => {
         console.error(err);
         alert("삭제 중 오류가 발생했습니다.");
+      });
+  };
+
+  const createGroup = () => {
+    if (!groupNameForCreate || groupNameForCreate.trim() === "") {
+      alert("그룹명을 입력해주세요.");
+      return;
+    }
+
+    const data = {
+      name: groupNameForCreate,
+      description: groupNameForCreate,
+    };
+
+    api
+      .post(`/api/room-group`, data)
+      .then((response) => {
+        console.log(response);
+        alert("새 그룹이 생성되었습니다.");
+        setIsPop2(false);
+        getAllRooms();
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("생성 중 오류가 발생했습니다.");
+      });
+  };
+
+  const createRoom = () => {
+    // ✅ 이름 체크
+    if (!roomNameForCreate || roomNameForCreate.trim() === "") {
+      alert("객실명을 입력해주세요.");
+      return;
+    }
+
+    // ✅ 그룹 체크
+    if (!roomGroupId) {
+      alert("객실 그룹을 선택해주세요.");
+      return;
+    }
+
+    const numericMax = Number(capacityMax);
+    const numericMin = Number(capacityMin);
+    const numericDayUse = Number(isDay);
+
+    // ✅ 숫자 체크
+    if (isNaN(numericMax) || isNaN(numericMin)) {
+      alert("인원 수는 숫자로 입력해주세요.");
+      return;
+    }
+
+    // ✅ 최소/최대 검증
+    if (numericMin > numericMax) {
+      alert("최소 인원은 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    // ✅ day_use 체크
+    if (numericDayUse !== 0 && numericDayUse !== 1) {
+      alert("숙박 타입 값이 올바르지 않습니다.");
+      return;
+    }
+
+    const data = {
+      name: roomNameForCreate.trim(),
+      description: roomNameForCreate.trim(),
+      room_group_id: roomGroupId,
+      capacity_max: numericMax,
+      capacity_min: numericMin,
+      day_use: numericDayUse,
+    };
+
+    api
+      .post("/api/room", data)
+      .then((response) => {
+        console.log(response);
+        setIsPop(false);
+        getAllRooms();
+      })
+      .catch((error) => {
+        console.error(error);
+        alert("생성 중 오류가 발생했습니다.");
       });
   };
 
@@ -169,6 +261,11 @@ function RoomManagement() {
             </button>
             <button
               onClick={() => {
+                setIsDay(1);
+                setCapacityMax(0);
+                setCapacityMin(0);
+                setRoomGroupId("");
+                setRoomNameForCreate("");
                 setIsPop(true);
               }}
             >
@@ -225,6 +322,9 @@ function RoomManagement() {
                                     setRoomId(data2.id);
                                     setRoomReason(data2.reason);
                                     setRoomDetailGroupName(data.name);
+                                    setIsDay(data2.day_use);
+                                    setCapacityMax(data2.capacity_max);
+                                    setCapacityMin(data2.capacity_min);
                                     setIsActive(
                                       data2.is_active === 1 ? true : false,
                                     );
@@ -274,8 +374,12 @@ function RoomManagement() {
                 <tr>
                   <th>그룹</th>
                   <td>
-                    <select>
-                      <option>선택</option>
+                    <select
+                      onChange={(e) => {
+                        setRoomGroupId(e.target.id);
+                      }}
+                    >
+                      <option id="">선택</option>
                       {groups.map((data, i) => {
                         return (
                           <option id={data.id} key={`kjhk${i}`}>
@@ -289,13 +393,78 @@ function RoomManagement() {
                 <tr>
                   <th>객실 이름</th>
                   <td>
-                    <input type="text" />
+                    <input
+                      type="text"
+                      value={roomNameForCreate}
+                      onChange={(e) => {
+                        setRoomNameForCreate(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>숙박여부</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="day_use"
+                        name="lodgement"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsLodge(1);
+                          }
+                        }}
+                        checked={isDay === 1 ? true : false}
+                      />
+                      <label htmlFor="day_use">데이유즈</label>
+                    </div>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="lodgement"
+                        name="lodgement"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsLodge(0);
+                          }
+                        }}
+                        checked={isDay !== 1 ? true : false}
+                      />
+                      <label htmlFor="lodgement">숙박가능</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>최소인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      value={capacityMin}
+                      onChange={(e) => {
+                        setCapacityMin(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>최대인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      value={capacityMax}
+                      onChange={(e) => {
+                        setCapacityMax(e.target.value);
+                      }}
+                    />
                   </td>
                 </tr>
               </tbody>
             </table>
             <div className="btn_area">
-              <button className="green">저장</button>
+              <button className="green" onClick={createRoom}>
+                저장
+              </button>
               <button
                 onClick={() => {
                   setIsPop(false);
@@ -325,13 +494,21 @@ function RoomManagement() {
                 <tr>
                   <th>그룹명</th>
                   <td>
-                    <input type="text" />
+                    <input
+                      type="text"
+                      value={groupNameForCreate}
+                      onChange={(e) => {
+                        setGroupNameForCreate(e.target.value);
+                      }}
+                    />
                   </td>
                 </tr>
               </tbody>
             </table>
             <div className="btn_area">
-              <button className="green">저장</button>
+              <button className="green" onClick={createGroup}>
+                저장
+              </button>
               <button
                 onClick={() => {
                   setIsPop2(false);
@@ -372,6 +549,63 @@ function RoomManagement() {
                       value={roomDetailName}
                       onChange={(e) => {
                         setRoomDetailName(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>숙박여부</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="day_use"
+                        name="lodgement"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsLodge(1);
+                          }
+                        }}
+                        checked={isDay === 1 ? true : false}
+                      />
+                      <label htmlFor="day_use">데이유즈</label>
+                    </div>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="lodgement"
+                        name="lodgement"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsLodge(0);
+                          }
+                        }}
+                        checked={isDay !== 1 ? true : false}
+                      />
+                      <label htmlFor="lodgement">숙박가능</label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>최소인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      value={capacityMin}
+                      onChange={(e) => {
+                        setCapacityMin(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>최대인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      value={capacityMax}
+                      onChange={(e) => {
+                        setCapacityMax(e.target.value);
                       }}
                     />
                   </td>
