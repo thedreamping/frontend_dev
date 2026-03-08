@@ -49,7 +49,7 @@ function MainDiningManagement() {
   }, []);
 
   const getBanners = () => {
-    api.get("/api/get-main-room-banner").then((response) => {
+    api.get("/api/get-main-dining-banner").then((response) => {
       console.log(response);
       if (response.data.data.length !== 0) {
         setBasicArray(response.data.data);
@@ -104,7 +104,7 @@ function MainDiningManagement() {
     });
 
     api
-      .post("/api/main-room-banner", formData, {
+      .post("/api/main-dining-banner", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((response) => {
@@ -200,7 +200,7 @@ function MainDiningManagement() {
                       <div className="file_uploader">
                         <input
                           type="text"
-                          placeholder="세로가 긴 직사각형 형태로 4:3 정도의 비율로 세로가 1000px 이상, 가로가 700px 이상의 크기릐 이미지를 이용해 주세요"
+                          placeholder="가로가 긴 직사각형 형태로 가로가 1000px 이상, 세로가 200px 이상의 크기의 이미지를 이용해 주세요"
                           disabled
                           value={data.file_name}
                         />

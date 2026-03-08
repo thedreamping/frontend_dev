@@ -200,7 +200,7 @@ function MainRoomsManagement() {
                       <div className="file_uploader">
                         <input
                           type="text"
-                          placeholder="세로가 긴 직사각형 형태로 4:3 정도의 비율로 세로가 1000px 이상, 가로가 700px 이상의 크기릐 이미지를 이용해 주세요"
+                          placeholder="세로가 긴 직사각형 형태로 4:3 정도의 비율로 세로가 1000px 이상, 가로가 700px 이상의 크기의 이미지를 이용해 주세요"
                           disabled
                           value={data.file_name}
                         />
