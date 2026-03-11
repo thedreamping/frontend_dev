@@ -46,7 +46,7 @@ function Login() {
     <>
       <div className="login_wrap">
         <div className="login_pannel">
-          <h2>드림핑 관리자 시스템 v1.1</h2>- Login -<br />
+          <h2>드림핑 관리자 시스템 v1.2</h2>- Login -<br />
           <br />
           <input
             type="text"
