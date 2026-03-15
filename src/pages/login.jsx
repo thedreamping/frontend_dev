@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import api from "../api/api";
+import { Link } from "react-router-dom";
 
 function Login() {
   const navigate = useNavigate();
@@ -69,7 +70,13 @@ function Login() {
           <button onClick={login} id="button_for_login">
             로그인
           </button>
-          <button>새 관리자 등록</button>
+          <button
+            onClick={() => {
+              alert("로그인후 새 관리자 등록 메뉴를 이용해 주세요");
+            }}
+          >
+            새 관리자 등록
+          </button>
         </div>
       </div>
     </>

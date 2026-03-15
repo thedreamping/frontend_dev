@@ -15,6 +15,8 @@ import MainRoomsManagement from "./pages/mainRoomsManagement";
 import MainDiningManagement from "./pages/mainDiningManagement";
 import SpecialOfferManagement from "./pages/specialOfferManagement";
 import DkSchedule from "./pages/dkSchedule";
+import AddAdministrator from "./pages/addAdministrator";
+import AdminList from "./pages/adminList";
 
 function App() {
   const navigate = useNavigate();
@@ -24,7 +26,7 @@ function App() {
     if (!sessionStorage.getItem("accessToken")) {
       navigate("/login");
     }
-  }, []);
+  }, [location.pathname]);
 
   useEffect(() => {
     navChange();
@@ -114,6 +116,12 @@ function App() {
             <li>
               <Link to="/event_pop_management">이벤트팝업 관리</Link>
             </li>
+            <li>
+              <Link to="/admin_list">관리자 리스트</Link>
+            </li>
+            <li>
+              <Link to="/add_administrator">새 관리자 추가</Link>
+            </li>
             {/* <li>
               <Link to="">메뉴 2</Link>
               <div className="open_close ac"></div>
@@ -147,6 +155,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/add_administrator" element={<AddAdministrator />} />
+          <Route path="/admin_list" element={<AdminList />} />
           <Route path="/reservation_env" element={<ReservationEnv />} />
           <Route path="/dk_schedule" element={<DkSchedule />} />
           <Route path="/refund_env" element={<RefundEnv />} />

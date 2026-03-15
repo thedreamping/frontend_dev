@@ -12,10 +12,6 @@ function DkSchedule() {
 
   const [selectedDays, setSelectedDays] = useState([]);
   const [isPop, setIsPop] = useState(false);
-  const [roomGroup, setRoomGroup] = useState([]);
-  const [checkedId, setCheckedId] = useState([]);
-  const [priceInfos, setPriceInfos] = useState([]);
-  const [isOneDayEdit, setIsOneDayEdit] = useState(false);
 
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
@@ -86,18 +82,11 @@ function DkSchedule() {
     return rows;
   };
 
-  const getDaysByWeekday = (data, targetWeekday) => {
-    return data.flat().filter((item) => item?.weekday === targetWeekday);
-  };
+  useEffect(() => {
+    console.log(selectedDays);
+  }, [selectedDays]);
 
-  const editOnlyOne = (date) => {
-    console.log(date, rooms);
-    if (!date) return;
-    setSelectedDays([date]);
-    setIsOneDayEdit(true);
-
-    setIsPop(true);
-  };
+  const saveSchedule = () => {};
 
   return (
     <>
@@ -105,7 +94,18 @@ function DkSchedule() {
         <div className="title">대관일정</div>
         <div className="content">
           <div className="btn_area">
-            <button className="green">저장</button>
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("일정을 넣을 날짜를 선택해 주세요");
+                  return;
+                }
+                setIsPop(true);
+              }}
+            >
+              선택날짜에 일정 집어넣기
+            </button>
           </div>
           <div className="rooms_calendar_info">
             <button
@@ -158,18 +158,7 @@ function DkSchedule() {
                           );
                         }}
                       >
-                        <div>
-                          {date ? date.day : ""}{" "}
-                          <button
-                            style={{ float: "right" }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              editOnlyOne(date);
-                            }}
-                          >
-                            수정
-                          </button>
-                        </div>
+                        <div>{date ? date.day : ""} </div>
                       </td>
                     ))}
                   </tr>
@@ -182,6 +171,64 @@ function DkSchedule() {
           </div>
         </div>
       </div>
+
+      {isPop && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ width: "1200px", height: "600px" }}>
+            <div className="popup_title">일정 집어넣기</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsPop(false);
+              }}
+            >
+              X
+            </div>
+            <div className="btn_area">
+              <button className="green" onClick={saveSchedule}>
+                저장
+              </button>
+            </div>
+            <div className="ovf_scroll_for_pop">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>선택된 날짜</th>
+                    <td>
+                      {selectedDays.map((data, i) => {
+                        return (
+                          <span
+                            className="date_span"
+                            key={`khkj$${i}`}
+                          >{`${data.year}-${data.month < 10 ? "0" + data.month : data.month}-${data.day < 10 ? "0" + data.day : data.day}`}</span>
+                        );
+                      })}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>일정명</th>
+                    <td>
+                      <input type="text" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>자세한 내역</th>
+
+                    <td>
+                      <textarea></textarea>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className="btn_area">
+                <button className="green" onClick={saveSchedule}>
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
