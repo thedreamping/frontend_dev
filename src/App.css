@@ -1193,3 +1193,27 @@ th button.selectAllSameDays {
   top: 0px;
   left: 0px;
 }
+.has_schedule {
+  background: #fff6e5;
+}
+
+.schedule_badge {
+  font-size: 11px;
+  margin-top: 4px;
+  padding: 2px 4px;
+  background: #ff9800;
+  color: white;
+  border-radius: 3px;
+}
+.schedule_badge button {
+  display: inline-block;
+  padding-left: 4px;
+  padding-right: 4px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 9px !important;
+  color: black;
+  background: white;
+  border: 0px solid #d4d4d4;
+  float: right;
+}
