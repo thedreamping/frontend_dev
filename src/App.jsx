@@ -17,6 +17,7 @@ import SpecialOfferManagement from "./pages/specialOfferManagement";
 import DkSchedule from "./pages/dkSchedule";
 import AddAdministrator from "./pages/addAdministrator";
 import AdminList from "./pages/adminList";
+import DkBanners from "./pages/dkBanners";
 
 function App() {
   const navigate = useNavigate();
@@ -110,6 +111,9 @@ function App() {
               <Link to="/main_dining_management">메인 DINING 디자인 관리</Link>
             </li>
             <li>
+              <Link to="/dk_banners">대관 & 워크샵 배너 관리</Link>
+            </li>
+            <li>
               <Link to="/special_offer_management">SPECIAL OFFER관리</Link>
             </li>
 
@@ -164,6 +168,7 @@ function App() {
           <Route path="/option_management" element={<OptionManagement />} />
           <Route path="/components" element={<Components />} />
           <Route path="/main_bn_management" element={<MainBnManagement />} />
+          <Route path="/dk_banners" element={<DkBanners />} />
           <Route
             path="/special_offer_management"
             element={<SpecialOfferManagement />}
