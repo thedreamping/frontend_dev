@@ -21,7 +21,8 @@ function Login() {
 
         sessionStorage.setItem("accessToken", accessToken);
         sessionStorage.setItem("refreshToken", refreshToken);
-
+        sessionStorage.setItem("adminName", user.adming_name);
+        console.log(user);
         navigate("/");
       })
       .catch((err) => {

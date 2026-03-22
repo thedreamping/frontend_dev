@@ -4,47 +4,35 @@ import { Link } from "react-router-dom";
 import MyDatePicker from "../component/datepicker";
 import api from "../api/api";
 
-function SpecialOfferManagement() {
+function AroundAndSpot() {
   const [basicArray, setBasicArray] = useState([
     {
       id: Date.now() + Math.random(),
       file_name: "",
-      text: "",
-      link: "",
+
       file: null,
       file_url: "",
-      price: "",
-      period: "",
     },
     {
       id: Date.now() + Math.random(),
       file_name: "",
-      text: "",
-      link: "",
+
       file: null,
       file_url: "",
-      price: "",
-      period: "",
     },
     {
       id: Date.now() + Math.random(),
       file_name: "",
-      text: "",
-      link: "",
+
       file: null,
       file_url: "",
-      price: "",
-      period: "",
     },
     {
       id: Date.now() + Math.random(),
       file_name: "",
-      text: "",
-      link: "",
+
       file: null,
       file_url: "",
-      price: "",
-      period: "",
     },
   ]);
 
@@ -53,7 +41,7 @@ function SpecialOfferManagement() {
   }, []);
 
   const getBanners = () => {
-    api.get("/api/get-special-offer").then((response) => {
+    api.get("/api/get-around-and-spot").then((response) => {
       console.log(response);
       if (response.data.data.length !== 0) {
         setBasicArray(response.data.data);
@@ -77,16 +65,7 @@ function SpecialOfferManagement() {
     });
   };
   const save = () => {
-    if (
-      basicArray.some(
-        (item) =>
-          (!item.file && !item.file_url) ||
-          !item.text ||
-          !item.link ||
-          !item.price ||
-          !item.period,
-      )
-    ) {
+    if (basicArray.some((item) => !item.file && !item.file_url)) {
       alert("모든 슬라이드를 빠짐없이 입력해주세요.");
       return;
     }
@@ -102,20 +81,17 @@ function SpecialOfferManagement() {
 
       // 나머지 값은 항상 전송
       formData.append("file_name", item.file_name);
-      formData.append("text", item.text);
-      formData.append("link", item.link);
-      formData.append("period", item.period);
-      formData.append("price", item.price);
+
       formData.append("file_url", item.file_url || "");
     });
 
     api
-      .post("/api/special-offer", formData, {
+      .post("/api/around-and-spot", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then((response) => {
         console.log(response);
-        alert("스페셜오퍼 배너 설정이 저장되었습니다.");
+        alert("around & spot 배너 설정이 저장되었습니다.");
         getBanners();
       })
       .catch((err) => {
@@ -174,7 +150,7 @@ function SpecialOfferManagement() {
   return (
     <>
       <div className="workspace">
-        <div className="title">스페셜 오퍼 배너 관리</div>
+        <div className="title">Around & Spot 배너 관리</div>
         <div className="content">
           <div className="btn_area">
             <button className="green" onClick={save}>
@@ -205,7 +181,7 @@ function SpecialOfferManagement() {
                       <div className="file_uploader">
                         <input
                           type="text"
-                          placeholder="정사각형이미지로 500 x 500 크기 이상으로 준비해주세요."
+                          placeholder="자유롭게 직사각형 혹은 정사각형을 준비해주세요. 고해상도가 좋습니다."
                           disabled
                           value={data.file_name}
                         />
@@ -229,73 +205,17 @@ function SpecialOfferManagement() {
                           }}
                         />
                       </div>
-                      <input
-                        type="text"
-                        value={data.text}
-                        placeholder="프로모션 이름"
-                        onChange={(e) => {
-                          setBasicArray((prev) => {
-                            const newArr = [...prev];
-                            newArr[i] = {
-                              ...newArr[i],
-                              text: e.target.value,
-                            };
-                            return newArr;
-                          });
+                      <div
+                        style={{
+                          width: "240px",
+                          height: "240px",
+                          backgroundColor: "#f4f4f4",
+                          border: "1px solid #e4e4e4",
+                          backgroundImage: `url('${import.meta.env.VITE_API_BASE_URL + data.file_url}')`,
+                          backgroundPosition: "center center",
+                          backgroundSize: "cover",
                         }}
-                      />
-                      <br />
-                      <br />
-                      <input
-                        type="text"
-                        value={data.period}
-                        placeholder="기간 입력 (ex yyyy-mm-dd ~ yyyy-mm-dd) 형식을 지켜주시기 바랍니다."
-                        onChange={(e) => {
-                          setBasicArray((prev) => {
-                            const newArr = [...prev];
-                            newArr[i] = {
-                              ...newArr[i],
-                              period: e.target.value,
-                            };
-                            return newArr;
-                          });
-                        }}
-                      />
-                      <br />
-                      <br />
-                      <input
-                        type="text"
-                        value={data.price}
-                        placeholder="가격정보 입력 (ex 1,000,000 KRW ~) 형식을 지켜주시기 바랍니다."
-                        onChange={(e) => {
-                          setBasicArray((prev) => {
-                            const newArr = [...prev];
-                            newArr[i] = {
-                              ...newArr[i],
-                              price: e.target.value,
-                            };
-                            return newArr;
-                          });
-                        }}
-                      />
-
-                      <br />
-                      <br />
-                      <input
-                        type="text"
-                        placeholder="링크 URL (링크를 원하지 않으실 때는 / 입력해주세요)"
-                        value={data.link}
-                        onChange={(e) => {
-                          setBasicArray((prev) => {
-                            const newArr = [...prev];
-                            newArr[i] = {
-                              ...newArr[i],
-                              link: e.target.value,
-                            };
-                            return newArr;
-                          });
-                        }}
-                      />
+                      ></div>
                     </td>
                     <td>
                       <button onClick={() => rowAdd(i)}>추가</button>
@@ -321,4 +241,4 @@ function SpecialOfferManagement() {
   );
 }
 
-export default SpecialOfferManagement;
+export default AroundAndSpot;

@@ -18,6 +18,7 @@ import DkSchedule from "./pages/dkSchedule";
 import AddAdministrator from "./pages/addAdministrator";
 import AdminList from "./pages/adminList";
 import DkBanners from "./pages/dkBanners";
+import AroundAndSpot from "./pages/aroundAndSpot";
 
 function App() {
   const navigate = useNavigate();
@@ -66,6 +67,9 @@ function App() {
   return (
     <>
       <div className="wrap">
+        <div className="welcome">
+          <b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎
+        </div>
         <div className="left_menu">
           <h4>
             드림핑 관리자
@@ -116,7 +120,9 @@ function App() {
             <li>
               <Link to="/special_offer_management">SPECIAL OFFER관리</Link>
             </li>
-
+            <li>
+              <Link to="/around_and_spot">Around & Spot 관리</Link>
+            </li>
             <li>
               <Link to="/event_pop_management">이벤트팝업 관리</Link>
             </li>
@@ -168,6 +174,7 @@ function App() {
           <Route path="/option_management" element={<OptionManagement />} />
           <Route path="/components" element={<Components />} />
           <Route path="/main_bn_management" element={<MainBnManagement />} />
+          <Route path="/around_and_spot" element={<AroundAndSpot />} />
           <Route path="/dk_banners" element={<DkBanners />} />
           <Route
             path="/special_offer_management"

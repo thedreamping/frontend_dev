@@ -1217,3 +1217,18 @@ th button.selectAllSameDays {
   border: 0px solid #d4d4d4;
   float: right;
 }
+.wrap .welcome {
+  position: fixed;
+  font-size: 14px;
+  font-weight: normal;
+  color: black;
+  z-index: 9999;
+  top: 50px;
+  right: 90px;
+  display: inline-block;
+  height: 20px;
+  line-height: 20px;
+}
+.wrap .welcome b {
+  font-weight: bold;
+}
