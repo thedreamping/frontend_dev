@@ -19,6 +19,7 @@ import AddAdministrator from "./pages/addAdministrator";
 import AdminList from "./pages/adminList";
 import DkBanners from "./pages/dkBanners";
 import AroundAndSpot from "./pages/aroundAndSpot";
+import MainEventPopupManagement from "./pages/mainEventPopupManagement";
 
 function App() {
   const navigate = useNavigate();
@@ -166,6 +167,10 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/add_administrator" element={<AddAdministrator />} />
+          <Route
+            path="/event_pop_management"
+            element={<MainEventPopupManagement />}
+          />
           <Route path="/admin_list" element={<AdminList />} />
           <Route path="/reservation_env" element={<ReservationEnv />} />
           <Route path="/dk_schedule" element={<DkSchedule />} />
