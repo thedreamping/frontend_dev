@@ -14,6 +14,7 @@ function MainEventPopupManagement() {
       file_url: "",
       width: 0,
       height: 0,
+      is_use: 0,
     },
   ]);
 
@@ -73,6 +74,7 @@ function MainEventPopupManagement() {
       formData.append("width", item.width);
       formData.append("link", item.link);
       formData.append("height", item.height);
+      formData.append("is_use", item.is_use);
       formData.append("file_url", item.file_url || "");
     });
 
@@ -208,6 +210,52 @@ function MainEventPopupManagement() {
               })}
             </tbody>
           </table>
+          <div className="checks">
+            <input
+              type="radio"
+              id="use"
+              name="is_use"
+              checked={basicArray[0].is_use === 1 ? true : false}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setBasicArray((prev) => {
+                    const newArr = [...prev];
+                    newArr[0] = {
+                      ...newArr[0],
+                      is_use: 1,
+                    };
+                    return newArr;
+                  });
+                }
+              }}
+            />
+            <label htmlFor="use">사용</label>
+          </div>
+          <div className="checks">
+            <input
+              type="radio"
+              id="not_use"
+              name="is_use"
+              defaultChecked
+              checked={basicArray[0].is_use === 0 ? true : false}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setBasicArray((prev) => {
+                    const newArr = [...prev];
+                    newArr[0] = {
+                      ...newArr[0],
+                      is_use: 0,
+                    };
+                    return newArr;
+                  });
+                }
+              }}
+            />
+            <label htmlFor="not_use">비사용</label>
+          </div>
+          <br />
+          <br />
+          <br />
           <div className="btn_area">
             <button className="green" onClick={save}>
               저장
