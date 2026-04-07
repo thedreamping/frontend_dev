@@ -69,7 +69,7 @@ function App() {
     <>
       <div className="wrap">
         <div className="welcome">
-          <b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎
+         {sessionStorage.getItem("adminName") && <><b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎</>}  
         </div>
         <div className="left_menu">
           <h4>

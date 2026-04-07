@@ -129,7 +129,7 @@ function ReservationEnv() {
           room_group_name: room.name,
           price: Number(room.price),
         }));
-
+      console.log(rooms)  
       if (rooms.length === 0) {
         alert("선택된 객실이 없습니다.");
         return;
@@ -208,6 +208,7 @@ function ReservationEnv() {
                   alert("가격을 설정할 날짜를 선택해 주세요");
                   return;
                 }
+                getRoomGroup();
                 setIsPop(true);
               }}
             >
