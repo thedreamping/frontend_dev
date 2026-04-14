@@ -23,8 +23,10 @@ function OptionManagement() {
 
   const getOptions = () => {
     api.get("/api/options").then((response) => {
-      console.log(response);
-      setOtions(response.data.data);
+      const sorted = response.data.data.sort(
+        (a, b) => a.sort_order - b.sort_order
+      );
+      setOtions(sorted);
     });
   };
 
@@ -165,6 +167,47 @@ function OptionManagement() {
       alert(error.response?.data?.message || "삭제 중 오류 발생");
     }
   };
+  
+  const normalizeDate = (date) => date.split("T")[0];
+
+  const updateOrder = async (newOptions) => {
+    try {
+      await api.post("/api/options_all_change", {
+        options: newOptions,
+      });
+
+      setOtions(newOptions);
+    } catch (error) {
+      console.error("순서 변경 실패:", error);
+      alert("순서 변경 중 오류 발생");
+    }
+  };
+
+   const moveUp = (index) => {
+    if (index === 0) return;
+
+    const newOptions = [...options];
+
+    [newOptions[index - 1], newOptions[index]] = [
+      newOptions[index],
+      newOptions[index - 1],
+    ];
+
+    updateOrder(newOptions);
+  };
+
+  const moveDown = (index) => {
+    if (index === options.length - 1) return;
+
+    const newOptions = [...options];
+
+    [newOptions[index], newOptions[index + 1]] = [
+      newOptions[index + 1],
+      newOptions[index],
+    ];
+
+    updateOrder(newOptions);
+  };
 
   return (
     <>
@@ -198,6 +241,7 @@ function OptionManagement() {
                   <th>사용(예약) 가능 여부</th>
                   <th>삭제</th>
                   <th>수정</th>
+                  <th>차례</th>
                 </tr>
               </thead>
               <tbody>
@@ -263,6 +307,10 @@ function OptionManagement() {
                         >
                           수정
                         </button>
+                      </td>
+                      <td>
+                        <button onClick={() => moveUp(i)}>Up</button>
+                        <button onClick={() => moveDown(i)}>Down</button>
                       </td>
                     </tr>
                   );

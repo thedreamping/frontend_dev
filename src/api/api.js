@@ -14,19 +14,57 @@ const api = axios.create({
   },
 });
 
-// ✅ 요청 인터셉터 (accessToken 자동 첨부)
+// ✅ 로그 전송 함수
+const sendLog = async (config, statusCode) => {
+  try {
+    // 🔥 로그 API 자체는 제외 (무한루프 방지)
+    if (
+      config.url.includes("/api/logs") ||
+      config.url.includes("/api/users/token/reissue")
+    ) {
+      return;
+    }
+
+    await axios.post(
+      `${import.meta.env.VITE_API_BASE_URL}/api/logs`,
+      {
+        admin_name: config.metadata?.adminName,
+        method: config.method,
+        endpoint: config.url,
+        status_code: statusCode,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+      }
+    );
+  } catch (err) {
+    console.error("로그 전송 실패:", err);
+  }
+};
+
+// ✅ 요청 인터셉터
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("accessToken");
+    const adminName = sessionStorage.getItem("adminName");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    config.metadata = {
+      adminName: adminName || "unknown",
+      startTime: new Date(),
+    };
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// ✅ 중복 요청 방지를 위한 상태 및 큐
+// ✅ 중복 요청 방지
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -38,18 +76,25 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// ✅ 응답 인터셉터 (401 → 토큰 재발급)
+// ✅ 응답 인터셉터 (🔥 로그 추가됨)
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 🔥 성공 로그
+    sendLog(response.config, response.status);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    // 401 아니거나 이미 재시도한 요청이면 그대로 실패
+    // 🔥 실패 로그도 남김
+    if (originalRequest) {
+      sendLog(originalRequest, error.response?.status || 500);
+    }
+
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // 이미 재발급 중이면 큐에 대기
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -71,9 +116,6 @@ api.interceptors.response.use(
         throw new Error("No refresh token");
       }
 
-      // 🔥 여기 핵심 수정
-      // ❌ axios.post + 풀 URL
-      // ✅ api.post + 상대 경로
       const response = await api.post("/api/users/token/reissue", {
         refreshToken,
       });
@@ -105,7 +147,7 @@ api.interceptors.response.use(
     } finally {
       isRefreshing = false;
     }
-  },
+  }
 );
 
 export default api;
