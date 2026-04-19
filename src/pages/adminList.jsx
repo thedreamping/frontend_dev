@@ -46,22 +46,24 @@ function AdminList() {
             </thead>
             <tbody>
               {list?.map((data, i) => {
-                return (
-                  <tr key={i}>
-                    <td>{data.adminId}</td>
-                    <td>{data.name}</td>
-                    <td>{data.createdAt.split("T")[0]}</td>
-                    <td>
-                      <button
-                        onClick={() => {
-                          deleteAdmin(data.id);
-                        }}
-                      >
-                        삭제
-                      </button>
-                    </td>
-                  </tr>
-                );
+                if (data.hyper !== 1) {
+                  return (
+                    <tr key={i}>
+                      <td>{data.adminId}</td>
+                      <td>{data.name}</td>
+                      <td>{data.createdAt.split("T")[0]}</td>
+                      <td>
+                        <button
+                          onClick={() => {
+                            deleteAdmin(data.id);
+                          }}
+                        >
+                          삭제
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
               })}
             </tbody>
           </table>

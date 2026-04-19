@@ -20,10 +20,13 @@ import AdminList from "./pages/adminList";
 import DkBanners from "./pages/dkBanners";
 import AroundAndSpot from "./pages/aroundAndSpot";
 import MainEventPopupManagement from "./pages/mainEventPopupManagement";
+import LogAudit from "./pages/logAudit";
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [list,setList] = useState([]);
+  const [specialPower,setSpecialPower] = useState(false);
 
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
@@ -60,10 +63,38 @@ function App() {
     } finally {
       sessionStorage.removeItem("accessToken");
       sessionStorage.removeItem("refreshToken");
+      sessionStorage.removeItem("adminName");
 
       navigate("/login");
     }
   };
+
+
+  const getAdmins = () => {
+    api.get("/api/users/admin").then((response) => {
+      console.log(response);
+      setList(response.data.items);
+    });
+  };
+
+  useEffect(() => {
+    getAdmins();
+  },[location.pathname]);
+
+ useEffect(() => {
+    const adminName = sessionStorage.getItem("adminName");
+
+    if (!adminName || !list?.length) return;
+
+    const user = list.find(item => item.name === adminName);
+
+    const hyper = user?.hyper;
+
+    console.log("찾은 유저:", user);
+    console.log("hyper 값:", hyper);
+    setSpecialPower(hyper === 1 ? true : false)
+
+  }, [list]);
 
   return (
     <>
@@ -133,33 +164,12 @@ function App() {
             <li>
               <Link to="/add_administrator">새 관리자 추가</Link>
             </li>
-            {/* <li>
-              <Link to="">메뉴 2</Link>
-              <div className="open_close ac"></div>
-            </li>
-            <ul className="second">
+            { 
+              specialPower &&  
               <li>
-                <Link to="">서브메뉴1</Link>
+                <Link to="/log_audit">작업로그 확인</Link>
               </li>
-              <li className="ac">
-                <Link to="">서브메뉴2</Link>
-              </li>
-              <li>
-                <Link to="">서브메뉴3</Link>
-              </li>
-              <li>
-                <Link to="">서브메뉴4</Link>
-              </li>
-            </ul>
-            <li>
-              <Link to="">메뉴 3</Link>
-            </li>
-            <li>
-              <Link to="">메뉴 4</Link>
-            </li>
-            <li>
-              <Link to="">메뉴 5</Link>
-            </li> */}
+            }
           </ul>
         </div>
 
@@ -181,6 +191,8 @@ function App() {
           <Route path="/main_bn_management" element={<MainBnManagement />} />
           <Route path="/around_and_spot" element={<AroundAndSpot />} />
           <Route path="/dk_banners" element={<DkBanners />} />
+
+          
           <Route
             path="/special_offer_management"
             element={<SpecialOfferManagement />}
@@ -193,7 +205,10 @@ function App() {
             path="/main_romms_bn_management"
             element={<MainRoomsManagement />}
           />
+           <Route path="/log_audit" element={<LogAudit />} />
         </Routes>
+
+       
         <button className="logout" onClick={logout}></button>
       </div>
     </>

@@ -27,6 +27,10 @@ function RoomManagement() {
   const [capacityMax, setCapacityMax] = useState(0);
   const [roomNameForCreate, setRoomNameForCreate] = useState("");
   const [roomGroupId, setRoomGroupId] = useState("");
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [workPopForSelectedIds, setWorkPopForSelectedIds] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     getAllRooms();
@@ -84,6 +88,8 @@ function RoomManagement() {
       name: roomDetailName,
       is_active: isActive ? 1 : 0,
       reason: isActive ? null : roomReason?.trim(),
+      disable_start: isActive ? null : startDate,
+      disable_end: isActive ? null : endDate,
       capacity_max: Number(capacityMax),
       capacity_min: Number(capacityMin),
       day_use: Number(isDay), // 1 or 0 구조라면
@@ -94,6 +100,8 @@ function RoomManagement() {
       .then((response) => {
         console.log(response);
         setIsDetailPop(false);
+        setStartDate("");
+        setEndDate("");
         getAllRooms();
       })
       .catch((err) => {
@@ -111,6 +119,8 @@ function RoomManagement() {
       name: groupName,
       is_active: isActiveGroup ? 1 : 0,
       reason: isActiveGroup ? null : groupReason,
+      disable_start: isActiveGroup ? null : startDate,
+      disable_end: isActiveGroup ? null : endDate,
     };
 
     api
@@ -118,6 +128,8 @@ function RoomManagement() {
       .then((response) => {
         console.log(response);
         setIsDetailPopGroup(false);
+        setStartDate("");
+        setEndDate("");
         getAllRooms();
       })
       .catch((err) => {
@@ -137,6 +149,8 @@ function RoomManagement() {
         console.log(response);
         alert("삭제되었습니다.");
         setIsDetailPop(false);
+        setStartDate("");
+        setEndDate("");
         getAllRooms();
       })
       .catch((err) => {
@@ -156,6 +170,8 @@ function RoomManagement() {
         console.log(response);
         alert("삭제되었습니다.");
         setIsDetailPopGroup(false);
+        setStartDate("");
+        setEndDate("");
         getAllRooms();
       })
       .catch((err) => {
@@ -181,6 +197,8 @@ function RoomManagement() {
         console.log(response);
         alert("새 그룹이 생성되었습니다.");
         setIsPop2(false);
+        setStartDate("");
+        setEndDate("");
         getAllRooms();
       })
       .catch((error) => {
@@ -239,11 +257,53 @@ function RoomManagement() {
         console.log(response);
         setIsPop(false);
         getAllRooms();
+        setStartDate("");
+        setEndDate("");
       })
       .catch((error) => {
         console.error(error);
         alert("생성 중 오류가 발생했습니다.");
       });
+  };
+
+  useEffect(() => { console.log(selectedIds) }, [selectedIds]);
+
+  const workForSelected = () => {
+    if (!isActiveGroup && !groupReason?.trim()) {
+      alert("사유와 기간을 입력해주세요");
+      return;
+    }
+    if (startDate > endDate) {
+      alert("시작일은 종료일보다 클 수 없습니다.");
+      return;
+    }
+    const data = {
+       ids: selectedIds,
+       is_active: isActiveGroup ? 1 : 0,
+       reason: isActiveGroup ? null : groupReason,
+       disable_start: startDate,
+       disable_end: endDate,
+    };
+
+    api
+      .put(`/api/rooms/bulk-update`, data)
+      .then((response) => {
+        console.log(response);
+        setWorkPopForSelectedIds(false);
+        getAllRooms();
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("수정 중 오류가 발생했습니다.");
+      });
+  }
+
+  const handleDateChange1 = (formattedDate) => {
+    setStartDate(formattedDate);
+  };
+
+  const handleDateChange2 = (formattedDate) => {
+    setEndDate(formattedDate);
   };
 
   return (
@@ -270,6 +330,16 @@ function RoomManagement() {
               }}
             >
               객실추가
+            </button>
+            <button onClick={() => {
+              if (selectedIds.length === 0) {
+                alert("일괄적용할 방들을 선택해주세요.");
+                return;
+              } else {
+                setWorkPopForSelectedIds(true);
+              }
+            }}>
+              비활성화 일괄처리
             </button>{" "}
             <div className="room_cell_active active"></div> 숙박가능
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -308,15 +378,36 @@ function RoomManagement() {
                           {data?.rooms?.map((data2, ii) => {
                             return (
                               <>
+                                <div className="checks">
+                                  <input
+                                    type="checkbox"
+                                    id={data2.id}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedIds((prev) => [...prev, data2.id]);
+                                      } else {
+                                        setSelectedIds((prev) =>
+                                          prev.filter((id) => id !== data2.id)
+                                        );
+                                      }
+                                    }}
+                                  />
+                                  <label htmlFor={data2.id}></label>
+                                </div>
                                 <div
                                   className="room_cell"
                                   key={`iji${ii}`}
-                                  style={
-                                    data2.is_active === 1
-                                      ? { opacity: "1" }
-                                      : { opacity: "0.3" }
-                                  }
+                                  style={{
+                                      opacity:
+                                       data2.is_active === 0 &&
+                                        data2.disable_start != null &&
+                                        data2.disable_end != null &&
+                                        new Date() >= new Date(data2.disable_start) &&
+                                        new Date() <= new Date(data2.disable_end) ?
+                                         "0.3" : "1",
+                                    }}
                                   onClick={() => {
+                                    console.log(data2)
                                     setIsDetailPop(true);
                                     setRoomDetailName(data2.name);
                                     setRoomId(data2.id);
@@ -328,19 +419,25 @@ function RoomManagement() {
                                     setIsActive(
                                       data2.is_active === 1 ? true : false,
                                     );
+                                    setStartDate(data2.disable_start.split("T")[0]);
+                                    setEndDate(data2.disable_end.split("T")[0]);
                                   }}
                                 >
                                   {data2.name}{" "}
                                   <div
                                     className={
-                                      data2.available === 1
+                                     data2.available === 1
                                         ? "room_cell_active active"
                                         : "room_cell_active"
                                     }
                                   ></div>{" "}
-                                  {data2.is_active === 1
-                                    ? "ACTIVE"
-                                    : "DISABLED"}
+                                  { data2.is_active === 0 &&
+                                        data2.disable_start != null &&
+                                        data2.disable_end != null &&
+                                        new Date() >= new Date(data2.disable_start) &&
+                                        new Date() <= new Date(data2.disable_end)
+                                    ? "DISABLED"
+                                    : "ACTIVE"}
                                 </div>
 
                                 <br />
@@ -365,6 +462,8 @@ function RoomManagement() {
               className="popup_x"
               onClick={() => {
                 setIsPop(false);
+                setStartDate("");
+                setEndDate("");
               }}
             >
               X
@@ -468,6 +567,8 @@ function RoomManagement() {
               <button
                 onClick={() => {
                   setIsPop(false);
+                  setStartDate("");
+                  setEndDate("");
                 }}
               >
                 취소
@@ -485,6 +586,8 @@ function RoomManagement() {
               className="popup_x"
               onClick={() => {
                 setIsPop2(false);
+                setStartDate("");
+                setEndDate("");
               }}
             >
               X
@@ -512,6 +615,8 @@ function RoomManagement() {
               <button
                 onClick={() => {
                   setIsPop2(false);
+                  setStartDate("");
+                  setEndDate("");
                 }}
               >
                 취소
@@ -522,13 +627,15 @@ function RoomManagement() {
       )}
       {isDetailPop && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto" }}>
+          <div className="popup" style={{ height: "auto", width:'1000px'  }}>
             <div className="popup_title">객실 디테일</div>
             <div
               className="popup_x"
               onClick={() => {
                 setIsDetailPop(false);
                 setIsActive(true);
+                setStartDate("");
+                setEndDate("");
               }}
             >
               X
@@ -647,6 +754,20 @@ function RoomManagement() {
                 {isActive === false && (
                   <>
                     <tr>
+                      <th>기간</th>
+                      <td>
+                        <td>
+                          <MyDatePicker
+                            value={startDate}
+                            onDateChange={handleDateChange1}
+                          /> ~ <MyDatePicker
+                            value={endDate}
+                            onDateChange={handleDateChange2}
+                          />
+                        </td>
+                      </td>
+                    </tr>
+                    <tr>
                       <th>비활성화 사유</th>
                       <td>
                         <textarea
@@ -675,13 +796,15 @@ function RoomManagement() {
 
       {isDetailPopGroup && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto" }}>
+          <div className="popup" style={{ height: "auto", width:'1000px'  }}>
             <div className="popup_title">그룹 디테일</div>
             <div
               className="popup_x"
               onClick={() => {
                 setIsDetailPopGroup(false);
                 setIsActiveGroup(true);
+                setStartDate("");
+                setEndDate("");
               }}
             >
               X
@@ -736,6 +859,20 @@ function RoomManagement() {
                 {isActiveGroup === false && (
                   <>
                     <tr>
+                      <th>기간</th>
+                      <td>
+                        <td>
+                          <MyDatePicker
+                            value={startDate}
+                            onDateChange={handleDateChange1}
+                          /> ~ <MyDatePicker
+                            value={endDate}
+                            onDateChange={handleDateChange2}
+                          />
+                        </td>
+                      </td>
+                    </tr>
+                    <tr>
                       <th>비활성화 사유</th>
                       <td>
                         <textarea
@@ -756,6 +893,101 @@ function RoomManagement() {
               </button>
               <button className="red" onClick={groupDelete}>
                 이 그룹 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {workPopForSelectedIds && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ height: "auto", width:'1000px' }}>
+            <div className="popup_title">비활성화 일괄 편집</div>
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsDetailPopGroup(false);
+                setIsActiveGroup(true);
+                setWorkPopForSelectedIds(false);
+                setStartDate("");
+                setEndDate("");
+              }}
+            >
+              X
+            </div>
+            <table>
+              <tbody>
+                
+
+                <tr>
+                  <th>활성화여부</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="active"
+                        defaultChecked
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActiveGroup(true);
+                          }
+                        }}
+                        checked={isActiveGroup}
+                      />
+                      <label htmlFor="active">Active</label>
+                    </div>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        name="ac"
+                        id="non-active"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setIsActiveGroup(false);
+                          }
+                        }}
+                        checked={!isActiveGroup}
+                      />
+                      <label htmlFor="non-active">비활성화</label>
+                    </div>
+                  </td>
+                </tr>
+                {isActiveGroup === false && (
+                  <>
+                    <tr>
+                      <th>기간</th>
+                      <td>
+                        <td>
+                          <MyDatePicker
+                            value={startDate}
+                            onDateChange={handleDateChange1}
+                          /> ~ <MyDatePicker
+                            value={endDate}
+                            onDateChange={handleDateChange2}
+                          />
+                        </td>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th>비활성화 사유</th>
+                      <td>
+                        <textarea
+                          value={groupReason}
+                          onChange={(e) => {
+                            setGroupReason(e.target.value);
+                          }}
+                        ></textarea>
+                      </td>
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+            <div className="btn_area">
+              <button className="green" onClick={workForSelected}>
+                비활성화 방침 일괄 적용
               </button>
             </div>
           </div>

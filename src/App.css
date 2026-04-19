@@ -207,9 +207,10 @@ table {
 }
 .left_menu ul {
   width: 100%;
-  height: auto;
+  height: calc( 100% - 120px );
   display: block;
   position: relative;
+  overflow:auto;
 }
 .left_menu ul li {
   display: block;
@@ -1243,3 +1244,6 @@ th button.selectAllSameDays {
 .wrap .welcome b {
   font-weight: bold;
 }
+
+.td_scroll .checks { margin-top:4px; }
+.td_scroll .checks input[type="checkbox"] + label { margin-right:0px; }
