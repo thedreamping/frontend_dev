@@ -27,12 +27,20 @@ function App() {
   const location = useLocation();
   const [list,setList] = useState([]);
   const [specialPower,setSpecialPower] = useState(false);
+  const [action,setAction] = useState("");
 
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
       navigate("/login");
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    api.get('/api/naver-status').then((response) => {
+      console.log(response)
+      setAction(response.data.data.action)
+    })
+  },[location.pathname])
 
   useEffect(() => {
     navChange();
@@ -101,6 +109,7 @@ function App() {
       <div className="wrap">
         <div className="welcome">
          {sessionStorage.getItem("adminName") && <><b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎</>}  
+         <em style={{marginLeft:'20px'}}>네이버크롤링 상태 : <span style={{backgroundColor:action}}></span> {action === "green" ? "정상" : action === "orange" ? "로그인 필요" : action === "red" ? "에러상태" : ""} </em>
         </div>
         <div className="left_menu">
           <h4>

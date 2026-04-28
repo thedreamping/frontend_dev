@@ -1247,3 +1247,4 @@ th button.selectAllSameDays {
 
 .td_scroll .checks { margin-top:4px; }
 .td_scroll .checks input[type="checkbox"] + label { margin-right:0px; }
+.welcome span { display:inline-block;width:14px;height:14px;border-radius:50%;background:gray;vertical-align:middle;margin-left:10px; }
