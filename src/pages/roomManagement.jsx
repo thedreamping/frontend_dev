@@ -430,6 +430,7 @@ function RoomManagement() {
                                     );
                                     setStartDate(toKSTDate(data2.disable_start));
                                     setEndDate(toKSTDate(data2.disable_end));
+                                    setGroupReason(data2.is_ota === 1 ? "네이버예약" : "")
                                   }}
                                 >
                                   {data2.name}{" "}
