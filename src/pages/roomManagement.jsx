@@ -420,7 +420,6 @@ function RoomManagement() {
                                     setIsDetailPop(true);
                                     setRoomDetailName(data2.name);
                                     setRoomId(data2.id);
-                                    setRoomReason(data2.reason);
                                     setRoomDetailGroupName(data.name);
                                     setIsDay(data2.day_use);
                                     setCapacityMax(data2.capacity_max);
@@ -430,7 +429,7 @@ function RoomManagement() {
                                     );
                                     setStartDate(toKSTDate(data2.disable_start));
                                     setEndDate(toKSTDate(data2.disable_end));
-                                    setGroupReason(data2.is_ota === 1 ? "네이버예약" : "")
+                                    setRoomReason(data2.is_ota === 1 ? "네이버예약" : data2.reason)
                                   }}
                                 >
                                   {data2.name}{" "}
