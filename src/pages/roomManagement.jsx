@@ -428,8 +428,8 @@ function RoomManagement() {
                                     setIsActive(
                                       data2.is_active === 1 ? true : false,
                                     );
-                                    setStartDate(toKSTDate(data2.disable_start.split("T")[0]));
-                                    setEndDate(toKSTDate(data2.disable_end.split("T")[0]));
+                                    setStartDate(toKSTDate(data2.disable_start));
+                                    setEndDate(toKSTDate(data2.disable_end));
                                   }}
                                 >
                                   {data2.name}{" "}
