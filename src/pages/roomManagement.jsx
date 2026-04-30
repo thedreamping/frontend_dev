@@ -339,7 +339,7 @@ function RoomManagement() {
                 setWorkPopForSelectedIds(true);
               }
             }}>
-              비활성화 일괄처리
+              숙박 예약 일괄처리
             </button>{" "}
             <div className="room_cell_active active"></div> 숙박가능
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -436,8 +436,8 @@ function RoomManagement() {
                                         data2.disable_end != null &&
                                         new Date() >= new Date(data2.disable_start) &&
                                         new Date() <= new Date(data2.disable_end)
-                                    ? "DISABLED"
-                                    : "ACTIVE"}
+                                    ? "숙박중"
+                                    : "정보보기"}
                                 </div>
 
                                 <br />
@@ -718,7 +718,7 @@ function RoomManagement() {
                   </td>
                 </tr>
                 <tr>
-                  <th>활성화여부</th>
+                  <th>숙박</th>
                   <td>
                     <div className="checks">
                       <input
@@ -733,7 +733,7 @@ function RoomManagement() {
                         }}
                         checked={isActive}
                       />
-                      <label htmlFor="active">Active</label>
+                      <label htmlFor="active">숙박아님</label>
                     </div>
                     <div className="checks">
                       <input
@@ -747,7 +747,7 @@ function RoomManagement() {
                         }}
                         checked={!isActive}
                       />
-                      <label htmlFor="non-active">비활성화</label>
+                      <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
                 </tr>
@@ -768,7 +768,7 @@ function RoomManagement() {
                       </td>
                     </tr>
                     <tr>
-                      <th>비활성화 사유</th>
+                      <th>비고</th>
                       <td>
                         <textarea
                           value={roomReason}
@@ -823,7 +823,7 @@ function RoomManagement() {
                 </tr>
 
                 <tr>
-                  <th>활성화여부</th>
+                  <th>숙박</th>
                   <td>
                     <div className="checks">
                       <input
@@ -838,7 +838,7 @@ function RoomManagement() {
                         }}
                         checked={isActiveGroup}
                       />
-                      <label htmlFor="active">Active</label>
+                      <label htmlFor="active">숙박아님</label>
                     </div>
                     <div className="checks">
                       <input
@@ -852,7 +852,7 @@ function RoomManagement() {
                         }}
                         checked={!isActiveGroup}
                       />
-                      <label htmlFor="non-active">비활성화</label>
+                      <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
                 </tr>
@@ -873,7 +873,7 @@ function RoomManagement() {
                       </td>
                     </tr>
                     <tr>
-                      <th>비활성화 사유</th>
+                      <th>비고</th>
                       <td>
                         <textarea
                           value={groupReason}
@@ -921,7 +921,7 @@ function RoomManagement() {
                 
 
                 <tr>
-                  <th>활성화여부</th>
+                  <th>숙박</th>
                   <td>
                     <div className="checks">
                       <input
@@ -936,7 +936,7 @@ function RoomManagement() {
                         }}
                         checked={isActiveGroup}
                       />
-                      <label htmlFor="active">Active</label>
+                      <label htmlFor="active">숙박아님</label>
                     </div>
                     <div className="checks">
                       <input
@@ -950,7 +950,7 @@ function RoomManagement() {
                         }}
                         checked={!isActiveGroup}
                       />
-                      <label htmlFor="non-active">비활성화</label>
+                      <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
                 </tr>
@@ -971,7 +971,7 @@ function RoomManagement() {
                       </td>
                     </tr>
                     <tr>
-                      <th>비활성화 사유</th>
+                      <th>비고</th>
                       <td>
                         <textarea
                           value={groupReason}
@@ -987,7 +987,7 @@ function RoomManagement() {
             </table>
             <div className="btn_area">
               <button className="green" onClick={workForSelected}>
-                비활성화 방침 일괄 적용
+                숙박 예약 일괄 적용
               </button>
             </div>
           </div>
