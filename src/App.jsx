@@ -37,7 +37,7 @@ function App() {
 
   useEffect(() => {
     api.get('/api/for_debuging').then((respone) => {
-      console.log("디버깅 : " , response)
+      console.log("디버깅 : " , respone)
     })
   },[])
 
