@@ -306,6 +306,15 @@ function RoomManagement() {
     setEndDate(formattedDate);
   };
 
+  const toKSTDate = (date) =>
+      new Intl.DateTimeFormat("sv-SE", {
+        timeZone: "Asia/Seoul",
+      }).format(new Date(date));
+
+  const todayKST = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Seoul",
+    }).format(new Date());
+
   return (
     <>
       <div className="workspace">
@@ -341,9 +350,9 @@ function RoomManagement() {
             }}>
               숙박 예약 일괄처리
             </button>{" "}
-            <div className="room_cell_active active"></div> 숙박가능
+            <div className="room_cell_active active"></div> 빈방
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <div className="room_cell_active"></div> 손님 있음
+            <div className="room_cell_active"></div> 예약되어 이용중
           </div>
           <div className="hor_scroll">
             <table>
@@ -402,8 +411,8 @@ function RoomManagement() {
                                        data2.is_active === 0 &&
                                         data2.disable_start != null &&
                                         data2.disable_end != null &&
-                                        new Date() >= new Date(data2.disable_start) &&
-                                        new Date() <= new Date(data2.disable_end) ?
+                                        todayKST >= toKSTDate(data2.disable_start) &&
+                                        todayKST <= toKSTDate(data2.disable_end) ?
                                          "0.3" : "1",
                                     }}
                                   onClick={() => {
@@ -419,8 +428,8 @@ function RoomManagement() {
                                     setIsActive(
                                       data2.is_active === 1 ? true : false,
                                     );
-                                    setStartDate(data2.disable_start.split("T")[0]);
-                                    setEndDate(data2.disable_end.split("T")[0]);
+                                    setStartDate(toKSTDate(data2.disable_start.split("T")[0]));
+                                    setEndDate(toKSTDate(data2.disable_end.split("T")[0]));
                                   }}
                                 >
                                   {data2.name}{" "}
@@ -434,8 +443,8 @@ function RoomManagement() {
                                   { data2.is_active === 0 &&
                                         data2.disable_start != null &&
                                         data2.disable_end != null &&
-                                        new Date() >= new Date(data2.disable_start) &&
-                                        new Date() <= new Date(data2.disable_end)
+                                        todayKST >= toKSTDate(data2.disable_start) &&
+                                        todayKST <= toKSTDate(data2.disable_end) 
                                     ? "숙박중"
                                     : "정보보기"}
                                 </div>
