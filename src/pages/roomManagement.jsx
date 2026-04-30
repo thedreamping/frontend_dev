@@ -352,7 +352,7 @@ function RoomManagement() {
             </button>{" "}
             <div className="room_cell_active active"></div> 빈방
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <div className="room_cell_active"></div> 예약되어 이용중
+            <div className="room_cell_active"></div> 예약됨
           </div>
           <div className="hor_scroll">
             <table>
