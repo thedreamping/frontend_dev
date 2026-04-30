@@ -36,6 +36,12 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
+    api.get('/api/for_debuging').then((respone) => {
+      console.log("디버깅 : " , response)
+    })
+  },[])
+
+  useEffect(() => {
     api.get('/api/naver-status').then((response) => {
       console.log(response)
       setAction(response.data.data.action)
