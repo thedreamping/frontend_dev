@@ -21,6 +21,7 @@ import DkBanners from "./pages/dkBanners";
 import AroundAndSpot from "./pages/aroundAndSpot";
 import MainEventPopupManagement from "./pages/mainEventPopupManagement";
 import LogAudit from "./pages/logAudit";
+import ReservationManagement from "./pages/reservationManagement";
 
 function App() {
   const navigate = useNavigate();
@@ -141,7 +142,7 @@ function App() {
               <Link to="/refund_env">환불정책 설정</Link>
             </li>
             <li>
-              <Link to="/dfds">객실예약 조회</Link>
+              <Link to="/reservation_management">객실예약 조회 / 관리</Link>
             </li>
             <li>
               <Link to="/dk_schedule">대관일정</Link>
@@ -206,6 +207,7 @@ function App() {
           <Route path="/main_bn_management" element={<MainBnManagement />} />
           <Route path="/around_and_spot" element={<AroundAndSpot />} />
           <Route path="/dk_banners" element={<DkBanners />} />
+          <Route path="/reservation_management" element={<ReservationManagement />} />
 
           
           <Route
