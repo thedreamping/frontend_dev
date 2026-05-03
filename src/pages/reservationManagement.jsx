@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import MyDatePicker from "../component/datepicker";
 import api from "../api/api";
@@ -16,8 +15,9 @@ function ReservationManagement() {
 
   const [selectedDays, setSelectedDays] = useState([]);
   const [isPop, setIsPop] = useState(false);
-  const [checkedId, setCheckedId] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [manualMap, setManualMap] = useState({});
 
   const colorPalette = [
     "#ffe5e5",
@@ -39,22 +39,26 @@ function ReservationManagement() {
     "#e5ffe8",
   ];
 
-  const groupColorMap = {};
-  let colorIndex = 0;
+  // =================================================
+  // 🔥 FIX: color map 유지 (렌더 리셋 방지)
+  // =================================================
+  const groupColorMap = useRef({});
+  const colorIndex = useRef(0);
 
   const getRoomColor = (roomName) => {
     const groupName = roomName.replace(/[0-9]/g, "");
 
-    if (!groupColorMap[groupName]) {
-        groupColorMap[groupName] =
-        colorPalette[colorIndex % colorPalette.length];
+    if (!groupColorMap.current[groupName]) {
+      groupColorMap.current[groupName] =
+        colorPalette[colorIndex.current % colorPalette.length];
 
-        colorIndex++;
+      colorIndex.current++;
     }
 
-    return groupColorMap[groupName];
-    };
+    return groupColorMap.current[groupName];
+  };
 
+  // =================================================
   function getMonthDates(year, month) {
     const jsMonth = month - 1;
 
@@ -128,10 +132,12 @@ function ReservationManagement() {
     return rows;
   };
 
+  // =================================================
   const getDaysByWeekday = (data, targetWeekday) => {
     return data.flat().filter((item) => item?.weekday === targetWeekday);
   };
 
+  // =================================================
   const getRoomsByDate = (date) => {
     if (!date) return [];
 
@@ -158,11 +164,192 @@ function ReservationManagement() {
 
   useEffect(() => {
     getRooms();
+    getRoomGroups();
   }, []);
 
   const getRooms = () => {
     api.get("/api/rooms").then((response) => {
       setRooms(response.data.data || []);
+    });
+  };
+
+  const getRoomGroups = () => {
+    api.get("/api/room_group").then((response) => {
+      setGroups(response.data.data || []);
+    });
+  };
+
+  const isConsecutiveDays = (days) => {
+    if (!days || days.length === 0) return false;
+
+    const sorted = [...days].sort(
+      (a, b) =>
+        new Date(a.year, a.month - 1, a.day) -
+        new Date(b.year, b.month - 1, b.day)
+    );
+
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = new Date(sorted[i - 1].year, sorted[i - 1].month - 1, sorted[i - 1].day);
+      const curr = new Date(sorted[i].year, sorted[i].month - 1, sorted[i].day);
+
+      const diff = (curr - prev) / (1000 * 60 * 60 * 24);
+
+      if (diff !== 1) return false;
+    }
+
+    return true;
+  };
+
+  const formatRange = (days) => {
+    if (!days || days.length === 0) return "";
+
+    const sorted = [...days].sort(
+      (a, b) =>
+        new Date(a.year, a.month - 1, a.day) -
+        new Date(b.year, b.month - 1, b.day)
+    );
+
+    const start = sorted[0];
+    const end = sorted[sorted.length - 1];
+
+    return `${start.year}-${start.month}-${start.day} ~ ${end.year}-${end.month}-${end.day}`;
+  };
+
+  // =================================================
+  // 🔥 FIX: overlap 함수 통합 사용
+  // =================================================
+  const isOverlap = (checkIn, checkOut, selectedDays) => {
+    if (!checkIn || !checkOut) return false;
+
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    return selectedDays.some((d) => {
+      const target = new Date(d.year, d.month - 1, d.day);
+      target.setHours(0, 0, 0, 0);
+
+      return target >= start && target < end;
+    });
+  };
+
+  const getAvailableCount = (groupId) => {
+    const groupRooms = rooms.filter(r => r.room_group_id === groupId);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return groupRooms.filter((room) => {
+      if (!room.check_in || !room.check_out) return true;
+
+      const checkOut = new Date(room.check_out);
+      checkOut.setHours(0, 0, 0, 0);
+
+      // 오늘보다 이전 종료 → 사용 가능
+      if (checkOut < today) return true;
+
+      // 오늘 체크아웃 포함, selectedDays 겹치면 불가
+      return !isOverlap(room.check_in, room.check_out, selectedDays);
+    }).length;
+  };
+
+  const getTotalCount = (groupId) => {
+    return rooms.filter(r => r.room_group_id === groupId).length;
+  };
+
+  const getGroupRoomInfo = (groupId) => {
+    const total = getTotalCount(groupId);
+    const available = getAvailableCount(groupId);
+
+    return { total, available };
+  };
+
+  useEffect(() => {
+    console.log(selectedDays);
+  }, [selectedDays]);
+
+  const formatDate = (date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd} 00:00:00`;
+  };
+
+  const modifyReservationSchedule = async () => {
+    try {
+      const range = selectedDays
+        .map(d => new Date(d.year, d.month - 1, d.day))
+        .sort((a, b) => a - b);
+
+      const check_in = range[0];
+      const check_out = new Date(range[range.length - 1]);
+      check_out.setDate(check_out.getDate() + 1); // 중요: 체크아웃은 +1
+
+      const groupsToApply = Object.entries(manualMap)
+        .filter(([_, count]) => count > 0);
+
+      for (const [groupId, count] of groupsToApply) {
+       
+
+        const groupRooms = rooms.filter(
+          (r) =>
+            r.room_group_id === Number(groupId) &&
+            (
+              !r.check_in ||
+              !r.check_out ||
+              !isOverlap(r.check_in, r.check_out, selectedDays)
+            )
+        );
+
+        let assigned = 0;
+
+        for (const room of groupRooms) {
+          if (assigned >= count) break;
+
+          await api.put(`/api/room/${room.id}`, {
+            name: room.name,
+            is_active: 0,
+            capacity_max: room.capacity_max,
+            capacity_min: room.capacity_min,
+            day_use: room.day_use,
+            disable_start: formatDate(check_in),
+            disable_end: formatDate(check_out),
+            reason: "수기예약",
+          });
+
+          assigned++;
+        }
+      }
+
+      alert("수기예약 완료");
+      setIsPop(false);
+      setManualMap({});
+      setSelectedDays([]);
+      getRooms(); // refresh
+    } catch (err) {
+      console.error(err);
+      alert("수기예약 실패");
+    }
+  };
+
+  const increase = (groupId, max) => {
+    setManualMap((prev) => {
+      const current = prev[groupId] || 0;
+      if (current >= max) return prev;
+
+      return { ...prev, [groupId]: current + 1 };
+    });
+  };
+
+  const decrease = (groupId) => {
+    setManualMap((prev) => {
+      const current = prev[groupId] || 0;
+      if (current <= 0) return prev;
+
+      return { ...prev, [groupId]: current - 1 };
     });
   };
 
@@ -172,7 +359,24 @@ function ReservationManagement() {
         <div className="title">객실예약 조회 / 관리</div>
 
         <div className="content">
-          <div className="btn_area"></div>
+          <div className="btn_area">
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  return;
+                }
+                if (!isConsecutiveDays(selectedDays)) {
+                  alert("날짜는 연속으로 선택해야 합니다.");
+                  return;
+                }
+                setIsPop(true);
+              }}
+            >
+              선택한 날짜 수기예약
+            </button>
+          </div>
 
           <div className="rooms_calendar_info">
             <button
@@ -201,26 +405,21 @@ function ReservationManagement() {
 
           <div className="rooms_calendar">
             <table>
+              <colgroup>
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+                <col style={{ width: "14%" }} />
+              </colgroup>
+
               <thead>
                 <tr>
                   {["일", "월", "화", "수", "목", "금", "토"].map(
                     (dayName, index) => (
-                      <th
-                        key={index}
-                        onClick={() => {
-                          setSelectedDays(() =>
-                            getDaysByWeekday(
-                              buildCalendarRows(calendarData),
-                              index
-                            )
-                          );
-                        }}
-                      >
-                        {dayName}
-                        <button className="selectAllSameDays">
-                          전체선택
-                        </button>
-                      </th>
+                      <th key={index}>{dayName}</th>
                     )
                   )}
                 </tr>
@@ -258,7 +457,8 @@ function ReservationManagement() {
                                 background: getRoomColor(room.name),
                               }}
                             >
-                              {room.name}{" "}{room.is_ota === 1 ? "(네이버예약)" : ""}
+                              {room.name}{" "}
+                              {room.is_ota === 1 ? "(네이버예약)" : ""}
                             </div>
                           ))}
                       </td>
@@ -277,15 +477,73 @@ function ReservationManagement() {
                   alert("가격을 설정할 날짜를 선택해 주세요");
                   return;
                 }
-
+                if (!isConsecutiveDays(selectedDays)) {
+                  alert("날짜는 연속으로 선택해야 합니다.");
+                  return;
+                }
                 setIsPop(true);
               }}
             >
-              선택한 날짜 객실 가격 설정
+              선택한 날짜 수기예약
             </button>
           </div>
         </div>
       </div>
+
+      {isPop && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ height: "auto", width: "700px" }}>
+            <div className="popup_title">선택한 날짜 수기 예약</div>
+            <div
+              className="popup_x"
+              onClick={() => setIsPop(false)}
+            >
+              X
+            </div>
+
+            <table>
+              <colgroup>
+                <col style={{ width: "140px" }} />
+                <col style={{ width: "auto" }} />
+              </colgroup>
+
+              <tbody>
+                <tr>
+                  <th>선택한 기간</th>
+                  <td>{formatRange(selectedDays)}</td>
+                </tr>
+
+                <tr>
+                  <th>객실</th>
+                  <td>
+                    {groups.map((group) => {
+                      const { available } = getGroupRoomInfo(group.id);
+
+                      return (
+                        <div key={group.id} className="room_controll_cell">
+                          {group.name} (남은 방 수 : {available})
+
+                          <div className="room_controll_cell_pl_mi">
+                            <button type="button" className="plus" onClick={() => increase(group.id, available)}>+</button>
+
+                            {manualMap[group.id] || 0}
+
+                            <button type="button" className="minus" onClick={() => decrease(group.id)}>-</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="btn_area">
+              <button className="green" onClick={modifyReservationSchedule}>수기 예약 적용</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
