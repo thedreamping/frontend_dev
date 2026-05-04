@@ -231,7 +231,7 @@ function ReservationManagement() {
       const target = new Date(d.year, d.month - 1, d.day);
       target.setHours(0, 0, 0, 0);
 
-      return target >= start && target < end;
+      return target >= start && target <= end;
     });
   };
 
@@ -286,7 +286,7 @@ function ReservationManagement() {
 
       const check_in = range[0];
       const check_out = new Date(range[range.length - 1]);
-      check_out.setDate(check_out.getDate() + 1); // 중요: 체크아웃은 +1
+      check_out.setDate(check_out.getDate()); // 중요: 체크아웃은 +1
 
       const groupsToApply = Object.entries(manualMap)
         .filter(([_, count]) => count > 0);
