@@ -2,13 +2,34 @@ import axios from "axios";
 
 let navigateFunction = null;
 
+let loadingHandler = null;
+
+export const setApiLoadingHandler = (fn) => {
+  loadingHandler = fn;
+};
+
+let requestCount = 0;
+
+
+
+const showLoading = () => {
+  requestCount++;
+  loadingHandler?.(true);
+};
+
+const hideLoading = () => {
+  requestCount = Math.max(0, requestCount - 1);
+  if (requestCount === 0) {
+    loadingHandler?.(false);
+  }
+};
+
 export const setNavigate = (navigate) => {
   navigateFunction = navigate;
 };
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 5000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -47,6 +68,7 @@ const sendLog = async (config, statusCode) => {
 // ✅ 요청 인터셉터
 api.interceptors.request.use(
   (config) => {
+    if (!config._skipLoading) showLoading();
     const token = sessionStorage.getItem("accessToken");
     const adminName = sessionStorage.getItem("adminName");
 
@@ -80,10 +102,12 @@ const processQueue = (error, token = null) => {
 api.interceptors.response.use(
   (response) => {
     // 🔥 성공 로그
+    hideLoading();
     sendLog(response.config, response.status);
     return response;
   },
   async (error) => {
+    hideLoading();
     const originalRequest = error.config;
 
     // 🔥 실패 로그도 남김
@@ -101,6 +125,7 @@ api.interceptors.response.use(
       })
         .then((newToken) => {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          originalRequest._skipLoading = true;
           return api(originalRequest);
         })
         .catch((err) => Promise.reject(err));
@@ -138,6 +163,7 @@ api.interceptors.response.use(
       processQueue(null, newAccessToken);
 
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      originalRequest._skipLoading = true;
       return api(originalRequest);
     } catch (err) {
       console.error("🚫 토큰 재발급 실패:", err);

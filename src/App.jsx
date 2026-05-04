@@ -22,6 +22,7 @@ import AroundAndSpot from "./pages/aroundAndSpot";
 import MainEventPopupManagement from "./pages/mainEventPopupManagement";
 import LogAudit from "./pages/logAudit";
 import ReservationManagement from "./pages/reservationManagement";
+import { setApiLoadingHandler } from "./api/api";
 
 function App() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ function App() {
   const [list,setList] = useState([]);
   const [specialPower,setSpecialPower] = useState(false);
   const [action,setAction] = useState("");
+  const [isLoading,setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
@@ -110,6 +112,12 @@ function App() {
     setSpecialPower(hyper === 1 ? true : false)
 
   }, [list]);
+
+
+
+  useEffect(() => {
+    setApiLoadingHandler(setIsLoading);
+  }, []);
 
   return (
     <>
@@ -228,6 +236,7 @@ function App() {
        
         <button className="logout" onClick={logout}></button>
       </div>
+      <div className="loading" style={isLoading ? { display:'flex'} : { display:'none'}}><div className={"icon"}></div></div>
     </>
   );
 }
