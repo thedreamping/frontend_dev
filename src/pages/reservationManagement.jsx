@@ -141,24 +141,33 @@ function ReservationManagement() {
   const getRoomsByDate = (date) => {
     if (!date) return [];
 
-    const target = `${date.year}-${String(date.month).padStart(
-      2,
-      "0"
-    )}-${String(date.day).padStart(2, "0")}`;
-
-    const toKSTDate = (utcDate) => {
-      const d = new Date(utcDate);
-      d.setHours(d.getHours() + 9);
-      return d.toISOString().slice(0, 10);
-    };
+    const target = `${date.year}-${String(date.month).padStart(2, "0")}-${String(
+      date.day
+    ).padStart(2, "0")}`;
 
     return rooms.filter((room) => {
-      if (!room.check_in || !room.check_out) return false;
+      if (!room.check_in_and_out) return false;
 
-      const checkIn = toKSTDate(room.check_in);
-      const checkOut = toKSTDate(room.check_out);
+      let schedules = room.check_in_and_out;
 
-      return target >= checkIn && target <= checkOut;
+      if (typeof schedules === "string") {
+        try {
+          schedules = JSON.parse(schedules);
+        } catch {
+          return false;
+        }
+      }
+
+      if (!Array.isArray(schedules)) return false;
+
+      return schedules.some((schedule) => {
+        if (!schedule.check_in || !schedule.check_out) return false;
+
+        return (
+          target >= schedule.check_in &&
+          target <= schedule.check_out
+        );
+      });
     });
   };
 
@@ -218,23 +227,31 @@ function ReservationManagement() {
   // =================================================
   // 🔥 FIX: overlap 함수 통합 사용
   // =================================================
-  const isOverlap = (checkIn, checkOut, selectedDays) => {
-    if (!checkIn || !checkOut) return false;
+  const isOverlap = (room, selectedDays) => {
+    if (!room.check_in_and_out) return false;
 
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
+    let schedules = room.check_in_and_out;
 
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
+    if (typeof schedules === "string") {
+      try {
+        schedules = JSON.parse(schedules);
+      } catch {
+        return false;
+      }
+    }
 
     return selectedDays.some((d) => {
-      const target = new Date(d.year, d.month - 1, d.day);
-      target.setHours(0, 0, 0, 0);
+      const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+        d.day
+      ).padStart(2, "0")}`;
 
-      return target >= start && target <= end;
+      return schedules.some(
+        (s) =>
+          target >= s.check_in &&
+          target <= s.check_out
+      );
     });
   };
-
   const getAvailableCount = (groupId) => {
     const groupRooms = rooms.filter(r => r.room_group_id === groupId);
 
@@ -300,7 +317,7 @@ function ReservationManagement() {
             (
               !r.check_in ||
               !r.check_out ||
-              !isOverlap(r.check_in, r.check_out, selectedDays)
+              !isOverlap(r, selectedDays)
             )
         );
 
