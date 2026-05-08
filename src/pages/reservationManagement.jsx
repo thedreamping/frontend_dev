@@ -100,6 +100,27 @@ function ReservationManagement() {
     setMonth((prev) => prev - 1);
   };
 
+  const hasNaverBooking = (room, date) => {
+    if (!room.check_in_and_out) return false;
+
+    let schedules = room.check_in_and_out;
+
+    if (typeof schedules === "string") {
+      schedules = JSON.parse(schedules);
+    }
+
+    const target = `${date.year}-${String(date.month).padStart(2, "0")}-${String(
+      date.day
+    ).padStart(2, "0")}`;
+
+    return schedules.some(
+      (s) =>
+        s.source === "naver" &&
+        target >= s.check_in &&
+        target <= s.check_out
+    );
+  };
+
   const buildCalendarRows = (dates) => {
     if (!dates || dates.length === 0) return [];
 
@@ -515,7 +536,7 @@ function ReservationManagement() {
                               }}
                             >
                               {room.name}{" "}
-                              {room.is_ota === 1 ? "(네이버예약)" : ""}
+                              {hasNaverBooking(room, date) ? "(네이버예약)" : "(수기예약)"}
                             </div>
                           ))}
                       </td>
