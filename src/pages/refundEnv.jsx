@@ -2,35 +2,39 @@ import { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
 import MyDatePicker from "../component/datepicker";
+import api from "../api/api";
 
 function RefundEnv() {
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [startDate2, setStartDate2] = useState("");
-  const [endDate2, setEndDate2] = useState("");
-  const [startDate3, setStartDate3] = useState("");
-  const [endDate3, setEndDate3] = useState("");
 
-  const handleDateChange = (formattedDate) => {
-    setStartDate(formattedDate);
-  };
-  const handleDateChange2 = (formattedDate) => {
-    setEndDate(formattedDate);
+  const [refundInfo,setRefundInfo] = useState([]);
+
+  useEffect(() => {
+    getRefundInfo()
+  },[])
+
+  const getRefundInfo = () => {
+    api.get("/api/refund-info").then((response) => {
+      console.log(response);
+      setRefundInfo(response.data.data)
+    })
+  }
+
+  const modify = (i, id) => {
+    const ch = document.querySelector(`#ga${i}`).value;
+
+    api.put(`/api/refund-info/${id}`, {
+      changed: Number(ch),
+    }).then((response) => {
+      console.log(response);
+      alert("수정되었습니다.");
+      getRefundInfo();
+    }).catch((err) => {
+      console.error(err);
+      alert("수정 실패");
+    });
   };
 
-  const handleDateChange3 = (formattedDate) => {
-    setStartDate2(formattedDate);
-  };
-  const handleDateChange4 = (formattedDate) => {
-    setEndDate2(formattedDate);
-  };
-
-  const handleDateChange5 = (formattedDate) => {
-    setStartDate3(formattedDate);
-  };
-  const handleDateChange6 = (formattedDate) => {
-    setEndDate3(formattedDate);
-  };
+  useEffect(() => {console.log(refundInfo)},[refundInfo])
 
   return (
     <>
@@ -43,120 +47,25 @@ function RefundEnv() {
                 <th>도착일 기준</th>
                 <th>환불금액</th>
                 <th>수정</th>
-                <th>삭제</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 0일전 취소시</td>
-                <td style={{ textAlign: "left" }}>0%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 1일전 취소시</td>
-                <td style={{ textAlign: "left" }}>10%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 2일전 취소시</td>
-                <td style={{ textAlign: "left" }}>20%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 3일전 취소시</td>
-                <td style={{ textAlign: "left" }}>30%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 4일전 취소시</td>
-                <td style={{ textAlign: "left" }}>40%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 5일전 취소시</td>
-                <td style={{ textAlign: "left" }}>50%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 6일전 취소시</td>
-                <td style={{ textAlign: "left" }}>60%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 7일전 취소시</td>
-                <td style={{ textAlign: "left" }}>70%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 8일전 취소시</td>
-                <td style={{ textAlign: "left" }}>80%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 9일전 취소시</td>
-                <td style={{ textAlign: "left" }}>90%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ textAlign: "left" }}>도착일 10일전 취소시</td>
-                <td style={{ textAlign: "left" }}>100%</td>
-                <td style={{ textAlign: "left" }}>
-                  <button>수정</button>
-                </td>
-                <td style={{ textAlign: "left" }}>
-                  <button>삭제</button>
-                </td>
-              </tr>
+              {refundInfo?.map((data,i) => {
+                return <tr key={i}>
+                        <td style={{ textAlign: "left" }}>도착일 {data.day_before}일전 취소시</td>
+                        <td style={{ textAlign: "left" }}>
+                          <input
+                            type="number"
+                            defaultValue={data.per}
+                            style={{ width: "80px" }}
+                            id={"ga" + i}
+                          />{" "} %
+                        </td>
+                        <td style={{ textAlign: "left" }}>
+                          <button onClick={() => {modify(i,data.id)}}>수정</button>
+                        </td>
+                      </tr>
+              })}
             </tbody>
           </table>
           <div className="btn_area">

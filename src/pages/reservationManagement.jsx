@@ -353,6 +353,46 @@ function ReservationManagement() {
     });
   };
 
+  const getManualReservations = () => {
+    if (!selectedDays.length) return [];
+
+    return rooms.filter((room) => {
+      if (room.is_soogie !== 1) return false;
+
+      return isOverlap(room.disable_start, room.disable_end, selectedDays);
+    });
+  };
+
+  const cancelManualReservation = async (room) => {
+    console.log("취소 클릭됨", room);
+
+    if (!confirm("수기예약 취소할까요?")) return;
+
+    try {
+     
+
+      const response = await api.put(`/api/room/${room.id}`, {
+        name: room.name,
+        is_active: 1,
+        capacity_max: room.capacity_max,
+        capacity_min: room.capacity_min,
+        day_use: room.day_use,
+        disable_start: null,
+        disable_end: null,
+        reason: null,
+        is_soogie: 0,
+      });
+
+
+
+      alert("취소 완료");
+      getRooms();
+    } catch (err) {
+      console.error("취소 실패 상세:", err.response?.data || err);
+      alert("취소 실패");
+    }
+  };
+
   return (
     <>
       <div className="workspace">
@@ -516,23 +556,63 @@ function ReservationManagement() {
                 <tr>
                   <th>객실</th>
                   <td>
-                    {groups.map((group) => {
-                      const { available } = getGroupRoomInfo(group.id);
+                    <div style={{width:"100%",maxHeight:"340px",overflow:'auto',height:"auto"}}>
+                      {groups.map((group) => {
+                        const { available } = getGroupRoomInfo(group.id);
 
-                      return (
-                        <div key={group.id} className="room_controll_cell">
-                          {group.name} (남은 방 수 : {available})
+                        return (
+                          <div key={group.id} className="room_controll_cell">
+                            {group.name} (남은 방 수 : {available})
 
-                          <div className="room_controll_cell_pl_mi">
-                            <button type="button" className="plus" onClick={() => increase(group.id, available)}>+</button>
+                            <div className="room_controll_cell_pl_mi">
+                              <button type="button" className="plus" onClick={() => increase(group.id, available)}>+</button>
 
-                            {manualMap[group.id] || 0}
+                              {manualMap[group.id] || 0}
 
-                            <button type="button" className="minus" onClick={() => decrease(group.id)}>-</button>
+                              <button type="button" className="minus" onClick={() => decrease(group.id)}>-</button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>
+                    기존 수기예약
+                  </th>
+                  <td>
+                    <div style={{width:"100%",maxHeight:"340px",overflow:'auto',height:"auto"}}>
+                      {getManualReservations().length === 0 ? (
+                          <div>없음</div>
+                        ) : (
+                          getManualReservations().map((room) => (
+                            <div
+                              key={room.id}
+                              className="room_controll_cell"
+                              style={{ marginBottom: "8px" }}
+                            >
+                              <div style={{display:'inline-block',verticalAlign:"top"}}>
+                                {room.name}
+                                {" "}
+                                <small>
+                                  {room.disable_start?.slice(0, 10)} ~{" "}
+                                  {room.disable_end?.slice(0, 10)}
+                                </small>
+                                {" "}
+                              </div>
+
+                              <button
+                                className="minus"
+                                type="button"
+                                onClick={() => cancelManualReservation(room)}
+                              >
+                                취소
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
                   </td>
                 </tr>
               </tbody>
