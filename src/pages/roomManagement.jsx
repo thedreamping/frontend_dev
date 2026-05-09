@@ -512,38 +512,42 @@ function RoomManagement() {
                   </td>
                 </tr>
                <tr>
-                  <th>숙박여부</th>
-                  <td>
-                    <div className="checks">
-                      <input
-                        type="radio"
-                        id="day_use"
-                        name="lodgement"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsDay(1);
-                          }
-                        }}
-                        checked={isDay === 1 ? true : false}
-                      />
-                      <label htmlFor="day_use">데이유즈</label>
-                    </div>
-                    <div className="checks">
-                      <input
-                        type="radio"
-                        id="lodgement"
-                        name="lodgement"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsDay(0);
-                          }
-                        }}
-                        checked={isDay !== 1 ? true : false}
-                      />
-                      <label htmlFor="lodgement">숙박만 가능</label>
-                    </div>
-                  </td>
-                </tr>
+                <th>예약 타입</th>
+                <td>
+                  <div className="checks">
+                    <input
+                      type="radio"
+                      id="stay_only"
+                      name="reservation_type"
+                      onChange={() => setIsDay(0)}
+                      checked={isDay === 0}
+                    />
+                    <label htmlFor="stay_only">숙박만 가능</label>
+                  </div>
+
+                  <div className="checks">
+                    <input
+                      type="radio"
+                      id="both"
+                      name="reservation_type"
+                      onChange={() => setIsDay(1)}
+                      checked={isDay === 1}
+                    />
+                    <label htmlFor="both">데이유즈 + 숙박 가능</label>
+                  </div>
+
+                  <div className="checks">
+                    <input
+                      type="radio"
+                      id="day_only"
+                      name="reservation_type"
+                      onChange={() => setIsDay(2)}
+                      checked={isDay === 2}
+                    />
+                    <label htmlFor="day_only">데이유즈만 가능</label>
+                  </div>
+                </td>
+              </tr>
                 <tr>
                   <th>최소인원</th>
                   <td>
@@ -671,38 +675,42 @@ function RoomManagement() {
                   </td>
                 </tr>
                 <tr>
-                  <th>숙박여부</th>
+                  <th>예약 타입</th>
                   <td>
                     <div className="checks">
                       <input
                         type="radio"
-                        id="day_use"
-                        name="lodgement"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsDay(1);
-                          }
-                        }}
-                        checked={isDay === 1 ? true : false}
+                        id="stay_only"
+                        name="reservation_type"
+                        onChange={() => setIsDay(0)}
+                        checked={isDay === 0}
                       />
-                      <label htmlFor="day_use">데이유즈</label>
+                      <label htmlFor="stay_only">숙박만 가능</label>
                     </div>
+
                     <div className="checks">
                       <input
                         type="radio"
-                        id="lodgement"
-                        name="lodgement"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsDay(0);
-                          }
-                        }}
-                        checked={isDay !== 1 ? true : false}
+                        id="both"
+                        name="reservation_type"
+                        onChange={() => setIsDay(1)}
+                        checked={isDay === 1}
                       />
-                      <label htmlFor="lodgement">숙박만 가능</label>
+                      <label htmlFor="both">데이유즈 + 숙박 가능</label>
+                    </div>
+
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="day_only"
+                        name="reservation_type"
+                        onChange={() => setIsDay(2)}
+                        checked={isDay === 2}
+                      />
+                      <label htmlFor="day_only">데이유즈만 가능</label>
                     </div>
                   </td>
-                </tr> 
+                </tr>
                 <tr>
                   <th>최소인원</th>
                   <td>
