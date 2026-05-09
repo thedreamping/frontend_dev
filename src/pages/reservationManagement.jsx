@@ -426,6 +426,7 @@ function ReservationManagement() {
 
         if (match) {
           result.push({
+            ...room,
             room_id: room.id,
             room_name: room.name,
             ...schedule
@@ -445,8 +446,8 @@ function ReservationManagement() {
     try {
      
 
-      const response = await api.put(`/api/room/${room.id}`, {
-        name: room.name,
+      const response = await api.put(`/api/room/${room.room_id}`, {
+        name: room.room_name,
         is_active: 1,
         capacity_max: room.capacity_max,
         capacity_min: room.capacity_min,
@@ -526,7 +527,7 @@ function ReservationManagement() {
                 setIsPop(true);
               }}
             >
-              선택한 날짜 수기예약
+              선택한 날짜 수기예약 / 취소
             </button>
           </div>
 
@@ -632,24 +633,7 @@ function ReservationManagement() {
             </table>
           </div>
 
-          <div className="btn_area">
-            <button
-              className="green"
-              onClick={() => {
-                if (selectedDays.length === 0) {
-                  alert("가격을 설정할 날짜를 선택해 주세요");
-                  return;
-                }
-                if (!isConsecutiveDays(selectedDays)) {
-                  alert("날짜는 연속으로 선택해야 합니다.");
-                  return;
-                }
-                setIsPop(true);
-              }}
-            >
-              선택한 날짜 수기예약
-            </button>
-          </div>
+          
         </div>
       </div>
 
@@ -709,18 +693,19 @@ function ReservationManagement() {
                       {getManualReservations().length === 0 ? (
                           <div>없음</div>
                         ) : (
-                          getManualReservations().map((room) => (
-                            <div
+                          getManualReservations().map((room) => {
+                            console.log(room)
+                            return <div
                               key={room.id}
                               className="room_controll_cell"
                               style={{ marginBottom: "8px" }}
                             >
                               <div style={{display:'inline-block',verticalAlign:"top"}}>
-                                {room.name}
+                                {room.room_name}
                                 {" "}
                                 <small>
-                                  {room.disable_start?.slice(0, 10)} ~{" "}
-                                  {room.disable_end?.slice(0, 10)}
+                                  {room.check_in?.slice(0, 10)} ~{" "}
+                                  {room.check_out?.slice(0, 10)}
                                 </small>
                                 {" "}
                               </div>
@@ -733,7 +718,7 @@ function ReservationManagement() {
                                 취소
                               </button>
                             </div>
-                          ))
+                            })
                         )}
                       </div>
                   </td>
