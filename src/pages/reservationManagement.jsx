@@ -121,6 +121,31 @@ function ReservationManagement() {
     );
   };
 
+  const getBookingForDate = (room, date) => {
+    if (!room.check_in_and_out) return null;
+
+    let schedules = room.check_in_and_out;
+
+    if (typeof schedules === "string") {
+      schedules = JSON.parse(schedules);
+    }
+
+    const target = `${date.year}-${String(date.month).padStart(2, "0")}-${String(
+      date.day
+    ).padStart(2, "0")}`;
+
+    return schedules.find(
+      (s) =>
+        target >= s.check_in &&
+        target <= s.check_out
+    );
+  };
+
+  const isDayBooking = (booking) => {
+    if (!booking) return false;
+    return booking.check_in === booking.check_out;
+  };
+
   const buildCalendarRows = (dates) => {
     if (!dates || dates.length === 0) return [];
 
@@ -536,7 +561,16 @@ function ReservationManagement() {
                               }}
                             >
                               {room.name}{" "}
-                              {hasNaverBooking(room, date) ? "(네이버예약)" : "(수기예약)"}
+                              {(() => {
+                                      const booking = getBookingForDate(room, date);
+
+                                      if (!booking) return "";
+
+                                      const label =
+                                        booking.source === "naver" ? "네이버예약" : "수기예약";
+
+                                      return `(${label}${isDayBooking(booking) ? " 데이" : ""})`;
+                                    })()}
                             </div>
                           ))}
                       </td>
