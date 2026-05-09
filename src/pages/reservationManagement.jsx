@@ -122,23 +122,18 @@ function ReservationManagement() {
   };
 
   const getBookingForDate = (room, date) => {
-    if (!room.check_in_and_out) return null;
-
-    let schedules = room.check_in_and_out;
-
-    if (typeof schedules === "string") {
-      schedules = JSON.parse(schedules);
-    }
+    const schedules = getAllSchedules(room);
 
     const target = `${date.year}-${String(date.month).padStart(2, "0")}-${String(
       date.day
     ).padStart(2, "0")}`;
 
-    return schedules.find(
-      (s) =>
-        target >= s.check_in &&
-        target <= s.check_out
-    );
+    return schedules.find((s) => {
+      const start = normalize(s.check_in);
+      const end = normalize(s.check_out);
+
+      return start && end && target >= start && target <= end;
+    });
   };
 
   const isDayBooking = (booking) => {
@@ -192,27 +187,15 @@ function ReservationManagement() {
     ).padStart(2, "0")}`;
 
     return rooms.filter((room) => {
-      if (!room.check_in_and_out) return false;
-
-      let schedules = room.check_in_and_out;
-
-      if (typeof schedules === "string") {
-        try {
-          schedules = JSON.parse(schedules);
-        } catch {
-          return false;
-        }
-      }
-
-      if (!Array.isArray(schedules)) return false;
+      const schedules = getAllSchedules(room);
 
       return schedules.some((schedule) => {
         if (!schedule.check_in || !schedule.check_out) return false;
 
-        return (
-          target >= schedule.check_in &&
-          target <= schedule.check_out
-        );
+        const start = normalize(schedule.check_in);
+        const end = normalize(schedule.check_out);
+
+        return target >= start && target <= end;
       });
     });
   };
