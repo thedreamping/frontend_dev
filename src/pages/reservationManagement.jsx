@@ -562,15 +562,17 @@ function ReservationManagement() {
                             >
                               {room.name}{" "}
                               {(() => {
-                                      const booking = getBookingForDate(room, date);
+                                const booking = getBookingForDate(room, date);
 
-                                      if (!booking) return "";
+                                if (!booking) return "";
 
-                                      const label =
-                                        booking.source === "naver" ? "네이버예약" : "수기예약";
+                                const label =
+                                  booking.source === "naver" ? "네이버예약" : "수기예약";
 
-                                      return `(${label}${isDayBooking(booking) ? " 데이" : ""})`;
-                                    })()}
+                                const checkout = booking.check_out.slice(5);
+
+                                return `(${label}${isDayBooking(booking) ? " 데이" : ` 체크아웃:${checkout}`})`;
+                              })()}
                             </div>
                           ))}
                       </td>
