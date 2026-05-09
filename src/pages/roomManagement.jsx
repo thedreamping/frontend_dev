@@ -340,7 +340,7 @@ function RoomManagement() {
             >
               객실추가
             </button>
-            <button onClick={() => {
+            {/* <button onClick={() => {
               if (selectedIds.length === 0) {
                 alert("일괄적용할 방들을 선택해주세요.");
                 return;
@@ -349,7 +349,7 @@ function RoomManagement() {
               }
             }}>
               숙박 예약 일괄처리
-            </button>{" "}
+            </button>{" "} */}
             <div className="room_cell_active active"></div> 빈방
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <div className="room_cell_active"></div> 한달내로 예약되어져 있음 (방이 투명하면 현재 숙박되어지는 중)
@@ -510,7 +510,7 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th>숙박여부</th>
                   <td>
                     <div className="checks">
@@ -542,7 +542,7 @@ function RoomManagement() {
                       <label htmlFor="lodgement">숙박가능</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th>최소인원</th>
                   <td>
@@ -669,7 +669,7 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th>숙박여부</th>
                   <td>
                     <div className="checks">
@@ -701,7 +701,7 @@ function RoomManagement() {
                       <label htmlFor="lodgement">숙박가능</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th>최소인원</th>
                   <td>
@@ -726,7 +726,7 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th>숙박</th>
                   <td>
                     <div className="checks">
@@ -759,7 +759,7 @@ function RoomManagement() {
                       <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 {isActive === false && (
                   <>
                     <tr>
@@ -831,7 +831,7 @@ function RoomManagement() {
                   </td>
                 </tr>
 
-                <tr>
+                {/* <tr>
                   <th>숙박</th>
                   <td>
                     <div className="checks">
@@ -864,7 +864,7 @@ function RoomManagement() {
                       <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 {isActiveGroup === false && (
                   <>
                     <tr>
@@ -929,7 +929,7 @@ function RoomManagement() {
               <tbody>
                 
 
-                <tr>
+                {/* <tr>
                   <th>숙박</th>
                   <td>
                     <div className="checks">
@@ -962,7 +962,7 @@ function RoomManagement() {
                       <label htmlFor="non-active">숙박</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 {isActiveGroup === false && (
                   <>
                     <tr>
@@ -994,11 +994,11 @@ function RoomManagement() {
                 )}
               </tbody>
             </table>
-            <div className="btn_area">
+            {/* <div className="btn_area">
               <button className="green" onClick={workForSelected}>
                 숙박 예약 일괄 적용
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
       )}
