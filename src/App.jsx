@@ -156,9 +156,6 @@ function App() {
               <Link to="/dk_schedule">대관일정</Link>
             </li>
             <li>
-              <Link to="/dfds">관리자 추가 및 관리</Link>
-            </li>
-            <li>
               <Link to="/dfds">결제내역 관리</Link>
             </li>
             <li>

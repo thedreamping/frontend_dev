@@ -350,7 +350,7 @@ function RoomManagement() {
             }}>
               숙박 예약 일괄처리
             </button>{" "} */}
-            <div className="room_cell_active active"></div> 빈방
+            <div className="room_cell_active active"></div> 오늘 빈방
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <div className="room_cell_active"></div> 한달내로 예약되어져 있음 (방이 투명하면 현재 숙박되어지는 중)
           </div>
