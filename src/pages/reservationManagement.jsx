@@ -490,6 +490,7 @@ function ReservationManagement() {
   };
 
   const isRoomAvailable = (room, selectedDays) => {
+    console.log(room)
       if (selectedDays.length === 1 && Number(room.day_use) !== 1) {
         return false;
       }

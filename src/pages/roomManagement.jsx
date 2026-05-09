@@ -540,7 +540,7 @@ function RoomManagement() {
                         }}
                         checked={isDay !== 1 ? true : false}
                       />
-                      <label htmlFor="lodgement">숙박가능</label>
+                      <label htmlFor="lodgement">숙박만 가능</label>
                     </div>
                   </td>
                 </tr>
@@ -699,7 +699,7 @@ function RoomManagement() {
                         }}
                         checked={isDay !== 1 ? true : false}
                       />
-                      <label htmlFor="lodgement">숙박가능</label>
+                      <label htmlFor="lodgement">숙박만 가능</label>
                     </div>
                   </td>
                 </tr> 
