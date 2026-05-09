@@ -388,7 +388,7 @@ function RoomManagement() {
                           {data?.rooms?.map((data2, ii) => {
                             return (
                               <>
-                                <div className="checks">
+                                {/* <div className="checks">
                                   <input
                                     type="checkbox"
                                     id={data2.id}
@@ -403,7 +403,7 @@ function RoomManagement() {
                                     }}
                                   />
                                   <label htmlFor={data2.id}></label>
-                                </div>
+                                </div> */}
                                 <div
                                   className="room_cell"
                                   key={`iji${ii}`}
