@@ -298,24 +298,15 @@ function ReservationManagement() {
       );
     });
   };
+
+  const toTime = (d) => new Date(d).getTime();
+
   const getAvailableCount = (groupId) => {
-    const groupRooms = rooms.filter(r => r.room_group_id === groupId);
+    const groupRooms = rooms.filter(r => Number(r.room_group_id) === Number(groupId));
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return groupRooms.filter((room) => {
-      if (!room.check_in || !room.check_out) return true;
-
-      const checkOut = new Date(room.check_out);
-      checkOut.setHours(0, 0, 0, 0);
-
-      // 오늘보다 이전 종료 → 사용 가능
-      if (checkOut < today) return true;
-
-      // 오늘 체크아웃 포함, selectedDays 겹치면 불가
-      return !isOverlap(room.check_in, room.check_out, selectedDays);
-    }).length;
+    return groupRooms.filter(room =>
+      isRoomAvailable(room, selectedDays)
+    ).length;
   };
 
   const getTotalCount = (groupId) => {
@@ -424,9 +415,9 @@ function ReservationManagement() {
   const getManualReservations = () => {
     if (!selectedDays.length) return [];
 
-    return rooms.flatMap((room) => {
-      if (room.is_soogie !== 1) return [];
+    const result = [];
 
+    for (const room of rooms) {
       let schedules = [];
 
       try {
@@ -438,25 +429,27 @@ function ReservationManagement() {
         schedules = [];
       }
 
-      return schedules
-        .filter((schedule) =>
-          selectedDays.some((d) => {
-            const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
-              d.day
-            ).padStart(2, "0")}`;
+      for (const schedule of schedules) {
+        const match = selectedDays.some((d) => {
+          const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
 
-            return (
-              target >= schedule.check_in &&
-              target <= schedule.check_out
-            );
-          })
-        )
-        .map((schedule) => ({
-          ...room,
-          check_in: schedule.check_in,
-          check_out: schedule.check_out
-        }));
-    });
+          return (
+            target >= schedule.check_in &&
+            target <= schedule.check_out
+          );
+        });
+
+        if (match) {
+          result.push({
+            room_id: room.id,
+            room_name: room.name,
+            ...schedule
+          });
+        }
+      }
+    }
+
+    return result;
   };
 
   const cancelManualReservation = async (room) => {
@@ -478,6 +471,7 @@ function ReservationManagement() {
         reason: null,
         is_soogie: 0,
         cancel_booking: {
+          source: "manual",
           check_in: room.check_in,
           check_out: room.check_out
         }
@@ -491,6 +485,34 @@ function ReservationManagement() {
       console.error("취소 실패 상세:", err.response?.data || err);
       alert("취소 실패");
     }
+  };
+
+  const getAllSchedules = (room) => {
+    let naver = [];
+    let soogie = [];
+
+    try {
+      naver = JSON.parse(room.check_in_and_out || "[]");
+    } catch {}
+
+    try {
+      soogie = JSON.parse(room.check_in_and_out_soogie || "[]");
+    } catch {}
+
+    return [...naver, ...soogie];
+  };
+
+  const isRoomAvailable = (room, selectedDays) => {
+    const schedules = getAllSchedules(room);
+
+    return !selectedDays.some((d) => {
+      const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+
+      return schedules.some(s =>
+        toTime(target) >= toTime(s.check_in) &&
+        toTime(target) <= toTime(s.check_out)
+      );
+    });
   };
 
   return (
