@@ -381,6 +381,11 @@ function ReservationManagement() {
             disable_start: formatDate(check_in),
             disable_end: formatDate(check_out),
             reason: "수기예약",
+            manual_booking: {
+              source: "manual",
+              check_in: formatDate(check_in).slice(0, 10),
+              check_out: formatDate(check_out).slice(0, 10),
+            }
           });
 
           assigned++;
@@ -419,10 +424,38 @@ function ReservationManagement() {
   const getManualReservations = () => {
     if (!selectedDays.length) return [];
 
-    return rooms.filter((room) => {
-      if (room.is_soogie !== 1) return false;
+    return rooms.flatMap((room) => {
+      if (room.is_soogie !== 1) return [];
 
-      return isOverlap(room.disable_start, room.disable_end, selectedDays);
+      let schedules = [];
+
+      try {
+        schedules =
+          typeof room.check_in_and_out_soogie === "string"
+            ? JSON.parse(room.check_in_and_out_soogie)
+            : room.check_in_and_out_soogie || [];
+      } catch {
+        schedules = [];
+      }
+
+      return schedules
+        .filter((schedule) =>
+          selectedDays.some((d) => {
+            const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+              d.day
+            ).padStart(2, "0")}`;
+
+            return (
+              target >= schedule.check_in &&
+              target <= schedule.check_out
+            );
+          })
+        )
+        .map((schedule) => ({
+          ...room,
+          check_in: schedule.check_in,
+          check_out: schedule.check_out
+        }));
     });
   };
 
@@ -444,6 +477,10 @@ function ReservationManagement() {
         disable_end: null,
         reason: null,
         is_soogie: 0,
+        cancel_booking: {
+          check_in: room.check_in,
+          check_out: room.check_out
+        }
       });
 
 
