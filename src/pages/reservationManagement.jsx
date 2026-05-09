@@ -536,6 +536,9 @@ function ReservationManagement() {
             >
               선택한 날짜 수기예약 / 취소
             </button>
+            <button className="green">
+              현재날짜 기준 엑셀 다운로드
+            </button>
           </div>
 
           <div className="rooms_calendar_info">
