@@ -32,6 +32,7 @@ function RoomManagement() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+
   useEffect(() => {
     getAllRooms();
   }, []);
@@ -520,7 +521,7 @@ function RoomManagement() {
                         name="lodgement"
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setIsLodge(1);
+                            setIsDay(1);
                           }
                         }}
                         checked={isDay === 1 ? true : false}
@@ -534,7 +535,7 @@ function RoomManagement() {
                         name="lodgement"
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setIsLodge(0);
+                            setIsDay(0);
                           }
                         }}
                         checked={isDay !== 1 ? true : false}
@@ -679,7 +680,7 @@ function RoomManagement() {
                         name="lodgement"
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setIsLodge(1);
+                            setIsDay(1);
                           }
                         }}
                         checked={isDay === 1 ? true : false}
@@ -693,7 +694,7 @@ function RoomManagement() {
                         name="lodgement"
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setIsLodge(0);
+                            setIsDay(0);
                           }
                         }}
                         checked={isDay !== 1 ? true : false}
