@@ -490,21 +490,27 @@ function ReservationManagement() {
   };
 
   const isRoomAvailable = (room, selectedDays) => {
-    const schedules = getAllSchedules(room);
-  
-    return !selectedDays.some((d) => {
-      const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+      if (selectedDays.length === 1 && Number(room.day_use) !== 1) {
+        return false;
+      }
 
-      return schedules.some((s) => {
-        const start = normalize(s.check_in);
-        const end = normalize(s.check_out);
+      const schedules = getAllSchedules(room);
 
-        if (!start || !end) return false;
-        console.log(target >= start && target <= end)
-        return target >= start && target <= end;
+      return !selectedDays.some((d) => {
+        const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+          d.day
+        ).padStart(2, "0")}`;
+
+        return schedules.some((s) => {
+          const start = normalize(s.check_in);
+          const end = normalize(s.check_out);
+
+          if (!start || !end) return false;
+
+          return target >= start && target <= end;
+        });
       });
-    });
-  };
+    };
 
   return (
     <>
