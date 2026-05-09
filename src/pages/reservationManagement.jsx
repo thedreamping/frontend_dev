@@ -299,6 +299,8 @@ function ReservationManagement() {
     });
   };
 
+  const normalize = (d) => d?.slice(0, 10);
+
   const toTime = (d) => new Date(d).getTime();
 
   const getAvailableCount = (groupId) => {
@@ -508,10 +510,14 @@ function ReservationManagement() {
     return !selectedDays.some((d) => {
       const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
 
-      return schedules.some(s =>
-        toTime(target) >= toTime(s.check_in) &&
-        toTime(target) <= toTime(s.check_out)
-      );
+      return schedules.some((s) => {
+        const start = normalize(s.check_in);
+        const end = normalize(s.check_out);
+
+        if (!start || !end) return false;
+
+        return target >= start && target <= end;
+      });
     });
   };
 
