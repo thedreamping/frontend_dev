@@ -784,6 +784,7 @@ function RoomManagement() {
                           onChange={(e) => {
                             setRoomReason(e.target.value);
                           }}
+                          readOnly
                         ></textarea>
                       </td>
                     </tr>
@@ -889,6 +890,7 @@ function RoomManagement() {
                           onChange={(e) => {
                             setGroupReason(e.target.value);
                           }}
+                          readOnly
                         ></textarea>
                       </td>
                     </tr>
@@ -987,6 +989,7 @@ function RoomManagement() {
                           onChange={(e) => {
                             setGroupReason(e.target.value);
                           }}
+                          readOnly
                         ></textarea>
                       </td>
                     </tr>
