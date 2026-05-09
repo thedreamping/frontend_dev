@@ -305,7 +305,7 @@ function ReservationManagement() {
 
   const getAvailableCount = (groupId) => {
     const groupRooms = rooms.filter(r => Number(r.room_group_id) === Number(groupId));
-
+    
     return groupRooms.filter(room =>
       isRoomAvailable(room, selectedDays)
     ).length;
@@ -490,23 +490,24 @@ function ReservationManagement() {
   };
 
   const getAllSchedules = (room) => {
+   
     let naver = [];
     let soogie = [];
 
     try {
-      naver = JSON.parse(room.check_in_and_out || "[]");
+      naver = room.check_in_and_out || "[]";
     } catch {}
 
     try {
-      soogie = JSON.parse(room.check_in_and_out_soogie || "[]");
+      soogie = room.check_in_and_out_soogie || "[]";
     } catch {}
-
+    console.log(naver,soogie)
     return [...naver, ...soogie];
   };
 
   const isRoomAvailable = (room, selectedDays) => {
     const schedules = getAllSchedules(room);
-
+  
     return !selectedDays.some((d) => {
       const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
 
@@ -515,7 +516,7 @@ function ReservationManagement() {
         const end = normalize(s.check_out);
 
         if (!start || !end) return false;
-
+        console.log(target >= start && target <= end)
         return target >= start && target <= end;
       });
     });
