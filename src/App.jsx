@@ -23,6 +23,7 @@ import MainEventPopupManagement from "./pages/mainEventPopupManagement";
 import LogAudit from "./pages/logAudit";
 import ReservationManagement from "./pages/reservationManagement";
 import { setApiLoadingHandler } from "./api/api";
+import axios from "axios";
 
 function App() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ function App() {
   const [specialPower,setSpecialPower] = useState(false);
   const [action,setAction] = useState("");
   const [isLoading,setIsLoading] = useState(false);
+  const [isOn,setIsOn] = useState(false);
 
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
@@ -48,7 +50,9 @@ function App() {
     api.get('/api/naver-status').then((response) => {
       console.log(response)
       setAction(response.data.data.action)
-    })
+    });
+    alert("fuck")
+    isNaverCrawlerOn();
   },[location.pathname])
 
   useEffect(() => {
@@ -114,6 +118,15 @@ function App() {
   }, [list]);
 
 
+  const isNaverCrawlerOn = () => {
+    axios.get('https://dreampingback.duckdns.org:7000/crawler-health').then((response) => {
+      console.log(response.data.data);
+      if (response.data.data === true) {
+        setIsOn(true);
+      }
+    })
+  }
+
 
   useEffect(() => {
     setApiLoadingHandler(setIsLoading);
@@ -124,7 +137,7 @@ function App() {
       <div className="wrap">
         <div className="welcome">
          {sessionStorage.getItem("adminName") && <><b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎</>}  
-         <em style={{marginLeft:'20px'}}>네이버크롤링 상태 : <span style={{backgroundColor:action}}></span> {action === "green" ? "정상" : action === "orange" ? "로그인 필요" : action === "red" ? "에러상태" : ""} </em>
+         <em style={{marginLeft:'20px'}}>네이버크롤링 상태 : <span style={isOn ? {backgroundColor:action} : {}}></span> {isOn && action === "green" ? "정상" : isOn && action === "orange" ? "로그인 필요" : isOn && action === "red" ? "에러상태" : ""} {isOn === false ? "꺼져있음" : ""}   </em>
         </div>
         <div className="left_menu">
           <h4>
