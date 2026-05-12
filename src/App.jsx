@@ -119,8 +119,8 @@ function App() {
 
   const isNaverCrawlerOn = () => {
     axios.get('http://dreampingback.duckdns.org:7000/crawler-health').then((response) => {
-      console.log(response.data.data);
-      if (response.data.data === true) {
+      console.log(response.data);
+      if (response.data.ok === true) {
         setIsOn(true);
       }
     })
