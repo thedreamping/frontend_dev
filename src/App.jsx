@@ -51,7 +51,6 @@ function App() {
       console.log(response)
       setAction(response.data.data.action)
     });
-    alert("fuck")
     isNaverCrawlerOn();
   },[location.pathname])
 
