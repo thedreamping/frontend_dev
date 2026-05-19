@@ -459,9 +459,7 @@ function RoomManagement() {
                                   {data2.name}{" "}
                                   <div
                                    className={
-                                      data2.available === 0
-                                        ? "room_cell_active"
-                                        : !isRoomOccupiedToday(data2)
+                                      !isRoomOccupiedToday(data2)
                                           ? "room_cell_active active"
                                           : "room_cell_active"
                                     }
