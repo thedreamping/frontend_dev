@@ -323,19 +323,7 @@ function RoomManagement() {
     let naver = room.check_in_and_out;
     let soogie = room.check_in_and_out_soogie;
 
-    // 2. string 방어
-    try {
-      if (typeof naver === "string") naver = JSON.parse(naver);
-    } catch {
-      naver = [];
-    }
-
-    try {
-      if (typeof soogie === "string") soogie = JSON.parse(soogie);
-    } catch {
-      soogie = [];
-    }
-
+  
     const schedules = [...(naver || []), ...(soogie || [])];
 
     if (schedules.length === 0) return false;
@@ -344,8 +332,8 @@ function RoomManagement() {
     return schedules.some((s) => {
       if (!s?.check_in || !s?.check_out) return false;
 
-      const start = s.check_in.slice(0, 10);
-      const end = s.check_out.slice(0, 10);
+      const start = s.check_in;
+      const end = s.check_out;
 
       return today >= start && today <= end;
     });
@@ -471,9 +459,9 @@ function RoomManagement() {
                                   {data2.name}{" "}
                                   <div
                                    className={
-                                      data2.available !== 1
+                                      data2.available === 0
                                         ? "room_cell_active"
-                                        : !isRoomOccupiedToday(data2)
+                                        : isRoomOccupiedToday(data2)
                                           ? "room_cell_active active"
                                           : "room_cell_active"
                                     }
