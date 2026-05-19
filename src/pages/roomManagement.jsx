@@ -317,13 +317,37 @@ function RoomManagement() {
     }).format(new Date());
 
   const isRoomOccupiedToday = (room) => {
-    if (!room.reservations || room.reservations.length === 0) return false;
+    const today = todayKST; // "YYYY-MM-DD"
 
-    return room.reservations.some((r) => {
-      const start = toKSTDate(r.start_date);
-      const end = toKSTDate(r.end_date);
+    // 1. 네이버 + 수기 병합
+    let naver = room.check_in_and_out;
+    let soogie = room.check_in_and_out_soogie;
 
-      return todayKST >= start && todayKST <= end;
+    // 2. string 방어
+    try {
+      if (typeof naver === "string") naver = JSON.parse(naver);
+    } catch {
+      naver = [];
+    }
+
+    try {
+      if (typeof soogie === "string") soogie = JSON.parse(soogie);
+    } catch {
+      soogie = [];
+    }
+
+    const schedules = [...(naver || []), ...(soogie || [])];
+
+    if (schedules.length === 0) return false;
+
+    // 3. 오늘 날짜 포함 여부 체크
+    return schedules.some((s) => {
+      if (!s?.check_in || !s?.check_out) return false;
+
+      const start = s.check_in.slice(0, 10);
+      const end = s.check_out.slice(0, 10);
+
+      return today >= start && today <= end;
     });
   };
 
@@ -447,9 +471,11 @@ function RoomManagement() {
                                   {data2.name}{" "}
                                   <div
                                    className={
-                                      !isRoomOccupiedToday(data2)
-                                        ? "room_cell_active active"
-                                        : "room_cell_active"
+                                      data2.available !== 1
+                                        ? "room_cell_active"
+                                        : !isRoomOccupiedToday(data2)
+                                          ? "room_cell_active active"
+                                          : "room_cell_active"
                                     }
                                   ></div>{" "}
                                   { data2.is_active === 0 &&
