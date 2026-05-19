@@ -23,6 +23,7 @@ function OptionManagement() {
 
   const getOptions = () => {
     api.get("/api/options").then((response) => {
+      console.log(response.data.data)
       const sorted = response.data.data.sort(
         (a, b) => a.sort_order - b.sort_order
       );
@@ -43,6 +44,13 @@ function OptionManagement() {
 
   const handleDateChange4 = (formattedDate) => {
     setEndDateAble(formattedDate);
+  };
+
+  const toKSTDateString = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(`${dateString}T12:00:00+09:00`);
+    return date.toISOString().split("T")[0];
   };
 
   const modifyOption = async () => {
@@ -81,10 +89,10 @@ function OptionManagement() {
       const response = await api.put(`/api/options/${optionId}`, {
         name: optionName,
         price: numericPrice,
-        start_date: startDate,
-        end_date: endDate,
-        start_date_able: startDateAble,
-        end_date_able: endDateAble,
+        start_date: toKSTDateString(startDate),
+        end_date: toKSTDateString(endDate),
+        start_date_able: toKSTDateString(startDateAble),
+        end_date_able: toKSTDateString(endDateAble),
       });
 
       if (response.data.ok) {
@@ -131,13 +139,21 @@ function OptionManagement() {
     }
 
     try {
+      console.log({
+        name: optionName,
+        price: numericPrice,
+        start_date: toKSTDateString(startDate),
+        end_date: toKSTDateString(endDate),
+        start_date_able: toKSTDateString(startDateAble),
+        end_date_able: toKSTDateString(endDateAble),
+      })
       const response = await api.post(`/api/options`, {
         name: optionName,
         price: numericPrice,
-        start_date: startDate,
-        end_date: endDate,
-        start_date_able: startDateAble,
-        end_date_able: endDateAble,
+        start_date: toKSTDateString(startDate),
+        end_date: toKSTDateString(endDate),
+        start_date_able: toKSTDateString(startDateAble),
+        end_date_able: toKSTDateString(endDateAble),
       });
 
       if (response.data.ok) {
@@ -208,6 +224,8 @@ function OptionManagement() {
 
     updateOrder(newOptions);
   };
+
+  
 
   return (
     <>
