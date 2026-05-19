@@ -316,6 +316,17 @@ function RoomManagement() {
       timeZone: "Asia/Seoul",
     }).format(new Date());
 
+  const isRoomOccupiedToday = (room) => {
+    if (!room.reservations || room.reservations.length === 0) return false;
+
+    return room.reservations.some((r) => {
+      const start = toKSTDate(r.start_date);
+      const end = toKSTDate(r.end_date);
+
+      return todayKST >= start && todayKST <= end;
+    });
+  };
+
   return (
     <>
       <div className="workspace">
@@ -435,8 +446,8 @@ function RoomManagement() {
                                 >
                                   {data2.name}{" "}
                                   <div
-                                    className={
-                                     data2.available === 1
+                                   className={
+                                      !isRoomOccupiedToday(data2)
                                         ? "room_cell_active active"
                                         : "room_cell_active"
                                     }
