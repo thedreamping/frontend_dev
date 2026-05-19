@@ -462,8 +462,8 @@ function RoomManagement() {
                                       data2.available === 0
                                         ? "room_cell_active"
                                         : !isRoomOccupiedToday(data2)
-                                          ? "room_cell_active"
-                                          : "room_cell_active active"
+                                          ? "room_cell_active active"
+                                          : "room_cell_active"
                                     }
                                   ></div>{" "}
                                   { data2.is_active === 0 &&
