@@ -488,30 +488,40 @@ function ReservationManagement() {
     console.log(naver,soogie)
     return [...naver, ...soogie];
   };
-
   const isRoomAvailable = (room, selectedDays) => {
-    console.log(room)
-      if (selectedDays.length === 1 && Number(room.day_use) !== 1) {
-        return false;
-      }
+    const dayUse = Number(room.day_use);
 
-      const schedules = getAllSchedules(room);
+    // 날짜 범위
+    const isSingleDay = selectedDays.length === 1;
+    const isMultiDay = selectedDays.length > 1;
 
-      return !selectedDays.some((d) => {
-        const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
-          d.day
-        ).padStart(2, "0")}`;
+    // 0: 숙박만 → 1일 선택도 막고 싶다면
+    if (dayUse === 0 && isSingleDay) {
+      return false;
+    }
 
-        return schedules.some((s) => {
-          const start = normalize(s.check_in);
-          const end = normalize(s.check_out);
+    // 2: 데이만 → 2일 이상 선택 금지 (이게 핵심)
+    if (dayUse === 2 && isMultiDay) {
+      return false;
+    }
 
-          if (!start || !end) return false;
+    const schedules = getAllSchedules(room);
 
-          return target >= start && target <= end;
-        });
+    return !selectedDays.some((d) => {
+      const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+        d.day
+      ).padStart(2, "0")}`;
+
+      return schedules.some((s) => {
+        const start = normalize(s.check_in);
+        const end = normalize(s.check_out);
+
+        if (!start || !end) return false;
+
+        return target >= start && target <= end;
       });
-    };
+    });
+  };
 
   return (
     <>

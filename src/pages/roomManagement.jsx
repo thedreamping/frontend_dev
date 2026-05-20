@@ -95,6 +95,7 @@ function RoomManagement() {
       capacity_min: Number(capacityMin),
       day_use: Number(isDay), // 1 or 0 구조라면
     };
+    console.log(data)
 
     api
       .put(`/api/room/${roomId}`, data)
