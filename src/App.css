@@ -1249,10 +1249,13 @@ th button.selectAllSameDays {
 .td_scroll .checks input[type="checkbox"] + label { margin-right:0px; }
 .welcome span { display:inline-block;width:14px;height:14px;border-radius:50%;background:gray;vertical-align:middle;margin-left:10px; }
 .spacer_nm { margin-right:20px; }
-.room_controll_cell { font-size:14px;font-weight:normal;color:black;width:100%;height:34px;line-height:34px;padding-left:14px;position:relative;padding-right:14px;display:block;text-align:left;border:1px solid #d4d4d4;margin-bottom:4px; }
+.room_controll_cell { font-size:14px;font-weight:normal;color:black;width:100%;height:auto;line-height:34px;padding-left:14px;position:relative;padding-right:14px;display:block;text-align:left;border:1px solid #d4d4d4;margin-bottom:4px; }
 .room_controll_cell .room_controll_cell_pl_mi { width:170px;height:34px;line-height:34px;text-align:center;position:absolute;right:0px;top:0px;font-size:14px;font-weight:normal;color:black; }
 .room_controll_cell .room_controll_cell_pl_mi .plus { position:absolute;right:0px;top:0px;height:32px;line-height:32px;text-align:center;width:34px;background:#f4f4f4;color:black;font-size:14px;font-weight:bold; }
 .room_controll_cell .room_controll_cell_pl_mi .minus { position:absolute;left:0px;top:0px;height:32px;line-height:32px;text-align:center;width:34px;background:#f4f4f4;color:black;font-size:14px;font-weight:bold; }
+.room_controll_cell input[type="text"] { width:100%;border:0px solid #d4d4d4 !important;border-top:1px solid #d4d4d4 !important;padding-left:10px;height:34px !important;position:relative; }
+.input_wrap { width:100%;height:auto; } 
+.room_controll_cell.hei34 { height:34px; }
 .loading {
   display: flex;
   justify-content: center;

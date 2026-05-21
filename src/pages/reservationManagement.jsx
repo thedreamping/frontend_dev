@@ -18,6 +18,8 @@ function ReservationManagement() {
   const [rooms, setRooms] = useState([]);
   const [groups, setGroups] = useState([]);
   const [manualMap, setManualMap] = useState({});
+  const [memos, setMemos] = useState({});
+  const [isPop2,setIsPop2] = useState(false);
 
   const colorPalette = [
     "#ffe5e5",
@@ -316,7 +318,6 @@ function ReservationManagement() {
 
     return `${yyyy}-${mm}-${dd} 00:00:00`;
   };
-
   const modifyReservationSchedule = async () => {
     try {
       const range = selectedDays
@@ -325,13 +326,13 @@ function ReservationManagement() {
 
       const check_in = range[0];
       const check_out = new Date(range[range.length - 1]);
-      check_out.setDate(check_out.getDate()); // 중요: 체크아웃은 +1
+
+      check_out.setDate(check_out.getDate());
 
       const groupsToApply = Object.entries(manualMap)
         .filter(([_, count]) => count > 0);
 
       for (const [groupId, count] of groupsToApply) {
-       
 
         const groupRooms = rooms.filter(
           (r) =>
@@ -348,6 +349,9 @@ function ReservationManagement() {
         for (const room of groupRooms) {
           if (assigned >= count) break;
 
+          const memoText =
+            memos[groupId]?.[assigned] || "";
+
           await api.put(`/api/room/${room.id}`, {
             name: room.name,
             is_active: 0,
@@ -357,10 +361,12 @@ function ReservationManagement() {
             disable_start: formatDate(check_in),
             disable_end: formatDate(check_out),
             reason: "수기예약",
+
             manual_booking: {
               source: "manual",
               check_in: formatDate(check_in).slice(0, 10),
               check_out: formatDate(check_out).slice(0, 10),
+              memo: memoText
             }
           });
 
@@ -369,10 +375,14 @@ function ReservationManagement() {
       }
 
       alert("수기예약 완료");
+
       setIsPop(false);
       setManualMap({});
+      setMemos({});
       setSelectedDays([]);
-      getRooms(); // refresh
+
+      getRooms();
+
     } catch (err) {
       console.error(err);
       alert("수기예약 실패");
@@ -523,6 +533,49 @@ function ReservationManagement() {
     });
   };
 
+  const getNaverReservations = () => {
+    if (!selectedDays.length) return [];
+
+    const result = [];
+
+    for (const room of rooms) {
+      let schedules = [];
+
+      try {
+        schedules =
+          typeof room.naver_crawling_info === "string"
+            ? JSON.parse(room.naver_crawling_info)
+            : room.naver_crawling_info || [];
+      } catch {
+        schedules = [];
+      }
+
+      for (const schedule of schedules) {
+        const match = selectedDays.some((d) => {
+          const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+            d.day
+          ).padStart(2, "0")}`;
+
+          return (
+            target >= schedule.check_in &&
+            target <= schedule.check_out
+          );
+        });
+
+        if (match) {
+          result.push({
+            ...room,
+            room_id: room.id,
+            room_name: room.name,
+            ...schedule
+          });
+        }
+      }
+    }
+
+    return result;
+  };
+
   return (
     <>
       <div className="workspace">
@@ -545,6 +598,22 @@ function ReservationManagement() {
               }}
             >
               선택한 날짜 수기예약 / 취소
+            </button>
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  return;
+                }
+                if (!isConsecutiveDays(selectedDays)) {
+                  alert("날짜는 연속으로 선택해야 합니다.");
+                  return;
+                }
+                setIsPop2(true);
+              }}
+            >
+              선택한 날짜 네이버예약 상세
             </button>
             <button className="green">
               현재날짜 기준 엑셀 다운로드
@@ -663,7 +732,12 @@ function ReservationManagement() {
             <div className="popup_title">선택한 날짜 수기 예약</div>
             <div
               className="popup_x"
-              onClick={() => setIsPop(false)}
+               onClick={() => {
+                setIsPop(false);
+                setManualMap({});
+                setMemos({});
+                setSelectedDays([]);
+              }}
             >
               X
             </div>
@@ -698,6 +772,32 @@ function ReservationManagement() {
 
                               <button type="button" className="minus" onClick={() => decrease(group.id)}>-</button>
                             </div>
+                            <div className={"input_wrap"}>
+                              {Array.from({
+                                length: manualMap[group.id] || 0
+                              }).map((_, idx) => (
+                                <input
+                                  key={idx}
+                                  type="text"
+                                  placeholder={`세부정보 ${idx + 1}`}
+                                  value={memos[group.id]?.[idx] || ""}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    setMemos((prev) => {
+                                      const current = [...(prev[group.id] || [])];
+
+                                      current[idx] = value;
+
+                                      return {
+                                        ...prev,
+                                        [group.id]: current
+                                      };
+                                    });
+                                  }}
+                                />
+                              ))}
+                            </div>
                           </div>
                         );
                       })}
@@ -709,7 +809,8 @@ function ReservationManagement() {
                     기존 수기예약
                   </th>
                   <td>
-                    <div style={{width:"100%",maxHeight:"340px",overflow:'auto',height:"auto"}}>
+                  
+                    <div style={{width:"100%",maxHeight:"140px",overflow:'auto',height:"auto"}}>
                       {getManualReservations().length === 0 ? (
                           <div>없음</div>
                         ) : (
@@ -737,10 +838,19 @@ function ReservationManagement() {
                               >
                                 취소
                               </button>
+                              <div className="input_wrap">
+                                <textarea
+                                  value={room.memo || ""}
+                                  placeholder="메모 없음"
+                                  style={{width:"100%",height:"100px",resize:"none"}}
+                                  readOnly
+                                />
+                              </div>
                             </div>
                             })
                         )}
                       </div>
+                  
                   </td>
                 </tr>
               </tbody>
@@ -752,6 +862,99 @@ function ReservationManagement() {
           </div>
         </div>
       )}
+
+
+      {isPop2 && (
+          <div className="popup_wrap">
+            <div className="popup" style={{ height: "auto", width: "700px" }}>
+              <div className="popup_title">
+                선택한 날짜 네이버예약 상세
+              </div>
+
+              <div
+                className="popup_x"
+                onClick={() => {
+                  setIsPop2(false);
+                }}
+              >
+                X
+              </div>
+
+              <table>
+                <colgroup>
+                  <col style={{ width: "140px" }} />
+                  <col style={{ width: "auto" }} />
+                </colgroup>
+
+                <tbody>
+                  <tr>
+                    <th>선택한 기간</th>
+                    <td>{formatRange(selectedDays)}</td>
+                  </tr>
+
+                  <tr>
+                    <th>네이버 예약</th>
+
+                    <td>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxHeight: "500px",
+                          overflow: "auto"
+                        }}
+                      >
+                        {getNaverReservations().length === 0 ? (
+                          <div>없음</div>
+                        ) : (
+                          getNaverReservations().map((room, idx) => (
+                            <div
+                              key={idx}
+                              className="room_controll_cell"
+                              style={{ marginBottom: "12px" }}
+                            >
+                              <div>
+                                <b>{room.room_name}</b>
+                              </div>
+
+                              <div>
+                                {room.check_in?.slice(0, 10)} ~{" "}
+                                {room.check_out?.slice(0, 10)}
+                              </div>
+
+                              <div>
+                                예약자 : {room.name}
+                              </div>
+
+                              <div>
+                                연락처 : {room.phone}
+                              </div>
+
+                              <div>
+                                상품명 : {room.product_name}
+                              </div>
+
+                              <div>
+                                수량 : {room.qty}
+                              </div>
+
+                              <div>
+                                금액 : {room.price}
+                              </div>
+
+                              <div>
+                                예약번호 : {room.booking_id}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
     </>
   );
 }
