@@ -576,6 +576,35 @@ function ReservationManagement() {
     return result;
   };
 
+  const getBookingsByDate = (date) => {
+    if (!date) return [];
+
+    const target =
+      `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+
+    const result = [];
+
+    for (const room of rooms) {
+      const schedules = getAllSchedules(room);
+
+      for (const schedule of schedules) {
+        const start = normalize(schedule.check_in);
+        const end = normalize(schedule.check_out);
+
+        if (!start || !end) continue;
+
+        if (target >= start && target <= end) {
+          result.push({
+            room,
+            booking: schedule
+          });
+        }
+      }
+    }
+
+    return result;
+  };
+
   return (
     <>
       <div className="workspace">
@@ -688,7 +717,7 @@ function ReservationManagement() {
                         <div>{date ? date.day : ""}</div>
 
                         {date &&
-                          getRoomsByDate(date).map((room) => (
+                          getBookingsByDate(date).map(({ room, booking }, idx) => (
                             <div
                               key={room.id}
                               style={{
@@ -701,7 +730,7 @@ function ReservationManagement() {
                             >
                               {room.name}{" "}
                               {(() => {
-                                const booking = getBookingForDate(room, date);
+                                
 
                                 if (!booking) return "";
 
