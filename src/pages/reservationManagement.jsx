@@ -1111,39 +1111,41 @@ function ReservationManagement() {
                   검색
                 </button>
               </div>
-              <table>
-                <thead>
-                  <th>소스</th>
-                  <th>이름</th>
-                  <th>전화번호</th>
-                  <th>기간</th>
-                  <th>가격</th>
-                  <th>디테일</th>
-                  <th>메모</th>
-                </thead>
-                <tbody>
-                  {historyData.map((data, i) => {
-                    return (
-                      <tr key={i}>
-                        <td>{data.source}</td>
-                        <td>{data.guest_name}</td>
-                        <td>{data.guest_phone}</td>
-                        <td>
-                          {toKoreanDate(data.check_in)} ~{" "}
-                          {toKoreanDate(data.check_out)}
-                        </td>
-                        <td>{data.price?.toLocaleString()}</td>
-                        <td
-                          dangerouslySetInnerHTML={{
-                            __html: renderPayload(data.payload),
-                          }}
-                        ></td>
-                        <td>{data.memo}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="rooms_calendar">
+                <table>
+                  <thead>
+                    <th>소스</th>
+                    <th>이름</th>
+                    <th>전화번호</th>
+                    <th>기간</th>
+                    <th>가격</th>
+                    <th>디테일</th>
+                    <th>메모</th>
+                  </thead>
+                  <tbody>
+                    {historyData.map((data, i) => {
+                      return (
+                        <tr key={i}>
+                          <td>{data.source}</td>
+                          <td>{data.guest_name}</td>
+                          <td>{data.guest_phone}</td>
+                          <td>
+                            {toKoreanDate(data.check_in)} ~{" "}
+                            {toKoreanDate(data.check_out)}
+                          </td>
+                          <td>{data.price?.toLocaleString()}</td>
+                          <td
+                            dangerouslySetInnerHTML={{
+                              __html: renderPayload(data.payload),
+                            }}
+                          ></td>
+                          <td>{data.memo}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
               <div
                 style={{
                   display: "flex",
