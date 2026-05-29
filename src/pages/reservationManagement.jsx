@@ -1132,7 +1132,7 @@ function ReservationManagement() {
                           {toKoreanDate(data.check_in)} ~{" "}
                           {toKoreanDate(data.check_out)}
                         </td>
-                        <td>{data.price.toLocaleString()}</td>
+                        <td>{data.price?.toLocaleString()}</td>
                         <td
                           dangerouslySetInnerHTML={{
                             __html: renderPayload(data.payload),
