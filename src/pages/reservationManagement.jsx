@@ -29,6 +29,11 @@ function ReservationManagement() {
   const [historyData, setHistoryData] = useState([]);
   const [historyTotalPage, setHistoryTotalPage] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
+  const [checkInFrom, setCheckInFrom] = useState("");
+  const [checkInTo, setCheckInTo] = useState("");
+
+  const [checkOutFrom, setCheckOutFrom] = useState("");
+  const [checkOutTo, setCheckOutTo] = useState("");
 
   const colorPalette = [
     "#ffe5e5",
@@ -600,11 +605,16 @@ function ReservationManagement() {
   const getHistory = () => {
     api
       .get(
-        `/api/reservation_history?page=${historyPage}&limit=${historyLimit}&guest_name=${encodeURIComponent(guestName)}&guest_phone=${encodeURIComponent(guestPhone)}&memo=${encodeURIComponent(guestMemo)}`,
+        `/api/reservation_history?page=${historyPage}&limit=${historyLimit}
+      &guest_name=${encodeURIComponent(guestName)}
+      &guest_phone=${encodeURIComponent(guestPhone)}
+      &memo=${encodeURIComponent(guestMemo)}
+      &check_in_from=${encodeURIComponent(checkInFrom)}
+      &check_in_to=${encodeURIComponent(checkInTo)}
+      &check_out_from=${encodeURIComponent(checkOutFrom)}
+      &check_out_to=${encodeURIComponent(checkOutTo)}`.replace(/\s+/g, ""),
       )
       .then((response) => {
-        console.log(response);
-
         setHistoryData(response.data.list);
 
         setHistoryTotal(response.data.total);
@@ -1103,6 +1113,56 @@ function ReservationManagement() {
                   }}
                 />
 
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <span>체크인 기간</span>
+                  <input
+                    type="date"
+                    value={checkInFrom}
+                    onChange={(e) => {
+                      setCheckInFrom(e.target.value);
+                    }}
+                  />
+                  ~
+                  <input
+                    type="date"
+                    value={checkInTo}
+                    onChange={(e) => {
+                      setCheckInTo(e.target.value);
+                    }}
+                  />
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <span>체크아웃 기간</span>
+                  <input
+                    type="date"
+                    value={checkOutFrom}
+                    onChange={(e) => {
+                      setCheckOutFrom(e.target.value);
+                    }}
+                  />
+                  ~
+                  <input
+                    type="date"
+                    value={checkOutTo}
+                    onChange={(e) => {
+                      setCheckOutTo(e.target.value);
+                    }}
+                  />
+                </div>
+
                 <button
                   onClick={() => {
                     setHistoryPage(1);
@@ -1113,6 +1173,28 @@ function ReservationManagement() {
                   }}
                 >
                   검색
+                </button>
+
+                <button
+                  onClick={() => {
+                    setGuestName("");
+                    setGuestPhone("");
+                    setGuestMemo("");
+
+                    setCheckInFrom("");
+                    setCheckInTo("");
+
+                    setCheckOutFrom("");
+                    setCheckOutTo("");
+
+                    setHistoryPage(1);
+
+                    setTimeout(() => {
+                      getHistory();
+                    }, 0);
+                  }}
+                >
+                  초기화
                 </button>
               </div>
               <div className="rooms_calendar">
