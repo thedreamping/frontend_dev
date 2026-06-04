@@ -497,6 +497,17 @@ table {
   padding-left: 20px;
 }
 
+.workspace .content input[type="date"] {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #d4d4d4;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: normal;
+  color: black;
+  padding-left: 20px;
+}
+
 .workspace .content input[type="number"] {
   width: 100%;
   height: 34px;
@@ -1370,4 +1381,6 @@ th button.selectAllSameDays {
   color: white;
   border: 1px solid black;
   padding: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
 }

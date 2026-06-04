@@ -22,17 +22,18 @@ import AroundAndSpot from "./pages/aroundAndSpot";
 import MainEventPopupManagement from "./pages/mainEventPopupManagement";
 import LogAudit from "./pages/logAudit";
 import ReservationManagement from "./pages/reservationManagement";
+import PaymentList from "./pages/paymentList";
 import { setApiLoadingHandler } from "./api/api";
 import axios from "axios";
 
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [list,setList] = useState([]);
-  const [specialPower,setSpecialPower] = useState(false);
-  const [action,setAction] = useState("");
-  const [isLoading,setIsLoading] = useState(false);
-  const [isOn,setIsOn] = useState(false);
+  const [list, setList] = useState([]);
+  const [specialPower, setSpecialPower] = useState(false);
+  const [action, setAction] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOn, setIsOn] = useState(false);
 
   useEffect(() => {
     if (!sessionStorage.getItem("accessToken")) {
@@ -41,18 +42,18 @@ function App() {
   }, [location.pathname]);
 
   useEffect(() => {
-    api.get('/api/for_debuging').then((respone) => {
-      console.log("디버깅 : " , respone)
-    })
-  },[])
+    api.get("/api/for_debuging").then((respone) => {
+      console.log("디버깅 : ", respone);
+    });
+  }, []);
 
   useEffect(() => {
-    api.get('/api/naver-status').then((response) => {
-      console.log(response)
-      setAction(response.data.data.action)
+    api.get("/api/naver-status").then((response) => {
+      console.log(response);
+      setAction(response.data.data.action);
     });
     isNaverCrawlerOn();
-  },[location.pathname])
+  }, [location.pathname]);
 
   useEffect(() => {
     navChange();
@@ -89,7 +90,6 @@ function App() {
     }
   };
 
-
   const getAdmins = () => {
     api.get("/api/users/admin").then((response) => {
       console.log(response);
@@ -99,39 +99,37 @@ function App() {
 
   useEffect(() => {
     getAdmins();
-  },[location.pathname]);
+  }, [location.pathname]);
 
- useEffect(() => {
+  useEffect(() => {
     const adminName = sessionStorage.getItem("adminName");
 
     if (!adminName || !list?.length) return;
 
-    const user = list.find(item => item.name === adminName);
+    const user = list.find((item) => item.name === adminName);
 
     const hyper = user?.hyper;
 
     console.log("찾은 유저:", user);
     console.log("hyper 값:", hyper);
-    setSpecialPower(hyper === 1 ? true : false)
-
+    setSpecialPower(hyper === 1 ? true : false);
   }, [list]);
 
-
   const isNaverCrawlerOn = () => {
-    axios.get('http://dreampingback.duckdns.org:7000/crawler-health').then((response) => {
-      console.log(response.data);
-      
+    axios
+      .get("http://dreampingback.duckdns.org:7000/crawler-health")
+      .then((response) => {
+        console.log(response.data);
+
         if (response.data.ok === true) {
           setIsOn(true);
         }
-     
-     
-    }).catch((error) => {
-      console.log(error);
-      setIsOn(false)
-    })
-  }
-
+      })
+      .catch((error) => {
+        console.log(error);
+        setIsOn(false);
+      });
+  };
 
   useEffect(() => {
     setApiLoadingHandler(setIsLoading);
@@ -141,8 +139,23 @@ function App() {
     <>
       <div className="wrap">
         <div className="welcome">
-         {sessionStorage.getItem("adminName") && <><b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎</>}  
-         <em style={{marginLeft:'20px'}}>네이버크롤링 상태 : <span style={isOn ? {backgroundColor:action} : {}}></span> {isOn && action === "green" ? "정상" : isOn && action === "orange" ? "로그인 필요" : isOn && action === "red" ? "에러상태" : ""} {isOn === false ? "꺼져있음" : ""}   </em>
+          {sessionStorage.getItem("adminName") && (
+            <>
+              <b>{sessionStorage.getItem("adminName")}</b> 님 환영합니다~ 😎
+            </>
+          )}
+          <em style={{ marginLeft: "20px" }}>
+            네이버크롤링 상태 :{" "}
+            <span style={isOn ? { backgroundColor: action } : {}}></span>{" "}
+            {isOn && action === "green"
+              ? "정상"
+              : isOn && action === "orange"
+                ? "로그인 필요"
+                : isOn && action === "red"
+                  ? "에러상태"
+                  : ""}{" "}
+            {isOn === false ? "꺼져있음" : ""}{" "}
+          </em>
         </div>
         <div className="left_menu">
           <h4>
@@ -174,7 +187,7 @@ function App() {
               <Link to="/dk_schedule">대관일정</Link>
             </li>
             <li>
-              <Link to="/dfds">결제내역 관리</Link>
+              <Link to="/payments_list">홈페이지 결제 내역</Link>
             </li>
             <li>
               <Link to="/main_bn_management">메인배너 관리</Link>
@@ -203,12 +216,11 @@ function App() {
             <li>
               <Link to="/add_administrator">새 관리자 추가</Link>
             </li>
-            { 
-              specialPower &&  
+            {specialPower && (
               <li>
                 <Link to="/log_audit">작업로그 확인</Link>
               </li>
-            }
+            )}
           </ul>
         </div>
 
@@ -230,13 +242,16 @@ function App() {
           <Route path="/main_bn_management" element={<MainBnManagement />} />
           <Route path="/around_and_spot" element={<AroundAndSpot />} />
           <Route path="/dk_banners" element={<DkBanners />} />
-          <Route path="/reservation_management" element={<ReservationManagement />} />
+          <Route
+            path="/reservation_management"
+            element={<ReservationManagement />}
+          />
 
-          
           <Route
             path="/special_offer_management"
             element={<SpecialOfferManagement />}
           />
+          <Route path="/payments_list" element={<PaymentList />} />
           <Route
             path="/main_dining_management"
             element={<MainDiningManagement />}
@@ -245,13 +260,17 @@ function App() {
             path="/main_romms_bn_management"
             element={<MainRoomsManagement />}
           />
-           <Route path="/log_audit" element={<LogAudit />} />
+          <Route path="/log_audit" element={<LogAudit />} />
         </Routes>
 
-       
         <button className="logout" onClick={logout}></button>
       </div>
-      <div className="loading" style={isLoading ? { display:'flex'} : { display:'none'}}><div className={"icon"}></div></div>
+      <div
+        className="loading"
+        style={isLoading ? { display: "flex" } : { display: "none" }}
+      >
+        <div className={"icon"}></div>
+      </div>
     </>
   );
 }
