@@ -1164,6 +1164,7 @@ function ReservationManagement() {
                 </div>
 
                 <button
+                  className="btn_custom"
                   onClick={() => {
                     setHistoryPage(1);
 
@@ -1176,6 +1177,7 @@ function ReservationManagement() {
                 </button>
 
                 <button
+                  className="btn_custom"
                   onClick={() => {
                     setGuestName("");
                     setGuestPhone("");
