@@ -632,6 +632,41 @@ function ReservationManagement() {
     });
   };
 
+  const renderOptions = (options) => {
+    if (!options) return "-";
+
+    let data = options;
+
+    // 1) string → 그대로 반환
+    if (typeof data === "string") {
+      return data;
+    }
+
+    // 2) object (단일 옵션)
+    if (!Array.isArray(data)) {
+      return data.name || "-";
+    }
+
+    // 3) array (여러 옵션)
+    if (Array.isArray(data)) {
+      if (data.length === 0) return "-";
+
+      return data
+        .map((opt) => {
+          const name = opt.name || "-";
+          const qty = opt.qty ? ` x${opt.qty}` : "";
+          const price = opt.price
+            ? ` (${Number(opt.price).toLocaleString()}원)`
+            : "";
+
+          return `${name}${qty}${price}`;
+        })
+        .join("<br/>");
+    }
+
+    return "-";
+  };
+
   const renderPayload = (payload) => {
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
@@ -645,7 +680,7 @@ function ReservationManagement() {
       체크인 : ${data.check_in}<br />
       체크아웃 : ${data.check_out}<br />
       예약번호 : ${data.booking_id}<br/>
-      옵션 :  ${data.booking_option}<br/>
+      옵션 : ${renderOptions(data.booking_option)}<br/>
       메모 :  ${data.request_memo}
     `;
     } catch (err) {
