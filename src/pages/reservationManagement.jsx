@@ -794,7 +794,9 @@ function ReservationManagement() {
                                   const label =
                                     booking.source === "naver"
                                       ? "네이버예약"
-                                      : "수기예약";
+                                      : booking.source === "website"
+                                        ? "홈페이지예약"
+                                        : "수기예약";
 
                                   const checkout = booking.check_out.slice(5);
 
