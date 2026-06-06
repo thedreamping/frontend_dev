@@ -675,6 +675,7 @@ function ReservationManagement() {
       예약자 : ${data.name}<br />
       연락처 : ${data.phone}<br />
       상품명 : ${data.product_name}<br />
+      방수 : ${data.qty}<br />
       금액 : ${data.price.toLocaleString()}원<br />
       체크인 : ${data.check_in}<br />
       체크아웃 : ${data.check_out}<br />
