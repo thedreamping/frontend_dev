@@ -1103,7 +1103,7 @@ function ReservationManagement() {
       {isHistory && (
         <>
           <div className="popup_wrap">
-            <div className="popup" style={{ height: "700px", width: "1600px" }}>
+            <div className="popup" style={{ height: "770px", width: "1600px" }}>
               <div className="popup_title">예약 히스토리</div>
 
               <div
