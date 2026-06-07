@@ -32,7 +32,6 @@ function RoomManagement() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-
   useEffect(() => {
     getAllRooms();
   }, []);
@@ -95,7 +94,7 @@ function RoomManagement() {
       capacity_min: Number(capacityMin),
       day_use: Number(isDay), // 1 or 0 구조라면
     };
-    console.log(data)
+    console.log(data);
 
     api
       .put(`/api/room/${roomId}`, data)
@@ -268,7 +267,9 @@ function RoomManagement() {
       });
   };
 
-  useEffect(() => { console.log(selectedIds) }, [selectedIds]);
+  useEffect(() => {
+    console.log(selectedIds);
+  }, [selectedIds]);
 
   const workForSelected = () => {
     if (!isActiveGroup && !groupReason?.trim()) {
@@ -280,11 +281,11 @@ function RoomManagement() {
       return;
     }
     const data = {
-       ids: selectedIds,
-       is_active: isActiveGroup ? 1 : 0,
-       reason: isActiveGroup ? null : groupReason,
-       disable_start: startDate,
-       disable_end: endDate,
+      ids: selectedIds,
+      is_active: isActiveGroup ? 1 : 0,
+      reason: isActiveGroup ? null : groupReason,
+      disable_start: startDate,
+      disable_end: endDate,
     };
 
     api
@@ -298,7 +299,7 @@ function RoomManagement() {
         console.error(err);
         alert("수정 중 오류가 발생했습니다.");
       });
-  }
+  };
 
   const handleDateChange1 = (formattedDate) => {
     setStartDate(formattedDate);
@@ -309,13 +310,13 @@ function RoomManagement() {
   };
 
   const toKSTDate = (date) =>
-      new Intl.DateTimeFormat("sv-SE", {
-        timeZone: "Asia/Seoul",
-      }).format(new Date(date));
+    new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Seoul",
+    }).format(new Date(date));
 
   const todayKST = new Intl.DateTimeFormat("sv-SE", {
-      timeZone: "Asia/Seoul",
-    }).format(new Date());
+    timeZone: "Asia/Seoul",
+  }).format(new Date());
 
   const isRoomOccupiedToday = (room) => {
     const today = todayKST; // "YYYY-MM-DD"
@@ -324,7 +325,6 @@ function RoomManagement() {
     let naver = room.check_in_and_out;
     let soogie = room.check_in_and_out_soogie;
 
-  
     const schedules = [...(naver || []), ...(soogie || [])];
 
     if (schedules.length === 0) return false;
@@ -377,7 +377,8 @@ function RoomManagement() {
             </button>{" "} */}
             <div className="room_cell_active active"></div> 오늘 빈방
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <div className="room_cell_active"></div> 한달내로 예약되어져 있음 (방이 투명하면 현재 숙박되어지는 중)
+            <div className="room_cell_active"></div> 한달내로 예약되어져 있음
+            (방이 투명하면 현재 숙박되어지는 중 체크아웃되는 방도 여기 포함)
           </div>
           <div className="hor_scroll">
             <table>
@@ -432,16 +433,18 @@ function RoomManagement() {
                                   className="room_cell"
                                   key={`iji${ii}`}
                                   style={{
-                                      opacity:
-                                       data2.is_active === 0 &&
-                                        data2.disable_start != null &&
-                                        data2.disable_end != null &&
-                                        todayKST >= toKSTDate(data2.disable_start) &&
-                                        todayKST <= toKSTDate(data2.disable_end) ?
-                                         "0.3" : "1",
-                                    }}
+                                    opacity:
+                                      data2.is_active === 0 &&
+                                      data2.disable_start != null &&
+                                      data2.disable_end != null &&
+                                      todayKST >=
+                                        toKSTDate(data2.disable_start) &&
+                                      todayKST <= toKSTDate(data2.disable_end)
+                                        ? "0.3"
+                                        : "1",
+                                  }}
                                   onClick={() => {
-                                    console.log(data2)
+                                    console.log(data2);
                                     setIsDetailPop(true);
                                     setRoomDetailName(data2.name);
                                     setRoomId(data2.id);
@@ -452,24 +455,30 @@ function RoomManagement() {
                                     setIsActive(
                                       data2.is_active === 1 ? true : false,
                                     );
-                                    setStartDate(toKSTDate(data2.disable_start));
+                                    setStartDate(
+                                      toKSTDate(data2.disable_start),
+                                    );
                                     setEndDate(toKSTDate(data2.disable_end));
-                                    setRoomReason(data2.is_ota === 1 ? "네이버예약" : data2.reason)
+                                    setRoomReason(
+                                      data2.is_ota === 1
+                                        ? "네이버예약"
+                                        : data2.reason,
+                                    );
                                   }}
                                 >
                                   {data2.name}{" "}
                                   <div
-                                   className={
+                                    className={
                                       !isRoomOccupiedToday(data2)
-                                          ? "room_cell_active active"
-                                          : "room_cell_active"
+                                        ? "room_cell_active active"
+                                        : "room_cell_active"
                                     }
                                   ></div>{" "}
-                                  { data2.is_active === 0 &&
-                                        data2.disable_start != null &&
-                                        data2.disable_end != null &&
-                                        todayKST >= toKSTDate(data2.disable_start) &&
-                                        todayKST <= toKSTDate(data2.disable_end) 
+                                  {data2.is_active === 0 &&
+                                  data2.disable_start != null &&
+                                  data2.disable_end != null &&
+                                  todayKST >= toKSTDate(data2.disable_start) &&
+                                  todayKST <= toKSTDate(data2.disable_end)
                                     ? "숙박중"
                                     : "정보보기"}
                                 </div>
@@ -535,43 +544,43 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-               <tr>
-                <th>예약 타입</th>
-                <td>
-                  <div className="checks">
-                    <input
-                      type="radio"
-                      id="stay_only"
-                      name="reservation_type"
-                      onChange={() => setIsDay(0)}
-                      checked={isDay === 0}
-                    />
-                    <label htmlFor="stay_only">숙박만 가능</label>
-                  </div>
+                <tr>
+                  <th>예약 타입</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="stay_only"
+                        name="reservation_type"
+                        onChange={() => setIsDay(0)}
+                        checked={isDay === 0}
+                      />
+                      <label htmlFor="stay_only">숙박만 가능</label>
+                    </div>
 
-                  <div className="checks">
-                    <input
-                      type="radio"
-                      id="both"
-                      name="reservation_type"
-                      onChange={() => setIsDay(1)}
-                      checked={isDay === 1}
-                    />
-                    <label htmlFor="both">데이유즈 + 숙박 가능</label>
-                  </div>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="both"
+                        name="reservation_type"
+                        onChange={() => setIsDay(1)}
+                        checked={isDay === 1}
+                      />
+                      <label htmlFor="both">데이유즈 + 숙박 가능</label>
+                    </div>
 
-                  <div className="checks">
-                    <input
-                      type="radio"
-                      id="day_only"
-                      name="reservation_type"
-                      onChange={() => setIsDay(2)}
-                      checked={isDay === 2}
-                    />
-                    <label htmlFor="day_only">데이유즈만 가능</label>
-                  </div>
-                </td>
-              </tr>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="day_only"
+                        name="reservation_type"
+                        onChange={() => setIsDay(2)}
+                        checked={isDay === 2}
+                      />
+                      <label htmlFor="day_only">데이유즈만 가능</label>
+                    </div>
+                  </td>
+                </tr>
                 <tr>
                   <th>최소인원</th>
                   <td>
@@ -665,7 +674,7 @@ function RoomManagement() {
       )}
       {isDetailPop && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width:'1000px'  }}>
+          <div className="popup" style={{ height: "auto", width: "1000px" }}>
             <div className="popup_title">객실 디테일</div>
             <div
               className="popup_x"
@@ -802,7 +811,9 @@ function RoomManagement() {
                           <MyDatePicker
                             value={startDate}
                             onDateChange={handleDateChange1}
-                          /> ~ <MyDatePicker
+                          />{" "}
+                          ~{" "}
+                          <MyDatePicker
                             value={endDate}
                             onDateChange={handleDateChange2}
                           />
@@ -839,7 +850,7 @@ function RoomManagement() {
 
       {isDetailPopGroup && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width:'1000px'  }}>
+          <div className="popup" style={{ height: "auto", width: "1000px" }}>
             <div className="popup_title">그룹 디테일</div>
             <div
               className="popup_x"
@@ -908,7 +919,9 @@ function RoomManagement() {
                           <MyDatePicker
                             value={startDate}
                             onDateChange={handleDateChange1}
-                          /> ~ <MyDatePicker
+                          />{" "}
+                          ~{" "}
+                          <MyDatePicker
                             value={endDate}
                             onDateChange={handleDateChange2}
                           />
@@ -943,10 +956,9 @@ function RoomManagement() {
         </div>
       )}
 
-
       {workPopForSelectedIds && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width:'1000px' }}>
+          <div className="popup" style={{ height: "auto", width: "1000px" }}>
             <div className="popup_title">비활성화 일괄 편집</div>
             <div
               className="popup_x"
@@ -962,8 +974,6 @@ function RoomManagement() {
             </div>
             <table>
               <tbody>
-                
-
                 {/* <tr>
                   <th>숙박</th>
                   <td>
@@ -1007,7 +1017,9 @@ function RoomManagement() {
                           <MyDatePicker
                             value={startDate}
                             onDateChange={handleDateChange1}
-                          /> ~ <MyDatePicker
+                          />{" "}
+                          ~{" "}
+                          <MyDatePicker
                             value={endDate}
                             onDateChange={handleDateChange2}
                           />
