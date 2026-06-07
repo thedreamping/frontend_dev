@@ -105,6 +105,8 @@ function ReservationManagement() {
       setYear((prev) => prev - 1);
       return;
     }
+    groupColorMap.current = {};
+    colorIndex.current = 0;
 
     setCalendarData(getMonthDates(year, month));
   }, [month, year]);
@@ -490,12 +492,22 @@ function ReservationManagement() {
     let soogie = [];
 
     try {
-      naver = room.check_in_and_out || "[]";
-    } catch {}
+      naver =
+        typeof room.check_in_and_out === "string"
+          ? JSON.parse(room.check_in_and_out)
+          : room.check_in_and_out || [];
+    } catch {
+      naver = [];
+    }
 
     try {
-      soogie = room.check_in_and_out_soogie || "[]";
-    } catch {}
+      soogie =
+        typeof room.check_in_and_out_soogie === "string"
+          ? JSON.parse(room.check_in_and_out_soogie)
+          : room.check_in_and_out_soogie || [];
+    } catch {
+      soogie = [];
+    }
 
     return [...naver, ...soogie];
   };
@@ -813,7 +825,7 @@ function ReservationManagement() {
                           getBookingsByDate(date).map(
                             ({ room, booking }, idx) => (
                               <div
-                                key={room.id}
+                                key={`${room.id}-${booking?.check_in}-${booking?.check_out}`}
                                 style={{
                                   fontSize: "11px",
                                   padding: "2px 4px",
