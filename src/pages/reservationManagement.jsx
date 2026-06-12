@@ -674,6 +674,22 @@ function ReservationManagement() {
     });
   };
 
+  const formatKSTDateTime = (value) => {
+    if (!value) return "-";
+
+    const d = new Date(value);
+
+    return new Intl.DateTimeFormat("sv-SE", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d);
+  };
+
   const renderOptions = (options) => {
     if (!options) return "-";
 
@@ -719,7 +735,7 @@ function ReservationManagement() {
       상품명 : ${data.product_name}<br />
       방수 : ${data.qty}<br />
       금액 : ${data.price.toLocaleString()}원<br />
-      결제일 : ${data.payment_date || "-"}<br />
+      결제일 : ${formatKSTDateTime(data.payment_date)}<br />
       체크인 : ${data.check_in}<br />
       체크아웃 : ${data.check_out}<br />
       예약번호 : ${data.booking_id}<br/>
