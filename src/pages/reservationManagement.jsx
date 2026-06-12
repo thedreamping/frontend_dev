@@ -719,6 +719,7 @@ function ReservationManagement() {
       상품명 : ${data.product_name}<br />
       방수 : ${data.qty}<br />
       금액 : ${data.price.toLocaleString()}원<br />
+      결제일 : ${data.payment_date || "-"}<br />
       체크인 : ${data.check_in}<br />
       체크아웃 : ${data.check_out}<br />
       예약번호 : ${data.booking_id}<br/>
@@ -1142,7 +1143,12 @@ function ReservationManagement() {
                             <div>수량 : {room.qty}</div>
 
                             <div>금액 : {room.price}</div>
-
+                            <div>
+                              결제일 :{" "}
+                              {room.payment_date
+                                ? String(room.payment_date).slice(0, 10)
+                                : "-"}
+                            </div>
                             <div>예약번호 : {room.booking_id}</div>
                             <div>옵션 : {room.booking_option}</div>
                             <div>메모 : {room.request_memo}</div>
