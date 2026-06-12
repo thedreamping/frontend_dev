@@ -131,10 +131,15 @@ function ReservationManagement() {
       date.day,
     ).padStart(2, "0")}`;
 
-    return schedules.some(
-      (s) =>
-        s.source === "naver" && target >= s.check_in && target <= s.check_out,
-    );
+    return schedules.some((s) => {
+      if (s.source !== "naver") return false;
+
+      if (s.check_in === s.check_out) {
+        return target === s.check_in;
+      }
+
+      return target >= s.check_in && target < s.check_out;
+    });
   };
 
   const getBookingForDate = (room, date) => {
@@ -148,7 +153,13 @@ function ReservationManagement() {
       const start = normalize(s.check_in);
       const end = normalize(s.check_out);
 
-      return start && end && target >= start && target <= end;
+      if (!start || !end) return false;
+
+      if (start === end) {
+        return target === start;
+      }
+
+      return target >= start && target < end;
     });
   };
 
@@ -210,8 +221,11 @@ function ReservationManagement() {
 
         const start = normalize(schedule.check_in);
         const end = normalize(schedule.check_out);
+        if (start === end) {
+          return target === start;
+        }
 
-        return target >= start && target <= end;
+        return target >= start && target < end;
       });
     });
   };
@@ -294,9 +308,13 @@ function ReservationManagement() {
         d.day,
       ).padStart(2, "0")}`;
 
-      return schedules.some(
-        (s) => target >= s.check_in && target <= s.check_out,
-      );
+      return schedules.some((s) => {
+        if (s.check_in === s.check_out) {
+          return target === s.check_in;
+        }
+
+        return target >= s.check_in && target < s.check_out;
+      });
     });
   };
 
@@ -439,7 +457,11 @@ function ReservationManagement() {
         const match = selectedDays.some((d) => {
           const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
 
-          return target >= schedule.check_in && target <= schedule.check_out;
+          if (schedule.check_in === schedule.check_out) {
+            return target === schedule.check_in;
+          }
+
+          return target >= schedule.check_in && target < schedule.check_out;
         });
 
         if (match) {
@@ -541,7 +563,11 @@ function ReservationManagement() {
 
         if (!start || !end) return false;
 
-        return target >= start && target <= end;
+        if (start === end) {
+          return target === start;
+        }
+
+        return target >= start && target < end;
       });
     });
   };
@@ -569,7 +595,11 @@ function ReservationManagement() {
             d.day,
           ).padStart(2, "0")}`;
 
-          return target >= schedule.check_in && target <= schedule.check_out;
+          if (schedule.check_in === schedule.check_out) {
+            return target === schedule.check_in;
+          }
+
+          return target >= schedule.check_in && target < schedule.check_out;
         });
 
         if (match) {
@@ -602,7 +632,7 @@ function ReservationManagement() {
 
         if (!start || !end) continue;
 
-        if (target >= start && target <= end) {
+        if (isBookingVisibleOnDate(target, schedule)) {
           result.push({
             room,
             booking: schedule,
@@ -705,6 +735,21 @@ function ReservationManagement() {
       getHistory();
     }
   }, [historyPage, isHistory]);
+
+  const isBookingVisibleOnDate = (target, schedule) => {
+    const start = normalize(schedule.check_in);
+    const end = normalize(schedule.check_out);
+
+    if (!start || !end) return false;
+
+    // 데이유즈
+    if (start === end) {
+      return target === start;
+    }
+
+    // 숙박
+    return target >= start && target < end;
+  };
 
   return (
     <>
