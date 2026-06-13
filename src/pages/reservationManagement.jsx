@@ -115,13 +115,18 @@ function ReservationManagement() {
 
   const downloadExcel = () => {
     const now = new Date();
-
     const pad = (n) => String(n).padStart(2, "0");
 
     const fileTime =
       `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
       `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
     const rows = [];
+
+    const selectedSet = selectedDays.map(
+      (d) =>
+        `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
+    );
 
     rooms.forEach((room) => {
       let schedules = [];
@@ -136,6 +141,17 @@ function ReservationManagement() {
       }
 
       schedules.forEach((booking) => {
+        const start = normalize(booking.check_in);
+        const end = normalize(booking.check_out);
+
+        if (!start || !end) return;
+
+        const isVisible = selectedSet.some((target) =>
+          isBookingVisibleOnDate(target, booking),
+        );
+
+        if (!isVisible) return; // 🔥 핵심 필터
+
         rows.push({
           날짜: `${booking.check_in} ~ ${booking.check_out}`,
           객실타입: room.room_group_name || "",
@@ -154,16 +170,13 @@ function ReservationManagement() {
             : "",
 
           금액: booking.price || 0,
-
           채널: "네이버",
         });
       });
     });
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
-
     const workbook = XLSX.utils.book_new();
-
     XLSX.utils.book_append_sheet(workbook, worksheet, "예약목록");
 
     const excelBuffer = XLSX.write(workbook, {
