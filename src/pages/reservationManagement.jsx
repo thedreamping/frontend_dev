@@ -114,6 +114,13 @@ function ReservationManagement() {
   }, [month, year]);
 
   const downloadExcel = () => {
+    const now = new Date();
+
+    const pad = (n) => String(n).padStart(2, "0");
+
+    const fileTime =
+      `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
+      `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
     const rows = [];
 
     rooms.forEach((room) => {
@@ -168,7 +175,7 @@ function ReservationManagement() {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    saveAs(blob, `예약목록_${year}_${month}.xlsx`);
+    saveAs(blob, `예약목록_${year}_${month}_${fileTime}.xlsx`);
   };
 
   const nextMonth = () => setMonth((prev) => prev + 1);
