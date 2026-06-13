@@ -913,7 +913,7 @@ function ReservationManagement() {
                 downloadExcel();
               }}
             >
-              현재날짜 기준 엑셀 다운로드
+              선택 날짜 기준 엑셀 다운로드
             </button>
             <button
               className="green"
