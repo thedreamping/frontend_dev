@@ -894,7 +894,7 @@ function ReservationManagement() {
               className="green"
               onClick={() => {
                 if (selectedDays.length === 0) {
-                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  alert("다운로드 받을 날짜를 지정해주세요");
                   return;
                 }
                 downloadExcel();
