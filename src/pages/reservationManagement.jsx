@@ -828,6 +828,22 @@ function ReservationManagement() {
     return target >= start && target < end;
   };
 
+  useEffect(() => {
+    if (!groups.length || !rooms.length) return;
+
+    const groupMap = groups.reduce((acc, g) => {
+      acc[g.id] = g.name;
+      return acc;
+    }, {});
+
+    setRooms((prev) =>
+      prev.map((room) => ({
+        ...room,
+        room_group_name: groupMap[room.room_group_id] || "",
+      })),
+    );
+  }, [groups]);
+
   return (
     <>
       <div className="workspace">
