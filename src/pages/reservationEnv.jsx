@@ -106,6 +106,7 @@ function ReservationEnv() {
       const newData = response.data.data.map((item) => ({
         ...item,
         price: 0,
+        human_plus_price: 0,
       }));
 
       setRoomGroup(newData);
@@ -128,8 +129,9 @@ function ReservationEnv() {
           room_group_id: room.id,
           room_group_name: room.name,
           price: Number(room.price),
+          human_plus_price: Number(room.human_plus_price),
         }));
-      console.log(rooms)  
+      console.log(rooms);
       if (rooms.length === 0) {
         alert("선택된 객실이 없습니다.");
         return;
@@ -188,6 +190,7 @@ function ReservationEnv() {
         return {
           ...item,
           price: matchedRoom ? matchedRoom.price : 0,
+          human_plus_price: matchedRoom ? matchedRoom.human_plus_price : 0,
         };
       });
     });
@@ -357,9 +360,15 @@ function ReservationEnv() {
                         </div>
                         <div className="day_prices">
                           {getPricesByDate(date).map((price, idx) => (
-                            <div key={idx} className="price_item">
+                            <div
+                              key={idx}
+                              className="price_item"
+                              style={{ borderBottom: "1px solid #e4e4e4" }}
+                            >
                               {price.room_group_name} :{" "}
-                              {price.price.toLocaleString()}원
+                              {price.price.toLocaleString()}원<br />
+                              추가인원 단가 :{" "}
+                              {price.human_plus_price?.toLocaleString()}원
                             </div>
                           ))}
                         </div>
@@ -463,6 +472,28 @@ function ReservationEnv() {
                                         prev.map((item, index) =>
                                           index === i
                                             ? { ...item, price: value }
+                                            : item,
+                                        ),
+                                      );
+                                    }}
+                                    disabled={!checkedId.includes(data.id)}
+                                  />{" "}
+                                  원
+                                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;추가인원
+                                  단가&nbsp;&nbsp;
+                                  <input
+                                    type="number"
+                                    value={data.human_plus_price}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+
+                                      setRoomGroup((prev) =>
+                                        prev.map((item, index) =>
+                                          index === i
+                                            ? {
+                                                ...item,
+                                                human_plus_price: value,
+                                              }
                                             : item,
                                         ),
                                       );
