@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import MyDatePicker from "../component/datepicker";
 import api from "../api/api";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 function ReservationManagement() {
   const now = new Date();
@@ -110,6 +112,64 @@ function ReservationManagement() {
 
     setCalendarData(getMonthDates(year, month));
   }, [month, year]);
+
+  const downloadExcel = () => {
+    const rows = [];
+
+    rooms.forEach((room) => {
+      let schedules = [];
+
+      try {
+        schedules =
+          typeof room.naver_crawling_info === "string"
+            ? JSON.parse(room.naver_crawling_info)
+            : room.naver_crawling_info || [];
+      } catch {
+        schedules = [];
+      }
+
+      schedules.forEach((booking) => {
+        rows.push({
+          날짜: booking.check_in,
+          객실타입: room.room_group_name || "",
+          방번호: room.name || "",
+          인원: booking.qty || "",
+          이름: booking.name || "",
+          연락처: booking.phone || "",
+          메모: booking.request_memo || "",
+          옵션:
+            typeof booking.booking_option === "string"
+              ? booking.booking_option
+              : JSON.stringify(booking.booking_option || []),
+
+          결제일: booking.payment_date
+            ? String(booking.payment_date).slice(0, 10)
+            : "",
+
+          금액: booking.price || 0,
+
+          채널: "네이버",
+        });
+      });
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "예약목록");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(blob, `예약목록_${year}_${month}.xlsx`);
+  };
 
   const nextMonth = () => setMonth((prev) => prev + 1);
 
@@ -612,7 +672,7 @@ function ReservationManagement() {
         }
       }
     }
-
+    console.log(result);
     return result;
   };
 
@@ -807,7 +867,18 @@ function ReservationManagement() {
             >
               선택한 날짜 네이버예약 상세
             </button>
-            <button className="green">현재날짜 기준 엑셀 다운로드</button>
+            <button
+              className="green"
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("가격을 설정할 날짜를 선택해 주세요");
+                  return;
+                }
+                downloadExcel();
+              }}
+            >
+              현재날짜 기준 엑셀 다운로드
+            </button>
             <button
               className="green"
               onClick={() => {
