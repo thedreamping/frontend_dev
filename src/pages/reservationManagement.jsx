@@ -137,7 +137,7 @@ function ReservationManagement() {
 
       schedules.forEach((booking) => {
         rows.push({
-          날짜: booking.check_in,
+          날짜: `${booking.check_in} ~ ${booking.check_out}`,
           객실타입: room.room_group_name || "",
           방번호: room.name || "",
           인원: booking.qty || "",
