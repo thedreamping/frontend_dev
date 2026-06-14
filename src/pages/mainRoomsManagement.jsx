@@ -14,6 +14,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
+      show: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -23,6 +24,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
+      show: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -32,6 +34,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
+      show: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -41,6 +44,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
+      show: 1,
     },
   ]);
 
@@ -68,6 +72,7 @@ function MainRoomsManagement() {
         ...newArr[i],
         file_name: "",
         file: null,
+        file_url: "",
       };
       return newArr;
     });
@@ -97,6 +102,7 @@ function MainRoomsManagement() {
 
       // 나머지 값은 항상 전송
       formData.append("file_name", item.file_name);
+      formData.append("show", item.show);
       formData.append("text", item.text);
       formData.append("link", item.link);
       formData.append("title", item.title);
@@ -129,6 +135,7 @@ function MainRoomsManagement() {
         link: "",
         file: null,
         file_url: "",
+        show: 1,
       };
 
       newArr.splice(index + 1, 0, emptyRow); // 현재 행 아래에 삽입
@@ -179,9 +186,10 @@ function MainRoomsManagement() {
           <table>
             <colgroup>
               <col style={{ width: "5%" }} />
-              <col style={{ width: "65%" }} />
+              <col style={{ width: "60%" }} />
               <col style={{ width: "15%" }} />
-              <col style={{ width: "15%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "10%" }} />
             </colgroup>
             <thead>
               <tr>
@@ -189,6 +197,7 @@ function MainRoomsManagement() {
                 <th>이미지 파일</th>
                 <th>행추가/삭제</th>
                 <th>차례</th>
+                <th>노출</th>
               </tr>
             </thead>
             <tbody>
@@ -282,6 +291,30 @@ function MainRoomsManagement() {
                     <td>
                       <button onClick={() => moveUp(i)}>Up</button>
                       <button onClick={() => moveDown(i)}>Down</button>
+                    </td>
+                    <td>
+                      <div className="checks">
+                        <input
+                          type="checkbox"
+                          id={`banner_${data.id}`}
+                          checked={
+                            Number(data.show) === 1 || data.show === null
+                          }
+                          onChange={(e) => {
+                            setBasicArray((prev) => {
+                              const newArr = [...prev];
+
+                              newArr[i] = {
+                                ...newArr[i],
+                                show: e.target.checked ? 1 : 0,
+                              };
+
+                              return newArr;
+                            });
+                          }}
+                        />
+                        <label htmlFor={`banner_${data.id}`}></label>
+                      </div>
                     </td>
                   </tr>
                 );
