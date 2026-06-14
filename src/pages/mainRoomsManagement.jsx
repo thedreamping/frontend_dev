@@ -14,7 +14,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
-      show: 1,
+      show_bn: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -24,7 +24,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
-      show: 1,
+      show_bn: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -34,7 +34,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
-      show: 1,
+      show_bn: 1,
     },
     {
       id: Date.now() + Math.random(),
@@ -44,7 +44,7 @@ function MainRoomsManagement() {
       link: "",
       file: null,
       file_url: "",
-      show: 1,
+      show_bn: 1,
     },
   ]);
 
@@ -102,7 +102,7 @@ function MainRoomsManagement() {
 
       // 나머지 값은 항상 전송
       formData.append("file_name", item.file_name);
-      formData.append("show", item.show);
+      formData.append("show_bn", item.show_bn);
       formData.append("text", item.text);
       formData.append("link", item.link);
       formData.append("title", item.title);
@@ -135,7 +135,7 @@ function MainRoomsManagement() {
         link: "",
         file: null,
         file_url: "",
-        show: 1,
+        show_bn: 1,
       };
 
       newArr.splice(index + 1, 0, emptyRow); // 현재 행 아래에 삽입
@@ -298,7 +298,7 @@ function MainRoomsManagement() {
                           type="checkbox"
                           id={`banner_${data.id}`}
                           checked={
-                            Number(data.show) === 1 || data.show === null
+                            Number(data.show_bn) === 1 || data.show_bn === null
                           }
                           onChange={(e) => {
                             setBasicArray((prev) => {
@@ -306,7 +306,7 @@ function MainRoomsManagement() {
 
                               newArr[i] = {
                                 ...newArr[i],
-                                show: e.target.checked ? 1 : 0,
+                                show_bn: e.target.checked ? 1 : 0,
                               };
 
                               return newArr;
