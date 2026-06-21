@@ -108,6 +108,7 @@ function ReservationEnv() {
         price: 0,
         day_use_price: 0,
         human_plus_price: 0,
+        pet_plus_price: 0,
       }));
 
       setRoomGroup(newData);
@@ -132,6 +133,7 @@ function ReservationEnv() {
           price: Number(room.price),
           day_use_price: Number(room.day_use_price),
           human_plus_price: Number(room.human_plus_price),
+          pet_plus_price: Number(room.pet_plus_price),
         }));
       console.log(rooms);
       if (rooms.length === 0) {
@@ -194,6 +196,7 @@ function ReservationEnv() {
           price: matchedRoom ? matchedRoom.price : 0,
           day_use_price: matchedRoom ? matchedRoom.day_use_price : 0,
           human_plus_price: matchedRoom ? matchedRoom.human_plus_price : 0,
+          pet_plus_price: matchedRoom ? matchedRoom.pet_plus_price : 0,
         };
       });
     });
@@ -373,7 +376,9 @@ function ReservationEnv() {
                               {price.room_group_name} 데이유즈 :{" "}
                               {price.day_use_price?.toLocaleString()}원<br />
                               추가인원 단가 :{" "}
-                              {price.human_plus_price?.toLocaleString()}원
+                              {price.human_plus_price?.toLocaleString()}원<br />
+                              추가 pet 단가 :{" "}
+                              {price.pet_plus_price?.toLocaleString()}원
                             </div>
                           ))}
                         </div>
@@ -519,6 +524,27 @@ function ReservationEnv() {
                                             ? {
                                                 ...item,
                                                 human_plus_price: value,
+                                              }
+                                            : item,
+                                        ),
+                                      );
+                                    }}
+                                    disabled={!checkedId.includes(data.id)}
+                                  />{" "}
+                                  원 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;추가
+                                  pet 단가&nbsp;&nbsp;
+                                  <input
+                                    type="number"
+                                    value={data.pet_plus_price}
+                                    onChange={(e) => {
+                                      const value = Number(e.target.value);
+
+                                      setRoomGroup((prev) =>
+                                        prev.map((item, index) =>
+                                          index === i
+                                            ? {
+                                                ...item,
+                                                pet_plus_price: value,
                                               }
                                             : item,
                                         ),
