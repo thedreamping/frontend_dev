@@ -128,55 +128,106 @@ function ReservationManagement() {
         `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
     );
 
+    const getChannelName = (source) => {
+      if (source === "naver") return "네이버";
+      if (source === "manual") return "수기예약";
+      if (source === "website" || String(source || "").startsWith("SITE_"))
+        return "홈페이지";
+      return source || "";
+    };
+
+    const optionToText = (options) => {
+      if (!options) return "";
+
+      if (typeof options === "string") return options;
+
+      if (Array.isArray(options)) {
+        return options
+          .map((opt) => {
+            const name = opt.name || "";
+            const qty = opt.qty ? ` x${opt.qty}` : "";
+            const price = opt.price
+              ? ` (${Number(opt.price).toLocaleString()}원)`
+              : "";
+            return `${name}${qty}${price}`;
+          })
+          .join(", ");
+      }
+
+      if (typeof options === "object") {
+        return options.name || JSON.stringify(options);
+      }
+
+      return "";
+    };
+
+    const pushBookingRow = (room, booking, channelName) => {
+      const start = normalize(booking.check_in);
+      const end = normalize(booking.check_out);
+
+      if (!start || !end) return;
+
+      const isVisible = selectedSet.some((target) =>
+        isBookingVisibleOnDate(target, booking),
+      );
+
+      if (!isVisible) return;
+
+      rows.push({
+        날짜: `${start} ~ ${end}`,
+        객실타입: room.room_group_name || "",
+        방번호: room.name || room.room_name || "",
+        인원: booking.qty || booking.people || "",
+        이름: booking.name || booking.guest_name || "",
+        연락처: booking.phone || booking.guest_phone || "",
+        메모: booking.memo || booking.request_memo || "",
+        옵션: optionToText(booking.booking_option),
+        결제일: booking.payment_date
+          ? String(booking.payment_date).slice(0, 10)
+          : "",
+        금액: booking.price || "",
+        채널: channelName,
+      });
+    };
+
     rooms.forEach((room) => {
-      let schedules = [];
+      // 1. 네이버 상세 데이터
+      let naverSchedules = [];
 
       try {
-        schedules =
+        naverSchedules =
           typeof room.naver_crawling_info === "string"
             ? JSON.parse(room.naver_crawling_info)
             : room.naver_crawling_info || [];
       } catch {
-        schedules = [];
+        naverSchedules = [];
       }
 
-      schedules.forEach((booking) => {
-        const start = normalize(booking.check_in);
-        const end = normalize(booking.check_out);
+      naverSchedules.forEach((booking) => {
+        pushBookingRow(room, booking, "네이버");
+      });
 
-        if (!start || !end) return;
+      // 2. 수기예약 + 홈페이지예약
+      const allSchedules = getAllSchedules(room);
 
-        const isVisible = selectedSet.some((target) =>
-          isBookingVisibleOnDate(target, booking),
-        );
+      allSchedules.forEach((booking) => {
+        const source = booking.source || "";
 
-        if (!isVisible) return; // 🔥 핵심 필터
+        if (
+          source !== "manual" &&
+          source !== "website" &&
+          !String(source).startsWith("SITE_")
+        ) {
+          return;
+        }
 
-        rows.push({
-          날짜: `${booking.check_in} ~ ${booking.check_out}`,
-          객실타입: room.room_group_name || "",
-          방번호: room.name || "",
-          인원: booking.qty || "",
-          이름: booking.name || "",
-          연락처: booking.phone || "",
-          메모: booking.request_memo || "",
-          옵션:
-            typeof booking.booking_option === "string"
-              ? booking.booking_option
-              : JSON.stringify(booking.booking_option || []),
-
-          결제일: booking.payment_date
-            ? String(booking.payment_date).slice(0, 10)
-            : "",
-
-          금액: booking.price || 0,
-          채널: "네이버",
-        });
+        pushBookingRow(room, booking, getChannelName(source));
       });
     });
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "예약목록");
 
     const excelBuffer = XLSX.write(workbook, {
