@@ -112,134 +112,208 @@ function ReservationManagement() {
 
     setCalendarData(getMonthDates(year, month));
   }, [month, year]);
+  const downloadExcel = async () => {
+    try {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
 
-  const downloadExcel = () => {
-    const now = new Date();
-    const pad = (n) => String(n).padStart(2, "0");
+      const fileTime =
+        `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
+        `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
-    const fileTime =
-      `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
-      `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-
-    const rows = [];
-
-    const selectedSet = selectedDays.map(
-      (d) =>
-        `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
-    );
-
-    const getChannelName = (source) => {
-      if (source === "naver") return "네이버";
-      if (source === "manual") return "수기예약";
-      if (source === "website" || String(source || "").startsWith("SITE_"))
-        return "홈페이지";
-      return source || "";
-    };
-
-    const optionToText = (options) => {
-      if (!options) return "";
-
-      if (typeof options === "string") return options;
-
-      if (Array.isArray(options)) {
-        return options
-          .map((opt) => {
-            const name = opt.name || "";
-            const qty = opt.qty ? ` x${opt.qty}` : "";
-            const price = opt.price
-              ? ` (${Number(opt.price).toLocaleString()}원)`
-              : "";
-            return `${name}${qty}${price}`;
-          })
-          .join(", ");
-      }
-
-      if (typeof options === "object") {
-        return options.name || JSON.stringify(options);
-      }
-
-      return "";
-    };
-
-    const pushBookingRow = (room, booking, channelName) => {
-      const start = normalize(booking.check_in);
-      const end = normalize(booking.check_out);
-
-      if (!start || !end) return;
-
-      const isVisible = selectedSet.some((target) =>
-        isBookingVisibleOnDate(target, booking),
+      const selectedSet = selectedDays.map(
+        (d) =>
+          `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
       );
 
-      if (!isVisible) return;
+      const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+      const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(
+        new Date(year, month, 0).getDate(),
+      ).padStart(2, "0")}`;
 
-      rows.push({
-        날짜: `${start} ~ ${end}`,
-        객실타입: room.room_group_name || "",
-        방번호: room.name || room.room_name || "",
-        인원: booking.qty || booking.people || "",
-        이름: booking.name || booking.guest_name || "",
-        연락처: booking.phone || booking.guest_phone || "",
-        메모: booking.memo || booking.request_memo || "",
-        옵션: optionToText(booking.booking_option),
-        결제일: booking.payment_date
-          ? String(booking.payment_date).slice(0, 10)
-          : "",
-        금액: booking.price || "",
-        채널: channelName,
-      });
-    };
+      // 홈페이지 예약 상세 가져오기
+      const paymentRes = await api.get(
+        `/api/reservation_infos?page=1&limit=10000&check_in_from=${monthStart}&check_in_to=${monthEnd}`,
+      );
 
-    rooms.forEach((room) => {
-      // 1. 네이버 상세 데이터
-      let naverSchedules = [];
+      const homepageList = paymentRes.data.data || [];
 
-      try {
-        naverSchedules =
-          typeof room.naver_crawling_info === "string"
-            ? JSON.parse(room.naver_crawling_info)
-            : room.naver_crawling_info || [];
-      } catch {
-        naverSchedules = [];
-      }
+      const homepageMap = homepageList.reduce((acc, item) => {
+        acc[`SITE_${item.id}`] = item;
+        acc[String(item.id)] = item;
+        return acc;
+      }, {});
 
-      naverSchedules.forEach((booking) => {
-        pushBookingRow(room, booking, "네이버");
-      });
+      const groupMap = groups.reduce((acc, group) => {
+        acc[Number(group.id)] = group.name;
+        return acc;
+      }, {});
 
-      // 2. 수기예약 + 홈페이지예약
-      const allSchedules = getAllSchedules(room);
+      const rows = [];
 
-      allSchedules.forEach((booking) => {
-        const source = booking.source || "";
+      const getChannelName = (source) => {
+        if (source === "naver") return "네이버";
+        if (source === "manual") return "수기예약";
+        if (source === "website" || String(source || "").startsWith("SITE_")) {
+          return "홈페이지";
+        }
+        return source || "";
+      };
 
-        if (
-          source !== "manual" &&
-          source !== "website" &&
-          !String(source).startsWith("SITE_")
-        ) {
-          return;
+      const optionToText = (options) => {
+        if (!options) return "";
+
+        let data = options;
+
+        if (typeof data === "string") {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return data;
+          }
         }
 
-        pushBookingRow(room, booking, getChannelName(source));
+        if (Array.isArray(data)) {
+          return data
+            .map((opt) => {
+              const name = opt.name || "";
+              const qty = opt.qty ? ` x${opt.qty}` : "";
+              const price = opt.price
+                ? ` (${Number(opt.price).toLocaleString()}원)`
+                : "";
+              return `${name}${qty}${price}`;
+            })
+            .join(", ");
+        }
+
+        if (typeof data === "object") {
+          return data.name || JSON.stringify(data);
+        }
+
+        return "";
+      };
+
+      const getRoomGroupName = (room) => {
+        return (
+          room.room_group_name || groupMap[Number(room.room_group_id)] || ""
+        );
+      };
+
+      const getHomepageIdFromSource = (source) => {
+        const str = String(source || "");
+        if (!str.startsWith("SITE_")) return "";
+        return str.replace("SITE_", "");
+      };
+
+      const pushBookingRow = (room, booking, channelName) => {
+        const start = normalize(booking.check_in);
+        const end = normalize(booking.check_out);
+
+        if (!start || !end) return;
+
+        const isVisible = selectedSet.some((target) =>
+          isBookingVisibleOnDate(target, booking),
+        );
+
+        if (!isVisible) return;
+
+        const source = booking.source || "";
+        const homepageId = getHomepageIdFromSource(source);
+        const homepage = homepageMap[source] || homepageMap[homepageId] || null;
+
+        rows.push({
+          날짜: `${start} ~ ${end}`,
+          객실타입: getRoomGroupName(room),
+          방번호: room.name || room.room_name || "",
+
+          인원: booking.qty || booking.people || homepage?.qty || "",
+
+          이름:
+            homepage?.buyer_name || booking.name || booking.guest_name || "",
+
+          연락처:
+            homepage?.buyer_tel || booking.phone || booking.guest_phone || "",
+
+          메모:
+            homepage?.request_memo ||
+            booking.memo ||
+            booking.request_memo ||
+            "",
+
+          옵션: optionToText(
+            homepage?.booking_option || booking.booking_option,
+          ),
+
+          결제일: homepage?.created_at
+            ? new Date(homepage.created_at).toLocaleString("ko-KR")
+            : booking.payment_date
+              ? new Date(booking.payment_date).toLocaleString("ko-KR")
+              : "",
+
+          금액: homepage?.total_amount
+            ? Number(homepage.total_amount).toLocaleString()
+            : booking.price
+              ? Number(booking.price).toLocaleString()
+              : "",
+
+          채널: channelName,
+        });
+      };
+
+      rooms.forEach((room) => {
+        // 네이버 상세
+        let naverSchedules = [];
+
+        try {
+          naverSchedules =
+            typeof room.naver_crawling_info === "string"
+              ? JSON.parse(room.naver_crawling_info)
+              : room.naver_crawling_info || [];
+        } catch {
+          naverSchedules = [];
+        }
+
+        naverSchedules.forEach((booking) => {
+          pushBookingRow(room, booking, "네이버");
+        });
+
+        // 수기 + 홈페이지
+        const allSchedules = getAllSchedules(room);
+
+        allSchedules.forEach((booking) => {
+          const source = booking.source || "";
+
+          if (
+            source !== "manual" &&
+            source !== "website" &&
+            !String(source).startsWith("SITE_")
+          ) {
+            return;
+          }
+
+          pushBookingRow(room, booking, getChannelName(source));
+        });
       });
-    });
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "예약목록");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "예약목록");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
 
-    const blob = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-    saveAs(blob, `예약목록_${year}_${month}_${fileTime}.xlsx`);
+      saveAs(blob, `예약목록_${year}_${month}_${fileTime}.xlsx`);
+    } catch (err) {
+      console.error("엑셀 다운로드 실패:", err);
+      alert("엑셀 다운로드 중 오류 발생");
+    }
   };
 
   const nextMonth = () => setMonth((prev) => prev + 1);
