@@ -36,6 +36,8 @@ function ReservationManagement() {
 
   const [checkOutFrom, setCheckOutFrom] = useState("");
   const [checkOutTo, setCheckOutTo] = useState("");
+  const [manualBookingType, setManualBookingType] = useState("stay");
+  const [roomPriceInfos, setRoomPriceInfos] = useState([]);
 
   const colorPalette = [
     "#ffe5e5",
@@ -62,6 +64,12 @@ function ReservationManagement() {
   // =================================================
   const groupColorMap = useRef({});
   const colorIndex = useRef(0);
+
+  const loadRoomPriceInfos = () => {
+    api.get(`/api/room-price?year=${year}&month=${month}`).then((response) => {
+      setRoomPriceInfos(response.data.data || []);
+    });
+  };
 
   const getRoomColor = (roomName) => {
     const groupName = roomName.replace(/[0-9]/g, "");
@@ -111,6 +119,7 @@ function ReservationManagement() {
     colorIndex.current = 0;
 
     setCalendarData(getMonthDates(year, month));
+    loadRoomPriceInfos();
   }, [month, year]);
 
   const downloadExcel = async () => {
@@ -612,16 +621,90 @@ function ReservationManagement() {
 
     return `${yyyy}-${mm}-${dd} 00:00:00`;
   };
+
+  const formatDay = (d) => {
+    return `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+  };
+
+  const getEffectiveDayUse = (room, dateObj) => {
+    const target = formatDay(dateObj);
+
+    const matchedPrice = roomPriceInfos.find(
+      (price) =>
+        String(price.date).slice(0, 10) === target &&
+        Number(price.room_group_id) === Number(room.room_group_id),
+    );
+
+    // room_price에 is_day_use 값이 있으면 그걸 최우선
+    if (
+      matchedPrice &&
+      matchedPrice.is_day_use !== null &&
+      matchedPrice.is_day_use !== undefined
+    ) {
+      return Number(matchedPrice.is_day_use);
+    }
+
+    // 없으면 기존 room.day_use 사용
+    return Number(room.day_use);
+  };
+
+  const getManualBookingRange = () => {
+    const range = selectedDays
+      .map((d) => new Date(d.year, d.month - 1, d.day))
+      .sort((a, b) => a - b);
+
+    const checkIn = range[0];
+
+    // 하루 선택
+    if (range.length === 1) {
+      const checkOut = new Date(checkIn);
+
+      // 데이유즈면 4일 ~ 4일
+      if (manualBookingType === "day") {
+        return {
+          check_in: checkIn,
+          check_out: checkOut,
+        };
+      }
+
+      // 숙박이면 4일 ~ 5일
+      checkOut.setDate(checkOut.getDate() + 1);
+
+      return {
+        check_in: checkIn,
+        check_out: checkOut,
+      };
+    }
+
+    // 여러 날짜 선택은 무조건 숙박
+    // 4~5일 선택 => 4~6일 예약, 6일은 체크아웃이라 미표시
+    const checkOut = new Date(range[range.length - 1]);
+    checkOut.setDate(checkOut.getDate() + 1);
+
+    return {
+      check_in: checkIn,
+      check_out: checkOut,
+    };
+  };
+
+  const hasAnyManualBooking = (room) => {
+    let schedules = [];
+
+    try {
+      schedules =
+        typeof room.check_in_and_out_soogie === "string"
+          ? JSON.parse(room.check_in_and_out_soogie)
+          : room.check_in_and_out_soogie || [];
+    } catch {
+      schedules = [];
+    }
+
+    return schedules.length > 0;
+  };
+
   const modifyReservationSchedule = async () => {
     try {
-      const range = selectedDays
-        .map((d) => new Date(d.year, d.month - 1, d.day))
-        .sort((a, b) => a - b);
-
-      const check_in = range[0];
-      const check_out = new Date(range[range.length - 1]);
-
-      check_out.setDate(check_out.getDate());
+      const { check_in, check_out } = getManualBookingRange();
 
       const groupsToApply = Object.entries(manualMap).filter(
         ([_, count]) => count > 0,
@@ -630,8 +713,9 @@ function ReservationManagement() {
       for (const [groupId, count] of groupsToApply) {
         const groupRooms = rooms.filter(
           (r) =>
-            r.room_group_id === Number(groupId) &&
-            (!r.check_in || !r.check_out || !isOverlap(r, selectedDays)),
+            Number(r.room_group_id) === Number(groupId) &&
+            !hasAnyManualBooking(r) &&
+            !isOverlap(r, selectedDays),
         );
 
         let assigned = 0;
@@ -666,6 +750,7 @@ function ReservationManagement() {
       alert("수기예약 완료");
 
       setIsPop(false);
+      setManualBookingType("stay");
       setManualMap({});
       setMemos({});
       setSelectedDays([]);
@@ -793,20 +878,39 @@ function ReservationManagement() {
     return [...naver, ...soogie];
   };
   const isRoomAvailable = (room, selectedDays) => {
-    const dayUse = Number(room.day_use);
-
-    // 날짜 범위
     const isSingleDay = selectedDays.length === 1;
     const isMultiDay = selectedDays.length > 1;
 
-    // 0: 숙박만 → 1일 선택도 막고 싶다면
-    if (dayUse === 0 && isSingleDay) {
-      return false;
+    // 하루 선택 + 데이유즈
+    if (isSingleDay && manualBookingType === "day") {
+      const dayUse = getEffectiveDayUse(room, selectedDays[0]);
+
+      // 0 = 숙박만 가능
+      if (dayUse === 0) {
+        return false;
+      }
     }
 
-    // 2: 데이만 → 2일 이상 선택 금지 (이게 핵심)
-    if (dayUse === 2 && isMultiDay) {
-      return false;
+    // 하루 선택 + 숙박
+    if (isSingleDay && manualBookingType === "stay") {
+      const dayUse = getEffectiveDayUse(room, selectedDays[0]);
+
+      // 2 = 데이유즈만 가능
+      if (dayUse === 2) {
+        return false;
+      }
+    }
+
+    // 여러 날짜 선택은 무조건 숙박
+    if (isMultiDay) {
+      const hasDayUseOnlyDate = selectedDays.some((d) => {
+        const dayUse = getEffectiveDayUse(room, d);
+        return dayUse === 2;
+      });
+
+      if (hasDayUseOnlyDate) {
+        return false;
+      }
     }
 
     const schedules = getAllSchedules(room);
@@ -1221,6 +1325,7 @@ function ReservationManagement() {
                 setManualMap({});
                 setMemos({});
                 setSelectedDays([]);
+                setManualBookingType("stay");
               }}
             >
               X
@@ -1237,7 +1342,42 @@ function ReservationManagement() {
                   <th>선택한 기간</th>
                   <td>{formatRange(selectedDays)}</td>
                 </tr>
+                {selectedDays.length === 1 && (
+                  <tr>
+                    <th>예약 유형</th>
+                    <td>
+                      <label style={{ marginRight: "20px" }}>
+                        <input
+                          type="radio"
+                          name="manualBookingType"
+                          value="stay"
+                          checked={manualBookingType === "stay"}
+                          onChange={() => {
+                            setManualBookingType("stay");
+                            setManualMap({});
+                            setMemos({});
+                          }}
+                        />
+                        숙박
+                      </label>
 
+                      <label>
+                        <input
+                          type="radio"
+                          name="manualBookingType"
+                          value="day"
+                          checked={manualBookingType === "day"}
+                          onChange={() => {
+                            setManualBookingType("day");
+                            setManualMap({});
+                            setMemos({});
+                          }}
+                        />
+                        데이유즈
+                      </label>
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <th>객실</th>
                   <td>
