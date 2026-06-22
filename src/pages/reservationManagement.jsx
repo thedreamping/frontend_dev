@@ -112,7 +112,9 @@ function ReservationManagement() {
 
     setCalendarData(getMonthDates(year, month));
   }, [month, year]);
+
   const downloadExcel = async () => {
+    console.log("changed!");
     try {
       const now = new Date();
       const pad = (n) => String(n).padStart(2, "0");
@@ -121,9 +123,13 @@ function ReservationManagement() {
         `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
         `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
+      const rows = [];
+
       const selectedSet = selectedDays.map(
         (d) =>
-          `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
+          `${d.year}-${String(d.month).padStart(2, "0")}-${String(
+            d.day,
+          ).padStart(2, "0")}`,
       );
 
       const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -131,12 +137,13 @@ function ReservationManagement() {
         new Date(year, month, 0).getDate(),
       ).padStart(2, "0")}`;
 
-      // 홈페이지 예약 상세 가져오기
       const paymentRes = await api.get(
         `/api/reservation_infos?page=1&limit=10000&check_in_from=${monthStart}&check_in_to=${monthEnd}`,
       );
 
       const homepageList = paymentRes.data.data || [];
+
+      console.log("homepageList", homepageList);
 
       const homepageMap = homepageList.reduce((acc, item) => {
         acc[`SITE_${item.id}`] = item;
@@ -148,8 +155,6 @@ function ReservationManagement() {
         acc[Number(group.id)] = group.name;
         return acc;
       }, {});
-
-      const rows = [];
 
       const getChannelName = (source) => {
         if (source === "naver") return "네이버";
@@ -181,6 +186,7 @@ function ReservationManagement() {
               const price = opt.price
                 ? ` (${Number(opt.price).toLocaleString()}원)`
                 : "";
+
               return `${name}${qty}${price}`;
             })
             .join(", ");
@@ -201,8 +207,43 @@ function ReservationManagement() {
 
       const getHomepageIdFromSource = (source) => {
         const str = String(source || "");
-        if (!str.startsWith("SITE_")) return "";
+
+        if (!str.startsWith("SITE_")) {
+          return "";
+        }
+
         return str.replace("SITE_", "");
+      };
+
+      const isSameDate = (a, b) => {
+        return normalize(a) === normalize(b);
+      };
+
+      const findHomepageReservation = (booking, start, end) => {
+        const source = booking.source || "";
+        const homepageId = getHomepageIdFromSource(source);
+
+        let homepage = homepageMap[source] || homepageMap[homepageId] || null;
+
+        if (homepage) {
+          return homepage;
+        }
+
+        if (source !== "website" && !String(source).startsWith("SITE_")) {
+          return null;
+        }
+
+        homepage = homepageList.find((item) => {
+          const itemCheckIn = normalize(item.check_in);
+          const itemCheckOut = normalize(item.check_out);
+
+          if (itemCheckIn !== start) return false;
+          if (itemCheckOut !== end) return false;
+
+          return true;
+        });
+
+        return homepage || null;
       };
 
       const pushBookingRow = (room, booking, channelName) => {
@@ -218,8 +259,10 @@ function ReservationManagement() {
         if (!isVisible) return;
 
         const source = booking.source || "";
-        const homepageId = getHomepageIdFromSource(source);
-        const homepage = homepageMap[source] || homepageMap[homepageId] || null;
+        const homepage = findHomepageReservation(booking, start, end);
+
+        console.log("booking source", source, booking);
+        console.log("matched homepage", homepage);
 
         rows.push({
           날짜: `${start} ~ ${end}`,
@@ -250,18 +293,19 @@ function ReservationManagement() {
               ? new Date(booking.payment_date).toLocaleString("ko-KR")
               : "",
 
-          금액: homepage?.total_amount
-            ? Number(homepage.total_amount).toLocaleString()
-            : booking.price
-              ? Number(booking.price).toLocaleString()
-              : "",
+          금액:
+            homepage?.total_amount !== undefined &&
+            homepage?.total_amount !== null
+              ? Number(homepage.total_amount).toLocaleString()
+              : booking.price
+                ? Number(booking.price).toLocaleString()
+                : "",
 
           채널: channelName,
         });
       };
 
       rooms.forEach((room) => {
-        // 네이버 상세
         let naverSchedules = [];
 
         try {
@@ -277,7 +321,6 @@ function ReservationManagement() {
           pushBookingRow(room, booking, "네이버");
         });
 
-        // 수기 + 홈페이지
         const allSchedules = getAllSchedules(room);
 
         allSchedules.forEach((booking) => {
