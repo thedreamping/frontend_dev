@@ -288,7 +288,7 @@ function ReservationManagement() {
           객실타입: getRoomGroupName(room),
           방번호: room.name || room.room_name || "",
 
-          인원: homepage?.qty || booking.qty || booking.people || "",
+          방수: homepage?.qty || booking.qty || booking.people || "",
 
           이름:
             homepage?.buyer_name || booking.name || booking.guest_name || "",
