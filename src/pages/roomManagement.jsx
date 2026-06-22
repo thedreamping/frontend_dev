@@ -544,7 +544,7 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th>예약 타입</th>
                   <td>
                     <div className="checks">
@@ -580,7 +580,7 @@ function RoomManagement() {
                       <label htmlFor="day_only">데이유즈만 가능</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th>최소인원</th>
                   <td>
@@ -707,7 +707,7 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
-                <tr>
+                {/* <tr>
                   <th>예약 타입</th>
                   <td>
                     <div className="checks">
@@ -743,7 +743,7 @@ function RoomManagement() {
                       <label htmlFor="day_only">데이유즈만 가능</label>
                     </div>
                   </td>
-                </tr>
+                </tr> */}
                 <tr>
                   <th>최소인원</th>
                   <td>

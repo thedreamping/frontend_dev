@@ -17,6 +17,7 @@ function ReservationEnv() {
   const [checkedId, setCheckedId] = useState([]);
   const [priceInfos, setPriceInfos] = useState([]);
   const [isOneDayEdit, setIsOneDayEdit] = useState(false);
+  const [isTypePop, setIsTypePop] = useState(false);
 
   function getMonthDates(year, month) {
     // month: 1 ~ 12 (사람 기준)
@@ -60,6 +61,40 @@ function ReservationEnv() {
     console.log(calendarData);
     console.log(buildCalendarRows(calendarData));
   }, [calendarData]);
+
+  const updateRoomPriceType = async (type) => {
+    try {
+      const formattedDates = selectedDays.map((d) => {
+        const month = d.month < 10 ? "0" + d.month : d.month;
+        const day = d.day < 10 ? "0" + d.day : d.day;
+        return `${d.year}-${month}-${day}`;
+      });
+
+      if (formattedDates.length === 0) {
+        alert("변경할 날짜를 선택해 주세요.");
+        return;
+      }
+
+      if (checkedId.length === 0) {
+        alert("변경할 객실을 선택해 주세요.");
+        return;
+      }
+
+      await api.patch("/api/room-price/day-use", {
+        dates: formattedDates,
+        room_group_ids: checkedId,
+        is_day_use: type,
+      });
+
+      alert("가능 유형이 변경되었습니다.");
+      setIsTypePop(false);
+      setSelectedDays([]);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("가능 유형 변경 중 오류 발생");
+    }
+  };
 
   const buildCalendarRows = (dates) => {
     if (!dates || dates.length === 0) return [];
@@ -109,6 +144,7 @@ function ReservationEnv() {
         day_use_price: 0,
         human_plus_price: 0,
         pet_plus_price: 0,
+        is_day_use: 1,
       }));
 
       setRoomGroup(newData);
@@ -134,6 +170,7 @@ function ReservationEnv() {
           day_use_price: Number(room.day_use_price),
           human_plus_price: Number(room.human_plus_price),
           pet_plus_price: Number(room.pet_plus_price),
+          is_day_use: Number(room.is_day_use ?? 1),
         }));
       console.log(rooms);
       if (rooms.length === 0) {
@@ -190,13 +227,16 @@ function ReservationEnv() {
     }
     setRoomGroup((data) => {
       return data.map((item) => {
-        const matchedRoom = rooms.find((r) => r.room_group_name === item.name);
+        const matchedRoom = rooms.find(
+          (r) => Number(r.room_group_id) === Number(item.id),
+        );
         return {
           ...item,
           price: matchedRoom ? matchedRoom.price : 0,
           day_use_price: matchedRoom ? matchedRoom.day_use_price : 0,
           human_plus_price: matchedRoom ? matchedRoom.human_plus_price : 0,
           pet_plus_price: matchedRoom ? matchedRoom.pet_plus_price : 0,
+          is_day_use: matchedRoom ? Number(matchedRoom.is_day_use ?? 1) : 1,
         };
       });
     });
@@ -222,6 +262,19 @@ function ReservationEnv() {
               }}
             >
               선택한 날짜 객실 가격 설정
+            </button>
+            <button
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("변경할 날짜를 선택해 주세요");
+                  return;
+                }
+
+                getRoomGroup();
+                setIsTypePop(true);
+              }}
+            >
+              선택한 날짜 가능유형 일괄 변경
             </button>
           </div>
           <div className="rooms_calendar_info">
@@ -378,7 +431,14 @@ function ReservationEnv() {
                               추가인원 단가 :{" "}
                               {price.human_plus_price?.toLocaleString()}원<br />
                               추가 pet 단가 :{" "}
-                              {price.pet_plus_price?.toLocaleString()}원
+                              {price.pet_plus_price?.toLocaleString()}원<br />
+                              {price.is_day_use === 0 && <div>숙박만 가능</div>}
+                              {price.is_day_use === 1 && (
+                                <div>숙박+데이유즈 가능</div>
+                              )}
+                              {price.is_day_use === 2 && (
+                                <div>데이유즈만 가능</div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -401,6 +461,19 @@ function ReservationEnv() {
               }}
             >
               선택한 날짜 객실 가격 설정
+            </button>
+            <button
+              onClick={() => {
+                if (selectedDays.length === 0) {
+                  alert("변경할 날짜를 선택해 주세요");
+                  return;
+                }
+
+                getRoomGroup();
+                setIsTypePop(true);
+              }}
+            >
+              선택한 날짜 가능유형 일괄 변경
             </button>
           </div>
         </div>
@@ -472,6 +545,45 @@ function ReservationEnv() {
                                   {data.name}
                                 </th>
                                 <td>
+                                  숙박
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      data.is_day_use === 0 ||
+                                      data.is_day_use === 1
+                                    }
+                                    onChange={(e) => {
+                                      const stayChecked = e.target.checked;
+                                      const dayUseChecked =
+                                        data.is_day_use === 1 ||
+                                        data.is_day_use === 2;
+
+                                      if (!stayChecked && !dayUseChecked) {
+                                        alert(
+                                          "숙박 또는 데이유즈 중 하나는 선택해야 합니다.",
+                                        );
+                                        return;
+                                      }
+                                      let nextValue = 0;
+
+                                      if (stayChecked && dayUseChecked)
+                                        nextValue = 1;
+                                      else if (stayChecked && !dayUseChecked)
+                                        nextValue = 0;
+                                      else if (!stayChecked && dayUseChecked)
+                                        nextValue = 2;
+                                      else nextValue = 0;
+
+                                      setRoomGroup((prev) =>
+                                        prev.map((item, index) =>
+                                          index === i
+                                            ? { ...item, is_day_use: nextValue }
+                                            : item,
+                                        ),
+                                      );
+                                    }}
+                                    disabled={!checkedId.includes(data.id)}
+                                  />
                                   <input
                                     type="number"
                                     value={data.price}
@@ -490,6 +602,45 @@ function ReservationEnv() {
                                   />{" "}
                                   원
                                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;데이유즈{" "}
+                                  <input
+                                    type="checkbox"
+                                    checked={
+                                      data.is_day_use === 1 ||
+                                      data.is_day_use === 2
+                                    }
+                                    onChange={(e) => {
+                                      const dayUseChecked = e.target.checked;
+                                      const stayChecked =
+                                        data.is_day_use === 0 ||
+                                        data.is_day_use === 1;
+
+                                      if (!stayChecked && !dayUseChecked) {
+                                        alert(
+                                          "숙박 또는 데이유즈 중 하나는 선택해야 합니다.",
+                                        );
+                                        return;
+                                      }
+
+                                      let nextValue = 0;
+
+                                      if (stayChecked && dayUseChecked)
+                                        nextValue = 1;
+                                      else if (stayChecked && !dayUseChecked)
+                                        nextValue = 0;
+                                      else if (!stayChecked && dayUseChecked)
+                                        nextValue = 2;
+                                      else nextValue = 0;
+
+                                      setRoomGroup((prev) =>
+                                        prev.map((item, index) =>
+                                          index === i
+                                            ? { ...item, is_day_use: nextValue }
+                                            : item,
+                                        ),
+                                      );
+                                    }}
+                                    disabled={!checkedId.includes(data.id)}
+                                  />
                                   <input
                                     type="number"
                                     value={data.day_use_price}
@@ -566,6 +717,86 @@ function ReservationEnv() {
               <div className="btn_area">
                 <button className="green" onClick={saveRoomPrice}>
                   저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isTypePop && (
+        <div className="popup_wrap">
+          <div className="popup" style={{ width: "600px", height: "700px" }}>
+            <div className="popup_title">가능유형 일괄 변경</div>
+
+            <div
+              className="popup_x"
+              onClick={() => {
+                setIsTypePop(false);
+              }}
+            >
+              X
+            </div>
+
+            <div className="ovf_scroll_for_pop">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>선택된 날짜</th>
+                    <td>
+                      {selectedDays.map((data, i) => (
+                        <span className="date_span" key={`type-date-${i}`}>
+                          {`${data.year}-${
+                            data.month < 10 ? "0" + data.month : data.month
+                          }-${data.day < 10 ? "0" + data.day : data.day}`}
+                        </span>
+                      ))}
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <th>변경할 객실</th>
+                    <td>
+                      {roomGroup.map((data) => (
+                        <div key={`type-room-${data.id}`}>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={checkedId.includes(data.id)}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked;
+
+                                setCheckedId((prev) => {
+                                  if (isChecked) {
+                                    return prev.includes(data.id)
+                                      ? prev
+                                      : [...prev, data.id];
+                                  }
+
+                                  return prev.filter((id) => id !== data.id);
+                                });
+                              }}
+                            />
+                            {data.name}
+                          </label>
+                        </div>
+                      ))}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="btn_area">
+                <button onClick={() => updateRoomPriceType(0)}>
+                  숙박만 가능
+                </button>
+
+                <button onClick={() => updateRoomPriceType(1)}>
+                  숙박 + 데이유즈 가능
+                </button>
+
+                <button onClick={() => updateRoomPriceType(2)}>
+                  데이유즈만 가능
                 </button>
               </div>
             </div>
