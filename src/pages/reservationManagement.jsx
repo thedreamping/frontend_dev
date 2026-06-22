@@ -114,7 +114,6 @@ function ReservationManagement() {
   }, [month, year]);
 
   const downloadExcel = async () => {
-    console.log("changed!");
     try {
       const now = new Date();
       const pad = (n) => String(n).padStart(2, "0");
@@ -123,13 +122,9 @@ function ReservationManagement() {
         `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
         `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
-      const rows = [];
-
       const selectedSet = selectedDays.map(
         (d) =>
-          `${d.year}-${String(d.month).padStart(2, "0")}-${String(
-            d.day,
-          ).padStart(2, "0")}`,
+          `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
       );
 
       const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -143,8 +138,6 @@ function ReservationManagement() {
 
       const homepageList = paymentRes.data.data || [];
 
-      console.log("homepageList", homepageList);
-
       const homepageMap = homepageList.reduce((acc, item) => {
         acc[`SITE_${item.id}`] = item;
         acc[String(item.id)] = item;
@@ -155,6 +148,8 @@ function ReservationManagement() {
         acc[Number(group.id)] = group.name;
         return acc;
       }, {});
+
+      const rows = [];
 
       const getChannelName = (source) => {
         if (source === "naver") return "네이버";
@@ -215,17 +210,13 @@ function ReservationManagement() {
         return str.replace("SITE_", "");
       };
 
-      const isSameDate = (a, b) => {
-        return normalize(a) === normalize(b);
-      };
-
-      const findHomepageReservation = (booking, start, end) => {
+      const findHomepageReservation = (room, booking, start, end) => {
         const source = booking.source || "";
         const homepageId = getHomepageIdFromSource(source);
 
         let homepage = homepageMap[source] || homepageMap[homepageId] || null;
 
-        if (homepage) {
+        if (homepage && homepage.status === "PAID") {
           return homepage;
         }
 
@@ -234,8 +225,29 @@ function ReservationManagement() {
         }
 
         homepage = homepageList.find((item) => {
+          if (item.status !== "PAID") return false;
+
           const itemCheckIn = normalize(item.check_in);
           const itemCheckOut = normalize(item.check_out);
+
+          if (Number(item.room_id) !== Number(room.id)) return false;
+          if (itemCheckIn !== start) return false;
+          if (itemCheckOut !== end) return false;
+
+          return true;
+        });
+
+        if (homepage) return homepage;
+
+        homepage = homepageList.find((item) => {
+          if (item.status !== "PAID") return false;
+
+          const itemCheckIn = normalize(item.check_in);
+          const itemCheckOut = normalize(item.check_out);
+
+          if (Number(item.room_group_id) !== Number(room.room_group_id)) {
+            return false;
+          }
 
           if (itemCheckIn !== start) return false;
           if (itemCheckOut !== end) return false;
@@ -258,18 +270,14 @@ function ReservationManagement() {
 
         if (!isVisible) return;
 
-        const source = booking.source || "";
-        const homepage = findHomepageReservation(booking, start, end);
-
-        console.log("booking source", source, booking);
-        console.log("matched homepage", homepage);
+        const homepage = findHomepageReservation(room, booking, start, end);
 
         rows.push({
           날짜: `${start} ~ ${end}`,
           객실타입: getRoomGroupName(room),
           방번호: room.name || room.room_name || "",
 
-          인원: booking.qty || booking.people || homepage?.qty || "",
+          인원: homepage?.qty || booking.qty || booking.people || "",
 
           이름:
             homepage?.buyer_name || booking.name || booking.guest_name || "",
@@ -277,15 +285,9 @@ function ReservationManagement() {
           연락처:
             homepage?.buyer_tel || booking.phone || booking.guest_phone || "",
 
-          메모:
-            homepage?.request_memo ||
-            booking.memo ||
-            booking.request_memo ||
-            "",
+          메모: homepage?.memo || booking.memo || booking.request_memo || "",
 
-          옵션: optionToText(
-            homepage?.booking_option || booking.booking_option,
-          ),
+          옵션: optionToText(homepage?.options || booking.booking_option),
 
           결제일: homepage?.created_at
             ? new Date(homepage.created_at).toLocaleString("ko-KR")
