@@ -122,6 +122,8 @@ function ReservationManagement() {
         `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_` +
         `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 
+      const rows = [];
+
       const selectedSet = selectedDays.map(
         (d) =>
           `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`,
@@ -138,18 +140,28 @@ function ReservationManagement() {
 
       const homepageList = paymentRes.data.data || [];
 
-      const homepageMap = homepageList.reduce((acc, item) => {
-        acc[`SITE_${item.id}`] = item;
-        acc[String(item.id)] = item;
-        return acc;
-      }, {});
-
       const groupMap = groups.reduce((acc, group) => {
         acc[Number(group.id)] = group.name;
         return acc;
       }, {});
 
-      const rows = [];
+      const toKSTDate = (value) => {
+        if (!value) return "";
+
+        if (String(value).length === 10) {
+          return value;
+        }
+
+        return new Date(value).toLocaleDateString("sv-SE", {
+          timeZone: "Asia/Seoul",
+        });
+      };
+
+      const getRoomGroupName = (room) => {
+        return (
+          room.room_group_name || groupMap[Number(room.room_group_id)] || ""
+        );
+      };
 
       const getChannelName = (source) => {
         if (source === "naver") return "네이버";
@@ -181,7 +193,6 @@ function ReservationManagement() {
               const price = opt.price
                 ? ` (${Number(opt.price).toLocaleString()}원)`
                 : "";
-
               return `${name}${qty}${price}`;
             })
             .join(", ");
@@ -194,41 +205,37 @@ function ReservationManagement() {
         return "";
       };
 
-      const getRoomGroupName = (room) => {
-        return (
-          room.room_group_name || groupMap[Number(room.room_group_id)] || ""
-        );
-      };
-
       const getHomepageIdFromSource = (source) => {
         const str = String(source || "");
-
-        if (!str.startsWith("SITE_")) {
-          return "";
-        }
-
+        if (!str.startsWith("SITE_")) return "";
         return str.replace("SITE_", "");
       };
 
       const findHomepageReservation = (room, booking, start, end) => {
-        const source = booking.source || "";
+        const source = String(booking.source || "");
         const homepageId = getHomepageIdFromSource(source);
 
-        let homepage = homepageMap[source] || homepageMap[homepageId] || null;
+        let homepage = null;
 
-        if (homepage && homepage.status === "PAID") {
-          return homepage;
+        if (homepageId) {
+          homepage = homepageList.find(
+            (item) => Number(item.id) === Number(homepageId),
+          );
+
+          if (homepage && homepage.status === "PAID") {
+            return homepage;
+          }
         }
 
-        if (source !== "website" && !String(source).startsWith("SITE_")) {
+        if (source !== "website" && !source.startsWith("SITE_")) {
           return null;
         }
 
         homepage = homepageList.find((item) => {
           if (item.status !== "PAID") return false;
 
-          const itemCheckIn = normalize(item.check_in);
-          const itemCheckOut = normalize(item.check_out);
+          const itemCheckIn = toKSTDate(item.check_in);
+          const itemCheckOut = toKSTDate(item.check_out);
 
           if (Number(item.room_id) !== Number(room.id)) return false;
           if (itemCheckIn !== start) return false;
@@ -242,8 +249,8 @@ function ReservationManagement() {
         homepage = homepageList.find((item) => {
           if (item.status !== "PAID") return false;
 
-          const itemCheckIn = normalize(item.check_in);
-          const itemCheckOut = normalize(item.check_out);
+          const itemCheckIn = toKSTDate(item.check_in);
+          const itemCheckOut = toKSTDate(item.check_out);
 
           if (Number(item.room_group_id) !== Number(room.room_group_id)) {
             return false;
@@ -259,13 +266,17 @@ function ReservationManagement() {
       };
 
       const pushBookingRow = (room, booking, channelName) => {
-        const start = normalize(booking.check_in);
-        const end = normalize(booking.check_out);
+        const start = toKSTDate(booking.check_in);
+        const end = toKSTDate(booking.check_out);
 
         if (!start || !end) return;
 
         const isVisible = selectedSet.some((target) =>
-          isBookingVisibleOnDate(target, booking),
+          isBookingVisibleOnDate(target, {
+            ...booking,
+            check_in: start,
+            check_out: end,
+          }),
         );
 
         if (!isVisible) return;

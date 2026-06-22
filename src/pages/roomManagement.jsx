@@ -802,38 +802,6 @@ function RoomManagement() {
                     </div>
                   </td>
                 </tr> */}
-                {isActive === false && (
-                  <>
-                    <tr>
-                      <th>기간</th>
-                      <td>
-                        <td>
-                          <MyDatePicker
-                            value={startDate}
-                            onDateChange={handleDateChange1}
-                          />{" "}
-                          ~{" "}
-                          <MyDatePicker
-                            value={endDate}
-                            onDateChange={handleDateChange2}
-                          />
-                        </td>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>비고</th>
-                      <td>
-                        <textarea
-                          value={roomReason}
-                          onChange={(e) => {
-                            setRoomReason(e.target.value);
-                          }}
-                          readOnly
-                        ></textarea>
-                      </td>
-                    </tr>
-                  </>
-                )}
               </tbody>
             </table>
             <div className="btn_area">
@@ -910,38 +878,6 @@ function RoomManagement() {
                     </div>
                   </td>
                 </tr> */}
-                {isActiveGroup === false && (
-                  <>
-                    <tr>
-                      <th>기간</th>
-                      <td>
-                        <td>
-                          <MyDatePicker
-                            value={startDate}
-                            onDateChange={handleDateChange1}
-                          />{" "}
-                          ~{" "}
-                          <MyDatePicker
-                            value={endDate}
-                            onDateChange={handleDateChange2}
-                          />
-                        </td>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>비고</th>
-                      <td>
-                        <textarea
-                          value={groupReason}
-                          onChange={(e) => {
-                            setGroupReason(e.target.value);
-                          }}
-                          readOnly
-                        ></textarea>
-                      </td>
-                    </tr>
-                  </>
-                )}
               </tbody>
             </table>
             <div className="btn_area">
@@ -1008,38 +944,6 @@ function RoomManagement() {
                     </div>
                   </td>
                 </tr> */}
-                {isActiveGroup === false && (
-                  <>
-                    <tr>
-                      <th>기간</th>
-                      <td>
-                        <td>
-                          <MyDatePicker
-                            value={startDate}
-                            onDateChange={handleDateChange1}
-                          />{" "}
-                          ~{" "}
-                          <MyDatePicker
-                            value={endDate}
-                            onDateChange={handleDateChange2}
-                          />
-                        </td>
-                      </td>
-                    </tr>
-                    <tr>
-                      <th>비고</th>
-                      <td>
-                        <textarea
-                          value={groupReason}
-                          onChange={(e) => {
-                            setGroupReason(e.target.value);
-                          }}
-                          readOnly
-                        ></textarea>
-                      </td>
-                    </tr>
-                  </>
-                )}
               </tbody>
             </table>
             {/* <div className="btn_area">
