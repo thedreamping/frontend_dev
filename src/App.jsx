@@ -24,6 +24,7 @@ import LogAudit from "./pages/logAudit";
 import ReservationManagement from "./pages/reservationManagement";
 import PaymentList from "./pages/paymentList";
 import { setApiLoadingHandler } from "./api/api";
+import LedgerTicketBnManagement from "./pages/ledgerTicketBnManagement";
 import axios from "axios";
 
 function App() {
@@ -205,6 +206,9 @@ function App() {
               <Link to="/special_offer_management">SPECIAL OFFER관리</Link>
             </li>
             <li>
+              <Link to="/ledger_ticket_bn_management">레저티켓 배너 관리</Link>
+            </li>
+            <li>
               <Link to="/around_and_spot">Around & Spot 관리</Link>
             </li>
             <li>
@@ -242,6 +246,10 @@ function App() {
           <Route path="/main_bn_management" element={<MainBnManagement />} />
           <Route path="/around_and_spot" element={<AroundAndSpot />} />
           <Route path="/dk_banners" element={<DkBanners />} />
+          <Route
+            path="/ledger_ticket_bn_management"
+            element={<LedgerTicketBnManagement />}
+          />
           <Route
             path="/reservation_management"
             element={<ReservationManagement />}
