@@ -148,7 +148,7 @@ function ReservationEnv() {
       }));
 
       setRoomGroup(newData);
-      setCheckedId(newData.map((data) => data.id));
+      setCheckedId(newData.map((data) => Number(data.id)));
     });
   };
 
@@ -162,7 +162,7 @@ function ReservationEnv() {
 
       // ✅ 체크된 룸만 필터링
       const rooms = roomGroup
-        .filter((room) => checkedId.includes(room.id))
+        .filter((room) => checkedId.includes(Number(room.id)))
         .map((room) => ({
           room_group_id: room.id,
           room_group_name: room.name,
@@ -173,14 +173,11 @@ function ReservationEnv() {
           is_day_use: Number(room.is_day_use ?? 1),
         }));
       console.log(rooms);
-      if (rooms.length === 0) {
-        alert("선택된 객실이 없습니다.");
-        return;
-      }
 
       await api.post("/api/room-price", {
         dates: formattedDates,
         rooms: rooms,
+        checkedIds: checkedId,
       });
 
       alert("가격 저장 완료");
@@ -215,32 +212,34 @@ function ReservationEnv() {
 
     return priceInfos.filter((item) => item.date === formatted);
   };
-
   const editOnlyOne = (date, rooms) => {
-    console.log(date, rooms);
     if (!date) return;
+
     setSelectedDays([date]);
     setIsOneDayEdit(true);
-    if (!rooms || rooms.length === 0) {
-      setIsPop(true);
-      return;
-    }
+
     setRoomGroup((data) => {
       return data.map((item) => {
-        const matchedRoom = rooms.find(
+        const matchedRoom = rooms?.find(
           (r) => Number(r.room_group_id) === Number(item.id),
         );
+
         return {
           ...item,
-          price: matchedRoom ? matchedRoom.price : 0,
-          day_use_price: matchedRoom ? matchedRoom.day_use_price : 0,
-          human_plus_price: matchedRoom ? matchedRoom.human_plus_price : 0,
-          pet_plus_price: matchedRoom ? matchedRoom.pet_plus_price : 0,
+          price: matchedRoom ? Number(matchedRoom.price) : 0,
+          day_use_price: matchedRoom ? Number(matchedRoom.day_use_price) : 0,
+          human_plus_price: matchedRoom
+            ? Number(matchedRoom.human_plus_price)
+            : 0,
+          pet_plus_price: matchedRoom ? Number(matchedRoom.pet_plus_price) : 0,
           is_day_use: matchedRoom ? Number(matchedRoom.is_day_use ?? 1) : 1,
         };
       });
     });
-    setCheckedId(rooms.map((r) => r.room_group_id));
+
+    // 핵심: 이 날짜에 실제 저장된 room_price 기준으로 체크
+    setCheckedId((rooms || []).map((r) => Number(r.room_group_id)));
+
     setIsPop(true);
   };
 
@@ -523,18 +522,21 @@ function ReservationEnv() {
                                     <input
                                       type="checkbox"
                                       id={data.id}
-                                      checked={checkedId.includes(data.id)}
+                                      checked={checkedId.includes(
+                                        Number(data.id),
+                                      )}
                                       onChange={(e) => {
                                         const isChecked = e.target.checked;
 
                                         setCheckedId((prev) => {
+                                          const roomId = Number(data.id);
                                           if (isChecked) {
-                                            return prev.includes(data.id)
+                                            return prev.includes(roomId)
                                               ? prev
-                                              : [...prev, data.id];
+                                              : [...prev, roomId];
                                           } else {
                                             return prev.filter(
-                                              (id) => id !== data.id,
+                                              (id) => id !== roomId,
                                             );
                                           }
                                         });
@@ -582,7 +584,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />
                                   <input
                                     type="number"
@@ -598,7 +602,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />{" "}
                                   원
                                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;데이유즈{" "}
@@ -639,7 +645,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />
                                   <input
                                     type="number"
@@ -658,7 +666,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />{" "}
                                   원
                                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;추가인원
@@ -680,7 +690,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />{" "}
                                   원 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;추가
                                   pet 단가&nbsp;&nbsp;
@@ -701,7 +713,9 @@ function ReservationEnv() {
                                         ),
                                       );
                                     }}
-                                    disabled={!checkedId.includes(data.id)}
+                                    disabled={
+                                      !checkedId.includes(Number(data.id))
+                                    }
                                   />{" "}
                                   원
                                 </td>
@@ -762,18 +776,19 @@ function ReservationEnv() {
                           <label>
                             <input
                               type="checkbox"
-                              checked={checkedId.includes(data.id)}
+                              checked={checkedId.includes(Number(data.id))}
                               onChange={(e) => {
                                 const isChecked = e.target.checked;
+                                const roomId = Number(data.id);
 
                                 setCheckedId((prev) => {
                                   if (isChecked) {
-                                    return prev.includes(data.id)
+                                    return prev.includes(roomId)
                                       ? prev
-                                      : [...prev, data.id];
+                                      : [...prev, roomId];
                                   }
 
-                                  return prev.filter((id) => id !== data.id);
+                                  return prev.filter((id) => id !== roomId);
                                 });
                               }}
                             />
