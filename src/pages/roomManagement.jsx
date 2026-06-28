@@ -375,7 +375,8 @@ function RoomManagement() {
             }}>
               숙박 예약 일괄처리
             </button>{" "} */}
-            <div className="room_cell_active active"></div> 오늘 빈방
+            <div className="room_cell_active active"></div> 오늘 빈방 (오늘
+            체크인, 체크아웃 내역 없는 방)
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             <div className="room_cell_active"></div> 한달내로 예약되어져 있음
             (방이 투명하면 현재 숙박되어지는 중 체크아웃되는 방도 여기 포함)
