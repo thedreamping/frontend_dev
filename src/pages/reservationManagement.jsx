@@ -505,6 +505,11 @@ function ReservationManagement() {
 
   const getRooms = () => {
     api.get("/api/rooms").then((response) => {
+      console.log("ROOMS RESPONSE", response.data.data);
+
+      const cube1 = response.data.data.find((r) => r.name === "큐1");
+      console.log("큐1 데이터", cube1);
+      console.log("큐1 수기예약", cube1?.check_in_and_out_soogie);
       setRooms(response.data.data || []);
     });
   };
@@ -559,17 +564,7 @@ function ReservationManagement() {
   // 🔥 FIX: overlap 함수 통합 사용
   // =================================================
   const isOverlap = (room, selectedDays) => {
-    if (!room.check_in_and_out) return false;
-
-    let schedules = room.check_in_and_out;
-
-    if (typeof schedules === "string") {
-      try {
-        schedules = JSON.parse(schedules);
-      } catch {
-        return false;
-      }
-    }
+    const schedules = getAllSchedules(room);
 
     return selectedDays.some((d) => {
       const target = `${d.year}-${String(d.month).padStart(2, "0")}-${String(
@@ -577,11 +572,16 @@ function ReservationManagement() {
       ).padStart(2, "0")}`;
 
       return schedules.some((s) => {
-        if (s.check_in === s.check_out) {
-          return target === s.check_in;
+        const start = normalize(s.check_in);
+        const end = normalize(s.check_out);
+
+        if (!start || !end) return false;
+
+        if (start === end) {
+          return target === start;
         }
 
-        return target >= s.check_in && target < s.check_out;
+        return target >= start && target < end;
       });
     });
   };
@@ -711,12 +711,15 @@ function ReservationManagement() {
       );
 
       for (const [groupId, count] of groupsToApply) {
-        const groupRooms = rooms.filter(
-          (r) =>
-            Number(r.room_group_id) === Number(groupId) &&
-            !hasAnyManualBooking(r) &&
-            !isOverlap(r, selectedDays),
-        );
+        const groupRooms = rooms
+          .filter(
+            (r) =>
+              Number(r.room_group_id) === Number(groupId) &&
+              !isOverlap(r, selectedDays),
+          )
+          .sort((a, b) => {
+            return a.name.localeCompare(b.name, undefined, { numeric: true });
+          });
 
         let assigned = 0;
 
@@ -725,16 +728,7 @@ function ReservationManagement() {
 
           const memoText = memos[groupId]?.[assigned] || "";
 
-          await api.put(`/api/room/${room.id}`, {
-            name: room.name,
-            is_active: 0,
-            capacity_max: room.capacity_max,
-            capacity_min: room.capacity_min,
-            day_use: room.day_use,
-            disable_start: formatDate(check_in),
-            disable_end: formatDate(check_out),
-            reason: "수기예약",
-
+          await api.post(`/api/room/${room.id}/manual-booking`, {
             manual_booking: {
               source: "manual",
               check_in: formatDate(check_in).slice(0, 10),
