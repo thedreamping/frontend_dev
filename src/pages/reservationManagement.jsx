@@ -1082,9 +1082,13 @@ function ReservationManagement() {
 
     return "-";
   };
-  const renderPayload = (payload, canceled) => {
+
+  const renderPayload = (payload, canceled, rowCreatedAt, source) => {
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
+
+      const paymentDate =
+        data.payment_date || (source === "website" ? rowCreatedAt : null);
 
       return `
       ${
@@ -1097,7 +1101,7 @@ function ReservationManagement() {
       상품명 : ${data.product_name || "-"}<br />
       방수 : ${data.qty || "-"}<br />
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
-      결제일 : ${formatKSTDateTime(data.payment_date)}<br />
+      결제일 : ${formatKSTDateTime(paymentDate)}<br />
       체크인 : ${data.check_in || "-"}<br />
       체크아웃 : ${data.check_out || "-"}<br />
       예약번호 : ${data.booking_id || "-"}<br/>
@@ -1759,6 +1763,8 @@ function ReservationManagement() {
                               __html: renderPayload(
                                 data.payload,
                                 data.canceled,
+                                data.created_at,
+                                data.source,
                               ),
                             }}
                           ></td>
