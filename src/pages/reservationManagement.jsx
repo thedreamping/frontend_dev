@@ -38,6 +38,8 @@ function ReservationManagement() {
   const [checkOutTo, setCheckOutTo] = useState("");
   const [manualBookingType, setManualBookingType] = useState("stay");
   const [roomPriceInfos, setRoomPriceInfos] = useState([]);
+  const [paymentFrom, setPaymentFrom] = useState("");
+  const [paymentTo, setPaymentTo] = useState("");
 
   const colorPalette = [
     "#ffe5e5",
@@ -1009,13 +1011,12 @@ function ReservationManagement() {
       &guest_phone=${encodeURIComponent(guestPhone)}
       &memo=${encodeURIComponent(guestMemo)}
       &check_in_from=${encodeURIComponent(checkInFrom)}
-      &check_in_to=${encodeURIComponent(checkInTo)}
-      &check_out_from=${encodeURIComponent(checkOutFrom)}
-      &check_out_to=${encodeURIComponent(checkOutTo)}`.replace(/\s+/g, ""),
+      &check_out_to=${encodeURIComponent(checkOutTo)}
+      &payment_from=${encodeURIComponent(paymentFrom)}
+      &payment_to=${encodeURIComponent(paymentTo)}`.replace(/\s+/g, ""),
       )
       .then((response) => {
         setHistoryData(response.data.list);
-
         setHistoryTotal(response.data.total);
         setHistoryTotalPage(response.data.totalPage);
       });
@@ -1081,26 +1082,32 @@ function ReservationManagement() {
 
     return "-";
   };
-
-  const renderPayload = (payload) => {
+  const renderPayload = (payload, canceled) => {
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
 
       return `
-      예약자 : ${data.name}<br />
-      연락처 : ${data.phone}<br />
-      상품명 : ${data.product_name}<br />
-      방수 : ${data.qty}<br />
-      금액 : ${data.price.toLocaleString()}원<br />
+      ${
+        Number(canceled) === 1
+          ? `<div style="color:red;font-weight:bold;margin-bottom:6px;">취소됨</div>`
+          : ""
+      }
+      예약자 : ${data.name || "-"}<br />
+      연락처 : ${data.phone || "-"}<br />
+      상품명 : ${data.product_name || "-"}<br />
+      방수 : ${data.qty || "-"}<br />
+      금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
       결제일 : ${formatKSTDateTime(data.payment_date)}<br />
-      체크인 : ${data.check_in}<br />
-      체크아웃 : ${data.check_out}<br />
-      예약번호 : ${data.booking_id}<br/>
+      체크인 : ${data.check_in || "-"}<br />
+      체크아웃 : ${data.check_out || "-"}<br />
+      예약번호 : ${data.booking_id || "-"}<br/>
       옵션 : ${renderOptions(data.booking_option)}<br/>
-      메모 :  ${data.request_memo || ""}
+      메모 : ${data.request_memo || ""}
     `;
     } catch (err) {
-      return "-";
+      return Number(canceled) === 1
+        ? `<div style="color:red;font-weight:bold;">취소됨</div>`
+        : "-";
     }
   };
 
@@ -1656,7 +1663,7 @@ function ReservationManagement() {
                     gap: "5px",
                   }}
                 >
-                  <span>체크인 기간</span>
+                  <span>예약기간</span>
                   <input
                     type="date"
                     value={checkInFrom}
@@ -1667,35 +1674,22 @@ function ReservationManagement() {
                   ~
                   <input
                     type="date"
-                    value={checkInTo}
-                    onChange={(e) => {
-                      setCheckInTo(e.target.value);
-                    }}
-                  />
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                  }}
-                >
-                  <span>체크아웃 기간</span>
-                  <input
-                    type="date"
-                    value={checkOutFrom}
-                    onChange={(e) => {
-                      setCheckOutFrom(e.target.value);
-                    }}
-                  />
-                  ~
-                  <input
-                    type="date"
                     value={checkOutTo}
                     onChange={(e) => {
                       setCheckOutTo(e.target.value);
                     }}
+                  />
+                  <span>결제일</span>
+                  <input
+                    type="date"
+                    value={paymentFrom}
+                    onChange={(e) => setPaymentFrom(e.target.value)}
+                  />
+                  ~
+                  <input
+                    type="date"
+                    value={paymentTo}
+                    onChange={(e) => setPaymentTo(e.target.value)}
                   />
                 </div>
 
@@ -1726,6 +1720,8 @@ function ReservationManagement() {
                     setCheckOutTo("");
 
                     setHistoryPage(1);
+                    setPaymentFrom("");
+                    setPaymentTo("");
 
                     setTimeout(() => {
                       getHistory();
@@ -1760,7 +1756,10 @@ function ReservationManagement() {
                           <td>{data.price?.toLocaleString()}</td>
                           <td
                             dangerouslySetInnerHTML={{
-                              __html: renderPayload(data.payload),
+                              __html: renderPayload(
+                                data.payload,
+                                data.canceled,
+                              ),
                             }}
                           ></td>
                           <td>{data.memo}</td>
