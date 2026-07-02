@@ -1543,6 +1543,11 @@ function ReservationManagement() {
                               <button
                                 className="minus"
                                 type="button"
+                                style={{
+                                  backgroundColor: "black",
+                                  color: "white",
+                                  marginLeft: "40px",
+                                }}
                                 onClick={() => cancelManualReservation(room)}
                               >
                                 취소
