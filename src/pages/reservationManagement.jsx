@@ -40,6 +40,7 @@ function ReservationManagement() {
   const [roomPriceInfos, setRoomPriceInfos] = useState([]);
   const [paymentFrom, setPaymentFrom] = useState("");
   const [paymentTo, setPaymentTo] = useState("");
+  const [manualCheckOutDate, setManualCheckOutDate] = useState("");
 
   const colorPalette = [
     "#ffe5e5",
@@ -84,6 +85,17 @@ function ReservationManagement() {
     }
 
     return groupColorMap.current[groupName];
+  };
+
+  const addDaysToYmd = (ymd, days) => {
+    const d = new Date(ymd);
+    d.setDate(d.getDate() + days);
+
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   // =================================================
@@ -670,6 +682,13 @@ function ReservationManagement() {
       }
 
       // 숙박이면 4일 ~ 5일
+      if (manualCheckOutDate) {
+        return {
+          check_in: checkIn,
+          check_out: new Date(manualCheckOutDate),
+        };
+      }
+
       checkOut.setDate(checkOut.getDate() + 1);
 
       return {
@@ -750,10 +769,11 @@ function ReservationManagement() {
       setManualMap({});
       setMemos({});
       setSelectedDays([]);
-
+      setManualCheckOutDate("");
       getRooms();
     } catch (err) {
       console.error(err);
+      setManualCheckOutDate("");
       alert("수기예약 실패");
     }
   };
@@ -1170,6 +1190,15 @@ function ReservationManagement() {
                   alert("날짜는 연속으로 선택해야 합니다.");
                   return;
                 }
+                const first = [...selectedDays].sort(
+                  (a, b) =>
+                    new Date(a.year, a.month - 1, a.day) -
+                    new Date(b.year, b.month - 1, b.day),
+                )[0];
+
+                const checkInYmd = formatDay(first);
+                setManualCheckOutDate(addDaysToYmd(checkInYmd, 1));
+
                 setIsPop(true);
               }}
             >
@@ -1331,6 +1360,7 @@ function ReservationManagement() {
                 setMemos({});
                 setSelectedDays([]);
                 setManualBookingType("stay");
+                setManualCheckOutDate("");
               }}
             >
               X
@@ -1345,7 +1375,29 @@ function ReservationManagement() {
               <tbody>
                 <tr>
                   <th>선택한 기간</th>
-                  <td>{formatRange(selectedDays)}</td>
+                  <td>
+                    {selectedDays.length === 1 ? (
+                      <>
+                        <span>{formatDay(selectedDays[0])}</span>
+                        <span style={{ margin: "0 8px" }}>~</span>
+
+                        {manualBookingType === "stay" ? (
+                          <input
+                            type="date"
+                            value={manualCheckOutDate}
+                            min={addDaysToYmd(formatDay(selectedDays[0]), 1)}
+                            onChange={(e) =>
+                              setManualCheckOutDate(e.target.value)
+                            }
+                          />
+                        ) : (
+                          <span>{formatDay(selectedDays[0])}</span>
+                        )}
+                      </>
+                    ) : (
+                      formatRange(selectedDays)
+                    )}
+                  </td>
                 </tr>
                 {selectedDays.length === 1 && (
                   <tr>
