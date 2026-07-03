@@ -26,6 +26,7 @@ import PaymentList from "./pages/paymentList";
 import { setApiLoadingHandler } from "./api/api";
 import LedgerTicketBnManagement from "./pages/ledgerTicketBnManagement";
 import axios from "axios";
+import SmsManagement from "./pages/smsManagement";
 
 function App() {
   const navigate = useNavigate();
@@ -185,6 +186,9 @@ function App() {
               <Link to="/reservation_management">객실예약 조회 / 관리</Link>
             </li>
             <li>
+              <Link to="/sms_management">SMS 관리</Link>
+            </li>
+            <li>
               <Link to="/dk_schedule">대관일정</Link>
             </li>
             <li>
@@ -268,6 +272,7 @@ function App() {
             path="/main_romms_bn_management"
             element={<MainRoomsManagement />}
           />
+          <Route path="/sms_management" element={<SmsManagement />} />
           <Route path="/log_audit" element={<LogAudit />} />
         </Routes>
 
