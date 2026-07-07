@@ -180,10 +180,12 @@ function App() {
               <Link to="/option_management">옵션관리</Link>
             </li>
             <li>
-              <Link to="/refund_env">환불정책 설정</Link>
+              <Link to="/reservation_management">
+                <span style={{ color: "red" }}>★</span> 객실예약 조회/관리
+              </Link>
             </li>
             <li>
-              <Link to="/reservation_management">객실예약 조회 / 관리</Link>
+              <Link to="/refund_env">환불정책 설정</Link>
             </li>
             <li>
               <Link to="/sms_management">SMS 관리</Link>
