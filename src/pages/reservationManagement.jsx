@@ -609,7 +609,9 @@ function ReservationManagement() {
       (r) => Number(r.room_group_id) === Number(groupId),
     );
 
-    return groupRooms.filter((room) => isRoomAvailable(room, selectedDays))
+    const targetDays = getManualTargetDays();
+
+    return groupRooms.filter((room) => isRoomAvailable(room, targetDays))
       .length;
   };
 
@@ -708,6 +710,35 @@ function ReservationManagement() {
     };
   };
 
+  const getManualTargetDays = () => {
+    if (!selectedDays.length) return [];
+
+    const { check_in, check_out } = getManualBookingRange();
+
+    const startYmd = formatDate(check_in).slice(0, 10);
+    const endYmd = formatDate(check_out).slice(0, 10);
+
+    if (manualBookingType === "day" || startYmd === endYmd) {
+      return selectedDays;
+    }
+
+    const result = [];
+    const cursor = new Date(startYmd);
+    const end = new Date(endYmd);
+
+    while (cursor < end) {
+      result.push({
+        year: cursor.getFullYear(),
+        month: cursor.getMonth() + 1,
+        day: cursor.getDate(),
+      });
+
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return result;
+  };
+
   const hasAnyManualBooking = (room) => {
     let schedules = [];
 
@@ -732,15 +763,22 @@ function ReservationManagement() {
       );
 
       for (const [groupId, count] of groupsToApply) {
+        const targetDays = getManualTargetDays();
+
         const groupRooms = rooms
           .filter(
             (r) =>
               Number(r.room_group_id) === Number(groupId) &&
-              !isOverlap(r, selectedDays),
+              !isOverlap(r, targetDays),
           )
           .sort((a, b) => {
             return a.name.localeCompare(b.name, undefined, { numeric: true });
           });
+
+        console.log(
+          "배정 후보",
+          groupRooms.map((r) => r.name),
+        );
 
         let assigned = 0;
 
