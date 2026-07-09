@@ -1105,6 +1105,7 @@ function ReservationManagement() {
   };
 
   const renderPayload = (payload, canceled, rowCreatedAt, source) => {
+    console.log(payload);
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
 
@@ -1126,7 +1127,7 @@ function ReservationManagement() {
       체크인 : ${data.check_in || "-"}<br />
       체크아웃 : ${data.check_out || "-"}<br />
       예약번호 : ${data.booking_id || "-"}<br/>
-      옵션 : ${renderOptions(data.booking_option)}<br/>
+      옵션 : ${renderOptions(data.booking_option || data.options)}<br/>
       메모 : ${data.request_memo || ""}
     `;
     } catch (err) {
