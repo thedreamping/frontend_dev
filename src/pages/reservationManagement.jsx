@@ -1036,6 +1036,7 @@ function ReservationManagement() {
       &payment_to=${encodeURIComponent(paymentTo)}`.replace(/\s+/g, ""),
       )
       .then((response) => {
+        console.log("예약 히스토리 응답", response.data);
         setHistoryData(response.data.list);
         setHistoryTotal(response.data.total);
         setHistoryTotalPage(response.data.totalPage);
