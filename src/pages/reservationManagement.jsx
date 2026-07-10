@@ -1158,11 +1158,11 @@ function ReservationManagement() {
       }
       예약자 : ${data.name || "-"}<br />
       연락처 : ${data.phone || "-"}<br />
-      상품명 : ${
+      <span style="color:blue">상품명 : ${
         source === "manual"
           ? `수기예약(${data.product_name || "-"})`
           : data.product_name || "-"
-      }<br />
+      }</span><br />
       방수 : ${data.qty || "-"}<br />
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
       결제일 : ${formatKSTDateTime(paymentDate)}<br />
