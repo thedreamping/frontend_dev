@@ -254,6 +254,7 @@ function PaymentList() {
                 <th>체크아웃</th>
                 <th>숙박</th>
                 <th>결제금액</th>
+                <th>결제방법</th>
                 <th>상태</th>
                 <th>환불퍼센트</th>
                 <th>환불금액</th>
@@ -281,7 +282,7 @@ function PaymentList() {
                     <td>{data.nights} 박</td>
 
                     <td>{Number(data.total_amount).toLocaleString()}원</td>
-
+                    <td>{data.method}</td>
                     <td>{data.status}</td>
                     <td>
                       {data.refund_percent !== null &&
