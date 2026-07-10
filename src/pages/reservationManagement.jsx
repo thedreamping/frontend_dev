@@ -98,6 +98,14 @@ function ReservationManagement() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const getHistoryGroupName = (roomGroupId) => {
+    const matchedGroup = groups.find(
+      (group) => Number(group.id) === Number(roomGroupId),
+    );
+
+    return matchedGroup?.name || "";
+  };
+
   const renderHistoryDate = (value, source) => {
     if (!value) return "";
 
@@ -1160,7 +1168,7 @@ function ReservationManagement() {
     canceled,
     rowCreatedAt,
     source,
-    rowProductName,
+    roomGroupName,
   ) => {
     console.log(payload);
     try {
@@ -1179,8 +1187,8 @@ function ReservationManagement() {
       연락처 : ${data.phone || "-"}<br />
   <span style="color:blue">상품명 : ${
     source === "manual"
-      ? `수기예약(${rowProductName || "-"})`
-      : data.product_name || rowProductName || "-"
+      ? `수기예약(${roomGroupName || "-"})`
+      : data.product_name || "-"
   }</span><br />
       방수 : ${data.qty || "-"}<br />
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
@@ -1885,7 +1893,7 @@ function ReservationManagement() {
                                 data.canceled,
                                 data.created_at,
                                 data.source,
-                                data.product_name,
+                                getHistoryGroupName(data.room_group_id),
                               ),
                             }}
                           ></td>
