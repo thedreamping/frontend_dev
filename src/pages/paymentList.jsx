@@ -104,6 +104,16 @@ function PaymentList() {
     getPayments();
   }, [page]);
 
+  const toKoreanDate = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    return new Date(value).toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Seoul",
+    });
+  };
+
   return (
     <>
       <div className="workspace">
@@ -259,9 +269,9 @@ function PaymentList() {
                     <td>{getRoomName(data.room_id)}</td>
                     <td>{data.buyer_tel}</td>
 
-                    <td>{data.check_in.split("T")[0]}</td>
+                    <td>{toKoreanDate(data.check_in)}</td>
 
-                    <td>{data.check_out.split("T")[0]}</td>
+                    <td>{toKoreanDate(data.check_out)}</td>
 
                     <td>{data.nights} 박</td>
 

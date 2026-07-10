@@ -109,13 +109,6 @@ function ReservationManagement() {
   const renderHistoryDate = (value, source) => {
     if (!value) return "";
 
-    const isWebsite =
-      source === "website" || String(source || "").startsWith("SITE_");
-
-    if (isWebsite) {
-      return String(value).slice(0, 10);
-    }
-
     return toKoreanDate(value);
   };
 
