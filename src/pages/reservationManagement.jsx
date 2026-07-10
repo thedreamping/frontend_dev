@@ -1174,8 +1174,12 @@ function ReservationManagement() {
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
 
+      // const paymentDate =
+      //   data.payment_date || (source === "website" ? rowCreatedAt : null);
+
       const paymentDate =
-        data.payment_date || (source === "website" ? rowCreatedAt : null);
+        data.payment_date ||
+        (source === "website" || source === "manual" ? rowCreatedAt : null);
 
       return `
       ${
