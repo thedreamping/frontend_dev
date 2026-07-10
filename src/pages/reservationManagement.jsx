@@ -41,6 +41,11 @@ function ReservationManagement() {
   const [paymentFrom, setPaymentFrom] = useState("");
   const [paymentTo, setPaymentTo] = useState("");
   const [manualCheckOutDate, setManualCheckOutDate] = useState("");
+  // 그룹별 입력 방식: "one" | "all"
+  const [memoInputMode, setMemoInputMode] = useState({});
+
+  // 상품 전체 공통 메모
+  const [allMemos, setAllMemos] = useState({});
 
   const colorPalette = [
     "#ffe5e5",
@@ -799,7 +804,12 @@ function ReservationManagement() {
         for (const room of groupRooms) {
           if (assigned >= count) break;
 
-          const memoText = memos[groupId]?.[assigned] || "";
+          const memoMode = memoInputMode[groupId] || "one";
+
+          const memoText =
+            memoMode === "all"
+              ? allMemos[groupId] || ""
+              : memos[groupId]?.[assigned] || "";
 
           await api.post(`/api/room/${room.id}/manual-booking`, {
             manual_booking: {
@@ -819,8 +829,12 @@ function ReservationManagement() {
       setIsPop(false);
       setManualBookingType("stay");
       setManualMap({});
+
       setMemos({});
       setSelectedDays([]);
+
+      setMemoInputMode({});
+      setAllMemos({});
       setManualCheckOutDate("");
       getRooms();
     } catch (err) {
@@ -1426,6 +1440,8 @@ function ReservationManagement() {
                 setIsPop(false);
                 setManualMap({});
                 setMemos({});
+                setMemoInputMode({});
+                setAllMemos({});
                 setSelectedDays([]);
                 setManualBookingType("stay");
                 setManualCheckOutDate("");
@@ -1481,6 +1497,8 @@ function ReservationManagement() {
                             setManualBookingType("stay");
                             setManualMap({});
                             setMemos({});
+                            setMemoInputMode({});
+                            setAllMemos({});
                           }}
                         />
                         숙박
@@ -1496,6 +1514,8 @@ function ReservationManagement() {
                             setManualBookingType("day");
                             setManualMap({});
                             setMemos({});
+                            setMemoInputMode({});
+                            setAllMemos({});
                           }}
                         />
                         데이유즈
@@ -1539,34 +1559,97 @@ function ReservationManagement() {
                                 -
                               </button>
                             </div>
-                            <div className={"input_wrap"}>
-                              {Array.from({
-                                length: manualMap[group.id] || 0,
-                              }).map((_, idx) => (
-                                <input
-                                  key={idx}
-                                  type="text"
-                                  placeholder={`세부정보 ${idx + 1}`}
-                                  value={memos[group.id]?.[idx] || ""}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-
-                                    setMemos((prev) => {
-                                      const current = [
-                                        ...(prev[group.id] || []),
-                                      ];
-
-                                      current[idx] = value;
-
-                                      return {
+                            {(manualMap[group.id] || 0) > 0 && (
+                              <>
+                                <div className="all_or_one">
+                                  <input
+                                    type="radio"
+                                    id={`one-${group.id}`}
+                                    name={`all_or_one-${group.id}`}
+                                    value="one"
+                                    checked={
+                                      (memoInputMode[group.id] || "one") ===
+                                      "one"
+                                    }
+                                    onChange={() => {
+                                      setMemoInputMode((prev) => ({
                                         ...prev,
-                                        [group.id]: current,
-                                      };
-                                    });
-                                  }}
-                                />
-                              ))}
-                            </div>
+                                        [group.id]: "one",
+                                      }));
+                                    }}
+                                  />
+
+                                  <label htmlFor={`one-${group.id}`}>
+                                    하나씩 기입
+                                  </label>
+
+                                  <input
+                                    type="radio"
+                                    id={`all-${group.id}`}
+                                    name={`all_or_one-${group.id}`}
+                                    value="all"
+                                    checked={memoInputMode[group.id] === "all"}
+                                    onChange={() => {
+                                      setMemoInputMode((prev) => ({
+                                        ...prev,
+                                        [group.id]: "all",
+                                      }));
+                                    }}
+                                  />
+
+                                  <label htmlFor={`all-${group.id}`}>
+                                    해당 상품 전체 기입
+                                  </label>
+                                </div>
+
+                                {memoInputMode[group.id] === "all" ? (
+                                  <div className="input_wrap">
+                                    <input
+                                      type="text"
+                                      placeholder="세부정보 전체 상품"
+                                      value={allMemos[group.id] || ""}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        setAllMemos((prev) => ({
+                                          ...prev,
+                                          [group.id]: value,
+                                        }));
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="input_wrap">
+                                    {Array.from({
+                                      length: manualMap[group.id] || 0,
+                                    }).map((_, idx) => (
+                                      <input
+                                        key={idx}
+                                        type="text"
+                                        placeholder={`세부정보 ${idx + 1}`}
+                                        value={memos[group.id]?.[idx] || ""}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+
+                                          setMemos((prev) => {
+                                            const current = [
+                                              ...(prev[group.id] || []),
+                                            ];
+
+                                            current[idx] = value;
+
+                                            return {
+                                              ...prev,
+                                              [group.id]: current,
+                                            };
+                                          });
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
                         );
                       })}
