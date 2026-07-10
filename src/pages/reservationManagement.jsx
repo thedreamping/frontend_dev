@@ -1927,7 +1927,7 @@ function ReservationManagement() {
                       {getManualReservations().length === 0 ? (
                         <div>없음</div>
                       ) : (
-                        getManualReservations().map((room) => {
+                        getManualReservations().map((room, idx) => {
                           console.log(room);
                           return (
                             <div
