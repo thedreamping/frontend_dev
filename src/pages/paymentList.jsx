@@ -244,6 +244,8 @@ function PaymentList() {
             <thead>
               <tr>
                 <th>ID</th>
+
+                <th>결제일</th>
                 <th>예약자</th>
                 <th>룸그룹명</th>
                 <th>방번호</th>
@@ -255,7 +257,6 @@ function PaymentList() {
                 <th>상태</th>
                 <th>환불퍼센트</th>
                 <th>환불금액</th>
-                <th>결제일</th>
               </tr>
             </thead>
             <tbody>
@@ -263,7 +264,11 @@ function PaymentList() {
                 return (
                   <tr key={data.id}>
                     <td>{data.id}</td>
-
+                    <td>
+                      {data.created_at
+                        ? new Date(data.created_at).toLocaleString("ko-KR")
+                        : ""}
+                    </td>
                     <td>{data.buyer_name}</td>
                     <td>{getRoomGroupName(data.room_group_id)}</td>
                     <td>{getRoomName(data.room_id)}</td>
@@ -290,11 +295,6 @@ function PaymentList() {
                       data.refund_amount !== undefined
                         ? `${Number(data.refund_amount).toLocaleString()}원`
                         : "-"}
-                    </td>
-                    <td>
-                      {data.created_at
-                        ? new Date(data.created_at).toLocaleString("ko-KR")
-                        : ""}
                     </td>
                   </tr>
                 );
