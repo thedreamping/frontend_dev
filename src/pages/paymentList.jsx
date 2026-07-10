@@ -35,7 +35,24 @@ function PaymentList() {
       &check_out_to=${encodeURIComponent(checkOutTo)}`.replace(/\s+/g, ""),
       )
       .then((response) => {
-        setPaymentsList(response.data.data || []);
+        const list = response.data.data || [];
+
+        const filteredList = list.filter((item) => {
+          const status = String(item.status || "").toUpperCase();
+          const refundAmount = Number(item.refund_amount || 0);
+
+          if (status === "PENDING") {
+            return false;
+          }
+
+          if (status === "CANCELLED" || status === "CANCELED") {
+            return refundAmount > 0;
+          }
+
+          return true;
+        });
+
+        setPaymentsList(filteredList);
 
         setTotalPage(response.data.pagination.totalPages || 1);
 
@@ -193,6 +210,8 @@ function PaymentList() {
                 <th>숙박</th>
                 <th>결제금액</th>
                 <th>상태</th>
+                <th>환불퍼센트</th>
+                <th>환불금액</th>
                 <th>결제일</th>
               </tr>
             </thead>
@@ -215,7 +234,19 @@ function PaymentList() {
                     <td>{Number(data.total_amount).toLocaleString()}원</td>
 
                     <td>{data.status}</td>
+                    <td>
+                      {data.refund_percent !== null &&
+                      data.refund_percent !== undefined
+                        ? `${Number(data.refund_percent).toLocaleString()}%`
+                        : "-"}
+                    </td>
 
+                    <td>
+                      {data.refund_amount !== null &&
+                      data.refund_amount !== undefined
+                        ? `${Number(data.refund_amount).toLocaleString()}원`
+                        : "-"}
+                    </td>
                     <td>
                       {data.created_at
                         ? new Date(data.created_at).toLocaleString("ko-KR")
