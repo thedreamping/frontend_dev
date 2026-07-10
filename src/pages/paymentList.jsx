@@ -19,9 +19,40 @@ function PaymentList() {
 
   const [limit] = useState(20);
 
+  const [rooms, setRooms] = useState([]);
+  const [roomGroups, setRoomGroups] = useState([]);
+
   useEffect(() => {
     getPayments();
+    getRooms();
+    getRoomGroups();
   }, []);
+
+  const getRooms = () => {
+    api.get("/api/rooms").then((response) => {
+      setRooms(response.data.data || []);
+    });
+  };
+
+  const getRoomGroups = () => {
+    api.get("/api/room_group").then((response) => {
+      setRoomGroups(response.data.data || []);
+    });
+  };
+
+  const getRoomName = (roomId) => {
+    const room = rooms.find((item) => Number(item.id) === Number(roomId));
+
+    return room?.name || "-";
+  };
+
+  const getRoomGroupName = (roomGroupId) => {
+    const group = roomGroups.find(
+      (item) => Number(item.id) === Number(roomGroupId),
+    );
+
+    return group?.name || "-";
+  };
 
   const getPayments = () => {
     api
@@ -204,6 +235,8 @@ function PaymentList() {
               <tr>
                 <th>ID</th>
                 <th>예약자</th>
+                <th>룸그룹명</th>
+                <th>방번호</th>
                 <th>연락처</th>
                 <th>체크인</th>
                 <th>체크아웃</th>
@@ -222,7 +255,8 @@ function PaymentList() {
                     <td>{data.id}</td>
 
                     <td>{data.buyer_name}</td>
-
+                    <td>{getRoomGroupName(data.room_group_id)}</td>
+                    <td>{getRoomName(data.room_id)}</td>
                     <td>{data.buyer_tel}</td>
 
                     <td>{data.check_in.split("T")[0]}</td>
