@@ -1349,6 +1349,16 @@ function ReservationManagement() {
       : data.product_name || "-"
   }</span><br />
       방수 : ${data.qty || "-"}<br />
+
+${
+  source === "manual"
+    ? `객실명 : ${
+        Array.isArray(data.custom_room_no)
+          ? data.custom_room_no.join(", ")
+          : data.custom_room_no || "-"
+      }<br />`
+    : ""
+}
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
       결제일 : ${formatKSTDateTime(paymentDate)}<br />
       체크인 : ${data.check_in || "-"}<br />
