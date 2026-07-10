@@ -98,6 +98,19 @@ function ReservationManagement() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const renderHistoryDate = (value, source) => {
+    if (!value) return "";
+
+    const isWebsite =
+      source === "website" || String(source || "").startsWith("SITE_");
+
+    if (isWebsite) {
+      return String(value).slice(0, 10);
+    }
+
+    return toKoreanDate(value);
+  };
+
   // =================================================
   function getMonthDates(year, month) {
     const jsMonth = month - 1;
@@ -1142,7 +1155,13 @@ function ReservationManagement() {
     return "-";
   };
 
-  const renderPayload = (payload, canceled, rowCreatedAt, source) => {
+  const renderPayload = (
+    payload,
+    canceled,
+    rowCreatedAt,
+    source,
+    rowProductName,
+  ) => {
     console.log(payload);
     try {
       const data = typeof payload === "string" ? JSON.parse(payload) : payload;
@@ -1158,11 +1177,11 @@ function ReservationManagement() {
       }
       예약자 : ${data.name || "-"}<br />
       연락처 : ${data.phone || "-"}<br />
-      <span style="color:blue">상품명 : ${
-        source === "manual"
-          ? `수기예약(${data.product_name || "-"})`
-          : data.product_name || "-"
-      }</span><br />
+  <span style="color:blue">상품명 : ${
+    source === "manual"
+      ? `수기예약(${rowProductName || "-"})`
+      : data.product_name || rowProductName || "-"
+  }</span><br />
       방수 : ${data.qty || "-"}<br />
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
       결제일 : ${formatKSTDateTime(paymentDate)}<br />
@@ -1855,8 +1874,8 @@ function ReservationManagement() {
                           <td>{data.guest_name}</td>
                           <td>{data.guest_phone}</td>
                           <td>
-                            {toKoreanDate(data.check_in)} ~{" "}
-                            {toKoreanDate(data.check_out)}
+                            {renderHistoryDate(data.check_in, data.source)} ~{" "}
+                            {renderHistoryDate(data.check_out, data.source)}
                           </td>
                           <td>{data.price?.toLocaleString()}</td>
                           <td
@@ -1866,6 +1885,7 @@ function ReservationManagement() {
                                 data.canceled,
                                 data.created_at,
                                 data.source,
+                                data.product_name,
                               ),
                             }}
                           ></td>
