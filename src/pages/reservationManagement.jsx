@@ -47,6 +47,12 @@ function ReservationManagement() {
   // 상품 전체 공통 메모
   const [allMemos, setAllMemos] = useState({});
 
+  const [customName, setCustomName] = useState({});
+
+  const [allCustomName, setAllCustomName] = useState({});
+
+  const [customRoomNo, setCustomRoomNo] = useState({});
+
   const colorPalette = [
     "#ffe5e5",
     "#e5f3ff",
@@ -773,54 +779,215 @@ function ReservationManagement() {
     return schedules.length > 0;
   };
 
+  const getAvailableGroupRooms = (groupId) => {
+    const targetDays = getManualTargetDays();
+
+    return rooms
+      .filter(
+        (room) =>
+          Number(room.room_group_id) === Number(groupId) &&
+          isRoomAvailable(room, targetDays),
+      )
+      .sort((a, b) =>
+        String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+          numeric: true,
+        }),
+      );
+  };
+
+  const resetManualBookingInputs = () => {
+    setManualMap({});
+    setMemos({});
+    setAllMemos({});
+    setMemoInputMode({});
+
+    setCustomName({});
+    setAllCustomName({});
+    setCustomRoomNo({});
+  };
+
+  const increase = (groupId, max) => {
+    setManualMap((prev) => {
+      const current = prev[groupId] || 0;
+
+      if (current >= max) return prev;
+
+      return {
+        ...prev,
+        [groupId]: current + 1,
+      };
+    });
+  };
+
+  const decrease = (groupId) => {
+    const current = manualMap[groupId] || 0;
+
+    if (current <= 0) return;
+
+    const nextCount = current - 1;
+
+    setManualMap((prev) => ({
+      ...prev,
+      [groupId]: nextCount,
+    }));
+
+    setMemos((prev) => ({
+      ...prev,
+      [groupId]: (prev[groupId] || []).slice(0, nextCount),
+    }));
+
+    setCustomName((prev) => ({
+      ...prev,
+      [groupId]: (prev[groupId] || []).slice(0, nextCount),
+    }));
+
+    setCustomRoomNo((prev) => ({
+      ...prev,
+      [groupId]: (prev[groupId] || []).slice(0, nextCount),
+    }));
+
+    if (nextCount === 0) {
+      setMemoInputMode((prev) => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+
+      setAllMemos((prev) => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+
+      setAllCustomName((prev) => {
+        const next = { ...prev };
+        delete next[groupId];
+        return next;
+      });
+    }
+  };
+
   const modifyReservationSchedule = async () => {
     try {
       const { check_in, check_out } = getManualBookingRange();
 
       const groupsToApply = Object.entries(manualMap).filter(
-        ([_, count]) => count > 0,
+        ([_, count]) => Number(count) > 0,
       );
 
-      for (const [groupId, count] of groupsToApply) {
-        const targetDays = getManualTargetDays();
+      if (groupsToApply.length === 0) {
+        alert("예약할 객실 수를 선택해 주세요.");
+        return;
+      }
 
-        const groupRooms = rooms
-          .filter(
-            (r) =>
-              Number(r.room_group_id) === Number(groupId) &&
-              !isOverlap(r, targetDays),
-          )
-          .sort((a, b) => {
-            return a.name.localeCompare(b.name, undefined, { numeric: true });
-          });
+      for (const [groupId, rawCount] of groupsToApply) {
+        const count = Number(rawCount);
+        const memoMode = memoInputMode[groupId] || "one";
+
+        const availableRooms = getAvailableGroupRooms(groupId);
+
+        if (availableRooms.length < count) {
+          alert(
+            `${groups.find((group) => Number(group.id) === Number(groupId))?.name || "해당 상품"}의 예약 가능한 객실 수가 부족합니다.`,
+          );
+          return;
+        }
+
+        let selectedRooms = [];
+
+        // ==========================================
+        // 전체 기입: 가용 객실을 한1, 한2, 한3 순으로 배정
+        // ==========================================
+        if (memoMode === "all") {
+          selectedRooms = availableRooms.slice(0, count);
+        }
+
+        // ==========================================
+        // 하나씩 기입: 사용자가 select에서 고른 방 배정
+        // 미선택된 항목은 순서대로 자동 배정
+        // ==========================================
+        if (memoMode === "one") {
+          const selectedRoomIds = [];
+          const usedRoomIds = new Set();
+
+          // 사용자가 직접 고른 객실부터 등록
+          for (let idx = 0; idx < count; idx++) {
+            const selectedId = customRoomNo[groupId]?.[idx];
+
+            if (!selectedId) continue;
+
+            const roomId = Number(selectedId);
+
+            if (usedRoomIds.has(roomId)) {
+              alert("같은 객실을 중복 선택할 수 없습니다.");
+              return;
+            }
+
+            selectedRoomIds[idx] = roomId;
+            usedRoomIds.add(roomId);
+          }
+
+          // 미선택 줄은 이미 사용된 방을 제외하고 순서대로 자동배정
+          for (let idx = 0; idx < count; idx++) {
+            if (selectedRoomIds[idx]) continue;
+
+            const nextAvailableRoom = availableRooms.find(
+              (room) => !usedRoomIds.has(Number(room.id)),
+            );
+
+            if (!nextAvailableRoom) {
+              alert("예약 가능한 객실이 부족합니다.");
+              return;
+            }
+
+            const roomId = Number(nextAvailableRoom.id);
+
+            selectedRoomIds[idx] = roomId;
+            usedRoomIds.add(roomId);
+          }
+
+          selectedRooms = selectedRoomIds
+            .map((roomId) =>
+              availableRooms.find((room) => Number(room.id) === Number(roomId)),
+            )
+            .filter(Boolean);
+
+          if (selectedRooms.length !== count) {
+            alert("예약할 객실을 모두 선택해 주세요.");
+            return;
+          }
+        }
 
         console.log(
-          "배정 후보",
-          groupRooms.map((r) => r.name),
+          "수기예약 최종 배정 객실",
+          selectedRooms.map((room) => room.name),
         );
 
-        let assigned = 0;
-
-        for (const room of groupRooms) {
-          if (assigned >= count) break;
-
-          const memoMode = memoInputMode[groupId] || "one";
+        for (let idx = 0; idx < selectedRooms.length; idx++) {
+          const room = selectedRooms[idx];
 
           const memoText =
             memoMode === "all"
               ? allMemos[groupId] || ""
-              : memos[groupId]?.[assigned] || "";
+              : memos[groupId]?.[idx] || "";
+
+          const customNameText =
+            memoMode === "all"
+              ? allCustomName[groupId] || ""
+              : customName[groupId]?.[idx] || "";
 
           await api.post(`/api/room/${room.id}/manual-booking`, {
             manual_booking: {
               source: "manual",
               check_in: formatDate(check_in).slice(0, 10),
               check_out: formatDate(check_out).slice(0, 10),
+
+              custom_room_no: [room.name],
+              custom_name: customNameText,
+
               memo: memoText,
             },
           });
-
-          assigned++;
         }
       }
 
@@ -828,38 +995,18 @@ function ReservationManagement() {
 
       setIsPop(false);
       setManualBookingType("stay");
-      setManualMap({});
-
-      setMemos({});
       setSelectedDays([]);
-
-      setMemoInputMode({});
-      setAllMemos({});
       setManualCheckOutDate("");
+
+      resetManualBookingInputs();
+
       getRooms();
     } catch (err) {
-      console.error(err);
+      console.error("수기예약 실패:", err.response?.data || err);
+
       setManualCheckOutDate("");
       alert("수기예약 실패");
     }
-  };
-
-  const increase = (groupId, max) => {
-    setManualMap((prev) => {
-      const current = prev[groupId] || 0;
-      if (current >= max) return prev;
-
-      return { ...prev, [groupId]: current + 1 };
-    });
-  };
-
-  const decrease = (groupId) => {
-    setManualMap((prev) => {
-      const current = prev[groupId] || 0;
-      if (current <= 0) return prev;
-
-      return { ...prev, [groupId]: current - 1 };
-    });
   };
 
   const getManualReservations = () => {
@@ -1438,10 +1585,7 @@ function ReservationManagement() {
               className="popup_x"
               onClick={() => {
                 setIsPop(false);
-                setManualMap({});
-                setMemos({});
-                setMemoInputMode({});
-                setAllMemos({});
+                resetManualBookingInputs();
                 setSelectedDays([]);
                 setManualBookingType("stay");
                 setManualCheckOutDate("");
@@ -1495,10 +1639,7 @@ function ReservationManagement() {
                           checked={manualBookingType === "stay"}
                           onChange={() => {
                             setManualBookingType("stay");
-                            setManualMap({});
-                            setMemos({});
-                            setMemoInputMode({});
-                            setAllMemos({});
+                            resetManualBookingInputs();
                           }}
                         />
                         숙박
@@ -1512,10 +1653,7 @@ function ReservationManagement() {
                           checked={manualBookingType === "day"}
                           onChange={() => {
                             setManualBookingType("day");
-                            setManualMap({});
-                            setMemos({});
-                            setMemoInputMode({});
-                            setAllMemos({});
+                            resetManualBookingInputs();
                           }}
                         />
                         데이유즈
@@ -1604,6 +1742,33 @@ function ReservationManagement() {
 
                                 {memoInputMode[group.id] === "all" ? (
                                   <div className="input_wrap">
+                                    <div
+                                      style={{
+                                        marginBottom: "8px",
+                                        fontSize: "13px",
+                                      }}
+                                    >
+                                      배정 객실:{" "}
+                                      {getAvailableGroupRooms(group.id)
+                                        .slice(0, manualMap[group.id] || 0)
+                                        .map((room) => room.name)
+                                        .join(", ")}
+                                    </div>
+
+                                    <input
+                                      type="text"
+                                      placeholder="예약자명 전체 상품"
+                                      value={allCustomName[group.id] || ""}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        setAllCustomName((prev) => ({
+                                          ...prev,
+                                          [group.id]: value,
+                                        }));
+                                      }}
+                                    />
+
                                     <input
                                       type="text"
                                       placeholder="세부정보 전체 상품"
@@ -1622,30 +1787,122 @@ function ReservationManagement() {
                                   <div className="input_wrap">
                                     {Array.from({
                                       length: manualMap[group.id] || 0,
-                                    }).map((_, idx) => (
-                                      <input
-                                        key={idx}
-                                        type="text"
-                                        placeholder={`세부정보 ${idx + 1}`}
-                                        value={memos[group.id]?.[idx] || ""}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
+                                    }).map((_, idx) => {
+                                      const availableRooms =
+                                        getAvailableGroupRooms(group.id);
 
-                                          setMemos((prev) => {
-                                            const current = [
-                                              ...(prev[group.id] || []),
-                                            ];
+                                      const currentSelectedRoomId =
+                                        customRoomNo[group.id]?.[idx] ||
+                                        availableRooms[idx]?.id ||
+                                        "";
 
-                                            current[idx] = value;
+                                      const selectedByOtherRows = Array.from(
+                                        { length: manualMap[group.id] || 0 },
+                                        (_, selectedIdx) => {
+                                          if (selectedIdx === idx) return null;
 
-                                            return {
-                                              ...prev,
-                                              [group.id]: current,
-                                            };
-                                          });
-                                        }}
-                                      />
-                                    ))}
+                                          return Number(
+                                            customRoomNo[group.id]?.[
+                                              selectedIdx
+                                            ] ||
+                                              availableRooms[selectedIdx]?.id,
+                                          );
+                                        },
+                                      ).filter(Boolean);
+
+                                      return (
+                                        <div
+                                          key={idx}
+                                          style={{
+                                            display: "grid",
+                                            gridTemplateColumns:
+                                              "130px 1fr 1fr",
+                                            gap: "8px",
+                                            marginBottom: "8px",
+                                          }}
+                                        >
+                                          <select
+                                            value={currentSelectedRoomId}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              setCustomRoomNo((prev) => {
+                                                const current = [
+                                                  ...(prev[group.id] || []),
+                                                ];
+
+                                                current[idx] = value;
+
+                                                return {
+                                                  ...prev,
+                                                  [group.id]: current,
+                                                };
+                                              });
+                                            }}
+                                          >
+                                            <option value="">객실 선택</option>
+
+                                            {availableRooms.map((room) => (
+                                              <option
+                                                key={room.id}
+                                                value={room.id}
+                                                disabled={selectedByOtherRows.includes(
+                                                  Number(room.id),
+                                                )}
+                                              >
+                                                {room.name}
+                                              </option>
+                                            ))}
+                                          </select>
+
+                                          <input
+                                            type="text"
+                                            placeholder={`예약자명 ${idx + 1}`}
+                                            value={
+                                              customName[group.id]?.[idx] || ""
+                                            }
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              setCustomName((prev) => {
+                                                const current = [
+                                                  ...(prev[group.id] || []),
+                                                ];
+
+                                                current[idx] = value;
+
+                                                return {
+                                                  ...prev,
+                                                  [group.id]: current,
+                                                };
+                                              });
+                                            }}
+                                          />
+
+                                          <input
+                                            type="text"
+                                            placeholder={`세부정보 ${idx + 1}`}
+                                            value={memos[group.id]?.[idx] || ""}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              setMemos((prev) => {
+                                                const current = [
+                                                  ...(prev[group.id] || []),
+                                                ];
+
+                                                current[idx] = value;
+
+                                                return {
+                                                  ...prev,
+                                                  [group.id]: current,
+                                                };
+                                              });
+                                            }}
+                                          />
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </>
@@ -1674,7 +1931,7 @@ function ReservationManagement() {
                           console.log(room);
                           return (
                             <div
-                              key={room.id}
+                              key={`${room.room_id}-${room.check_in}-${room.check_out}-${idx}`}
                               className="room_controll_cell"
                               style={{ marginBottom: "8px" }}
                             >
@@ -1682,13 +1939,29 @@ function ReservationManagement() {
                                 style={{
                                   display: "inline-block",
                                   verticalAlign: "top",
+                                  lineHeight: "1.7",
                                 }}
                               >
-                                {room.room_name}{" "}
-                                <small>
-                                  {room.check_in?.slice(0, 10)} ~{" "}
-                                  {room.check_out?.slice(0, 10)}
-                                </small>{" "}
+                                <div>
+                                  <b>
+                                    객실 :{" "}
+                                    {Array.isArray(room.custom_room_no)
+                                      ? room.custom_room_no.join(", ")
+                                      : room.custom_room_no ||
+                                        room.room_name ||
+                                        "-"}
+                                  </b>
+                                </div>
+
+                                <div>예약자명 : {room.custom_name || "-"}</div>
+
+                                <div>
+                                  <small>
+                                    예약기간 :{" "}
+                                    {room.check_in?.slice(0, 10) || "-"} ~{" "}
+                                    {room.check_out?.slice(0, 10) || "-"}
+                                  </small>
+                                </div>
                               </div>
 
                               <button
@@ -1704,12 +1977,22 @@ function ReservationManagement() {
                                 취소
                               </button>
                               <div className="input_wrap">
+                                <div
+                                  style={{
+                                    fontSize: "13px",
+                                    marginBottom: "4px",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  세부정보
+                                </div>
+
                                 <textarea
                                   value={room.memo || ""}
                                   placeholder="메모 없음"
                                   style={{
                                     width: "100%",
-                                    height: "100px",
+                                    height: "80px",
                                     resize: "none",
                                   }}
                                   readOnly
