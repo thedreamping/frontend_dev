@@ -1286,29 +1286,10 @@ function ReservationManagement() {
             String(booking.check_out || "").slice(0, 10)
         );
       });
-      console.log("홈페이지 이름 매칭 확인", {
-        source,
-        booking,
-        room: {
-          id: room.id,
-          name: room.name,
-          room_group_id: room.room_group_id,
-        },
-        reservationId,
-        bookingCheckIn,
-        bookingCheckOut,
-        homepageReservations,
-        matchedWebsite,
-      });
-
       return (
-        matchedWebsite?.buyer_name ||
-        matchedWebsite?.buyerName ||
-        matchedWebsite?.guest_name ||
-        matchedWebsite?.guestName ||
-        matchedWebsite?.name ||
-        matchedWebsite?.custom_name ||
-        matchedWebsite?.reservation_name ||
+        matchedNaver?.name ||
+        matchedNaver?.guest_name ||
+        matchedNaver?.buyer_name ||
         "-"
       );
     }
@@ -1366,6 +1347,17 @@ function ReservationManagement() {
           return sameGroup && sameCheckIn && sameCheckOut;
         });
       }
+
+      console.log("홈페이지 이름 매칭 확인", {
+        source,
+        booking,
+        room,
+        reservationId,
+        bookingCheckIn,
+        bookingCheckOut,
+        homepageReservations,
+        matchedWebsite,
+      });
 
       return (
         matchedWebsite?.buyer_name ||
