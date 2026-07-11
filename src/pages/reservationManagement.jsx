@@ -53,6 +53,8 @@ function ReservationManagement() {
 
   const [customRoomNo, setCustomRoomNo] = useState({});
 
+  const [homepageReservations, setHomepageReservations] = useState([]);
+
   const colorPalette = [
     "#ffe5e5",
     "#e5f3ff",
@@ -78,6 +80,38 @@ function ReservationManagement() {
   // =================================================
   const groupColorMap = useRef({});
   const colorIndex = useRef(0);
+  const normalizeKSTDate = (value) => {
+    if (!value) return "";
+
+    const str = String(value);
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
+
+    return new Date(value).toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Seoul",
+    });
+  };
+
+  const getHomepageReservations = async () => {
+    try {
+      const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+
+      const monthEnd = `${year}-${String(month).padStart(2, "0")}-${String(
+        new Date(year, month, 0).getDate(),
+      ).padStart(2, "0")}`;
+
+      const response = await api.get(
+        `/api/reservation_infos?page=1&limit=10000&check_in_from=${monthStart}&check_in_to=${monthEnd}`,
+      );
+
+      setHomepageReservations(response.data.data || []);
+    } catch (err) {
+      console.error("홈페이지 예약 조회 실패:", err);
+      setHomepageReservations([]);
+    }
+  };
 
   const loadRoomPriceInfos = () => {
     api.get(`/api/room-price?year=${year}&month=${month}`).then((response) => {
@@ -154,11 +188,13 @@ function ReservationManagement() {
       setYear((prev) => prev - 1);
       return;
     }
+
     groupColorMap.current = {};
     colorIndex.current = 0;
 
     setCalendarData(getMonthDates(year, month));
     loadRoomPriceInfos();
+    getHomepageReservations();
   }, [month, year]);
 
   const downloadExcel = async () => {
@@ -1203,6 +1239,125 @@ function ReservationManagement() {
     console.log(result);
     return result;
   };
+  const getCalendarGuestName = (room, booking) => {
+    if (!booking) return "-";
+
+    // 새 수기예약 및 이름이 이미 포함된 예약
+    const directName =
+      booking.custom_name ||
+      booking.name ||
+      booking.guest_name ||
+      booking.buyer_name;
+
+    if (directName) {
+      return directName;
+    }
+
+    const source = String(booking.source || "");
+
+    // =====================================
+    // 네이버 예약 원본에서 이름 찾기
+    // =====================================
+    if (source === "naver") {
+      let naverBookings = [];
+
+      try {
+        naverBookings =
+          typeof room.naver_crawling_info === "string"
+            ? JSON.parse(room.naver_crawling_info)
+            : room.naver_crawling_info || [];
+      } catch {
+        naverBookings = [];
+      }
+
+      const matchedNaver = naverBookings.find((item) => {
+        // 예약번호가 있으면 예약번호를 최우선으로 비교
+        if (booking.booking_id && item.booking_id) {
+          return String(item.booking_id) === String(booking.booking_id);
+        }
+
+        // 예전 데이터처럼 예약번호가 없으면 날짜로 비교
+        return (
+          String(item.check_in || "").slice(0, 10) ===
+            String(booking.check_in || "").slice(0, 10) &&
+          String(item.check_out || "").slice(0, 10) ===
+            String(booking.check_out || "").slice(0, 10)
+        );
+      });
+
+      return (
+        matchedNaver?.name ||
+        matchedNaver?.guest_name ||
+        matchedNaver?.buyer_name ||
+        "-"
+      );
+    }
+
+    // =====================================
+    // 홈페이지 예약 원본에서 이름 찾기
+    // =====================================
+    if (source === "website" || source.startsWith("SITE_")) {
+      const reservationId = source.startsWith("SITE_")
+        ? source.replace("SITE_", "")
+        : booking.reservation_id;
+
+      let matchedWebsite = null;
+
+      // SITE_예약ID가 있으면 ID로 정확하게 찾기
+      if (reservationId) {
+        matchedWebsite = homepageReservations.find(
+          (item) => Number(item.id) === Number(reservationId),
+        );
+      }
+
+      // 구형 website 데이터는 객실·날짜로 보조 검색
+      const bookingCheckIn = normalizeKSTDate(booking.check_in);
+      const bookingCheckOut = normalizeKSTDate(booking.check_out);
+
+      // 구형 website 데이터: 실제 배정 객실 ID로 먼저 정확히 검색
+      if (!matchedWebsite) {
+        matchedWebsite = homepageReservations.find((item) => {
+          const sameRoom = Number(item.room_id) === Number(room.id);
+
+          const sameCheckIn =
+            normalizeKSTDate(item.check_in) === bookingCheckIn;
+
+          const sameCheckOut =
+            normalizeKSTDate(item.check_out) === bookingCheckOut;
+
+          return sameRoom && sameCheckIn && sameCheckOut;
+        });
+      }
+
+      // room_id가 없는 아주 오래된 홈페이지 데이터만 그룹 기준 보조 검색
+      if (!matchedWebsite) {
+        matchedWebsite = homepageReservations.find((item) => {
+          if (item.room_id) return false;
+
+          const sameGroup =
+            Number(item.room_group_id) === Number(room.room_group_id);
+
+          const sameCheckIn =
+            String(item.check_in || "").slice(0, 10) === bookingCheckIn;
+
+          const sameCheckOut =
+            String(item.check_out || "").slice(0, 10) === bookingCheckOut;
+
+          return sameGroup && sameCheckIn && sameCheckOut;
+        });
+      }
+
+      return (
+        matchedWebsite?.buyer_name ||
+        matchedWebsite?.name ||
+        matchedWebsite?.guest_name ||
+        "-"
+      );
+    }
+
+    // 과거 수기예약은 당시 이름 자체를 저장하지 않았다면 복구 불가
+    return "-";
+  };
 
   const getBookingsByDate = (date) => {
     if (!date) return [];
@@ -1597,21 +1752,22 @@ ${
                                 {(() => {
                                   if (!booking) return "";
 
+                                  const source = String(booking.source || "");
+
                                   const label =
-                                    booking.source === "naver"
+                                    source === "naver"
                                       ? "네이버예약"
-                                      : booking.source === "website"
+                                      : source === "website" ||
+                                          source.startsWith("SITE_")
                                         ? "홈페이지예약"
                                         : "수기예약";
 
                                   const checkout = booking.check_out.slice(5);
 
-                                  const guestName =
-                                    booking.name ||
-                                    booking.custom_name ||
-                                    booking.guest_name ||
-                                    booking.buyer_name ||
-                                    "-";
+                                  const guestName = getCalendarGuestName(
+                                    room,
+                                    booking,
+                                  );
 
                                   return `(${label}${
                                     isDayBooking(booking)
