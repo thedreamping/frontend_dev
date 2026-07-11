@@ -225,6 +225,24 @@ function PaymentList() {
     });
   };
 
+  const getCountInfo = (count) => {
+    if (!count) return "-";
+
+    let list = [];
+
+    try {
+      list = typeof count === "string" ? JSON.parse(count) : count;
+    } catch {
+      return "-";
+    }
+
+    return list
+      .map((item, idx) => {
+        return `${idx + 1}객실 ${item.people}명/${item.pets}마리`;
+      })
+      .join(", ");
+  };
+
   return (
     <>
       <div className="workspace">
@@ -361,6 +379,7 @@ function PaymentList() {
                 <th>룸그룹명</th>
                 <th>방번호</th>
                 <th>연락처</th>
+                <th>인원</th>
                 <th>체크인</th>
                 <th>체크아웃</th>
                 <th>숙박</th>
@@ -385,7 +404,7 @@ function PaymentList() {
                     <td>{getRoomGroupName(data.room_group_id)}</td>
                     <td>{getActualPaidRoomName(data)}</td>
                     <td>{data.buyer_tel}</td>
-
+                    <td>{getCountInfo(data.count)}</td>
                     <td>{toKoreanDate(data.check_in)}</td>
 
                     <td>{toKoreanDate(data.check_out)}</td>

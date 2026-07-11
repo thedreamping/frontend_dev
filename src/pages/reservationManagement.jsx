@@ -1517,57 +1517,213 @@ function ReservationManagement() {
     return "-";
   };
 
+  const getHomepageReservationsForHistory = async () => {
+    try {
+      const response = await api.get(
+        "/api/reservation_infos?page=1&limit=10000",
+      );
+
+      setHomepageReservations(response.data.data || []);
+    } catch (err) {
+      console.error("히스토리용 홈페이지 예약 조회 실패:", err);
+    }
+  };
+  const parseCountData = (value) => {
+    if (!value) return [];
+
+    try {
+      const parsed = typeof value === "string" ? JSON.parse(value) : value;
+
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      console.error("count JSON 파싱 실패:", value, err);
+      return [];
+    }
+  };
+
+  const getCountSummary = (count) => {
+    const list = parseCountData(count);
+
+    if (!list.length) {
+      return null;
+    }
+
+    const totalPeople = list.reduce((sum, item) => {
+      if (!item || typeof item !== "object") return sum;
+
+      return sum + Number(item.people || 0);
+    }, 0);
+
+    const totalPets = list.reduce((sum, item) => {
+      if (!item || typeof item !== "object") return sum;
+
+      return sum + Number(item.pets || 0);
+    }, 0);
+
+    return {
+      totalPeople,
+      totalPets,
+    };
+  };
+
+  const findHomepageReservationForHistory = (
+    payloadData,
+    source,
+    roomGroupId,
+  ) => {
+    const sourceText = String(source || "");
+
+    if (sourceText !== "website" && !sourceText.startsWith("SITE_")) {
+      return null;
+    }
+
+    const bookingId = String(payloadData?.booking_id || "");
+    const reservationId = payloadData?.reservation_id;
+
+    let targetId = null;
+
+    // source 자체가 SITE_123 형태
+    if (sourceText.startsWith("SITE_")) {
+      targetId = sourceText.replace("SITE_", "");
+    }
+
+    // payload.booking_id가 SITE_123 형태
+    if (!targetId && bookingId.startsWith("SITE_")) {
+      targetId = bookingId.replace("SITE_", "");
+    }
+
+    // payload에 reservation_id가 있는 경우
+    if (!targetId && reservationId) {
+      targetId = reservationId;
+    }
+
+    // ID가 있으면 가장 정확하게 조회
+    if (targetId) {
+      const matchedById = homepageReservations.find(
+        (item) => Number(item.id) === Number(targetId),
+      );
+
+      if (matchedById) {
+        return matchedById;
+      }
+    }
+
+    // 과거 홈페이지 데이터 fallback
+    return (
+      homepageReservations.find((item) => {
+        const sameGroup = Number(item.room_group_id) === Number(roomGroupId);
+
+        const sameCheckIn =
+          normalizeKSTDate(item.check_in) ===
+          normalizeKSTDate(payloadData?.check_in);
+
+        const sameCheckOut =
+          normalizeKSTDate(item.check_out) ===
+          normalizeKSTDate(payloadData?.check_out);
+
+        const samePhone =
+          String(item.buyer_tel || "").replace(/\D/g, "") ===
+          String(payloadData?.phone || "").replace(/\D/g, "");
+
+        return sameGroup && sameCheckIn && sameCheckOut && samePhone;
+      }) || null
+    );
+  };
+
   const renderPayload = (
     payload,
     canceled,
     rowCreatedAt,
     source,
     roomGroupName,
+    roomGroupId,
   ) => {
-    console.log(payload);
     try {
-      const data = typeof payload === "string" ? JSON.parse(payload) : payload;
+      const data =
+        typeof payload === "string" ? JSON.parse(payload) : payload || {};
 
-      // const paymentDate =
-      //   data.payment_date || (source === "website" ? rowCreatedAt : null);
+      const sourceText = String(source || "");
+
+      const isWebsite =
+        sourceText === "website" || sourceText.startsWith("SITE_");
+
+      const homepageReservation = isWebsite
+        ? findHomepageReservationForHistory(data, sourceText, roomGroupId)
+        : null;
+
+      /*
+       * 히스토리 payload에 count가 있으면 그것을 우선 사용하고,
+       * 없으면 reservations_info에서 찾은 값을 사용
+       */
+      const countValue = data.count ?? homepageReservation?.count;
+
+      const countSummary = isWebsite ? getCountSummary(countValue) : null;
 
       const paymentDate =
         data.payment_date ||
-        (source === "website" || source === "manual" ? rowCreatedAt : null);
+        (isWebsite || sourceText === "manual" ? rowCreatedAt : null);
 
       return `
       ${
         Number(canceled) === 1
-          ? `<div style="color:red;font-weight:bold;margin-bottom:6px;">취소됨</div>`
+          ? `
+            <div style="
+              color:red;
+              font-weight:bold;
+              margin-bottom:6px;
+            ">
+              취소됨
+            </div>
+          `
           : ""
       }
+
       예약자 : ${data.name || "-"}<br />
       연락처 : ${data.phone || "-"}<br />
-  <span style="color:blue">상품명 : ${
-    source === "manual"
-      ? `수기예약(${roomGroupName || "-"})`
-      : data.product_name || "-"
-  }</span><br />
+
+      <span style="color:blue">
+        상품명 : ${
+          sourceText === "manual"
+            ? `수기예약(${roomGroupName || "-"})`
+            : data.product_name || "-"
+        }
+      </span><br />
+
       방수 : ${data.qty || "-"}<br />
 
-${
-  source === "manual"
-    ? `객실명 : ${
-        Array.isArray(data.custom_room_no)
-          ? data.custom_room_no.join(", ")
-          : data.custom_room_no || "-"
-      }<br />`
-    : ""
-}
+      ${
+        countSummary
+          ? `
+            인원수 : ${countSummary.totalPeople}명<br />
+            강아지 : ${countSummary.totalPets}마리<br />
+          `
+          : ""
+      }
+
+      ${
+        sourceText === "manual"
+          ? `
+            객실명 : ${
+              Array.isArray(data.custom_room_no)
+                ? data.custom_room_no.join(", ")
+                : data.custom_room_no || "-"
+            }<br />
+          `
+          : ""
+      }
+
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
+
       결제일 : ${formatKSTDateTime(paymentDate)}<br />
       체크인 : ${data.check_in || "-"}<br />
       체크아웃 : ${data.check_out || "-"}<br />
-      예약번호 : ${data.booking_id || "-"}<br/>
-      옵션 : ${renderOptions(data.booking_option || data.options)}<br/>
+      예약번호 : ${data.booking_id || "-"}<br />
+      옵션 : ${renderOptions(data.booking_option || data.options)}<br />
       메모 : ${data.request_memo || ""}
     `;
     } catch (err) {
+      console.error("renderPayload error:", err, payload);
+
       return Number(canceled) === 1
         ? `<div style="color:red;font-weight:bold;">취소됨</div>`
         : "-";
@@ -1711,7 +1867,8 @@ ${
             </button>
             <button
               className="green"
-              onClick={() => {
+              onClick={async () => {
+                await getHomepageReservationsForHistory();
                 setIsHistory(true);
               }}
             >
@@ -2732,6 +2889,7 @@ ${
                                 data.created_at,
                                 data.source,
                                 getHistoryGroupName(data.room_group_id),
+                                data.room_group_id,
                               ),
                             }}
                           ></td>
