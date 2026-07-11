@@ -895,67 +895,63 @@ function ReservationManagement() {
 
         let selectedRooms = [];
 
-        // ==========================================
-        // 전체 기입: 가용 객실을 한1, 한2, 한3 순으로 배정
-        // ==========================================
-        if (memoMode === "all") {
-          selectedRooms = availableRooms.slice(0, count);
-        }
+        const selectedRoomIds = [];
+        const usedRoomIds = new Set();
 
-        // ==========================================
-        // 하나씩 기입: 사용자가 select에서 고른 방 배정
-        // 미선택된 항목은 순서대로 자동 배정
-        // ==========================================
-        if (memoMode === "one") {
-          const selectedRoomIds = [];
-          const usedRoomIds = new Set();
+        // 사용자가 선택한 객실 유효성 및 중복 검사
+        for (let idx = 0; idx < count; idx++) {
+          const selectedId = customRoomNo[groupId]?.[idx];
 
-          // 사용자가 직접 고른 객실부터 등록
-          for (let idx = 0; idx < count; idx++) {
-            const selectedId = customRoomNo[groupId]?.[idx];
+          if (!selectedId) continue;
 
-            if (!selectedId) continue;
+          const roomId = Number(selectedId);
 
-            const roomId = Number(selectedId);
+          const exists = availableRooms.some(
+            (room) => Number(room.id) === roomId,
+          );
 
-            if (usedRoomIds.has(roomId)) {
-              alert("같은 객실을 중복 선택할 수 없습니다.");
-              return;
-            }
-
-            selectedRoomIds[idx] = roomId;
-            usedRoomIds.add(roomId);
-          }
-
-          // 미선택 줄은 이미 사용된 방을 제외하고 순서대로 자동배정
-          for (let idx = 0; idx < count; idx++) {
-            if (selectedRoomIds[idx]) continue;
-
-            const nextAvailableRoom = availableRooms.find(
-              (room) => !usedRoomIds.has(Number(room.id)),
-            );
-
-            if (!nextAvailableRoom) {
-              alert("예약 가능한 객실이 부족합니다.");
-              return;
-            }
-
-            const roomId = Number(nextAvailableRoom.id);
-
-            selectedRoomIds[idx] = roomId;
-            usedRoomIds.add(roomId);
-          }
-
-          selectedRooms = selectedRoomIds
-            .map((roomId) =>
-              availableRooms.find((room) => Number(room.id) === Number(roomId)),
-            )
-            .filter(Boolean);
-
-          if (selectedRooms.length !== count) {
-            alert("예약할 객실을 모두 선택해 주세요.");
+          if (!exists) {
+            alert("선택한 객실이 현재 예약 가능한 상태가 아닙니다.");
             return;
           }
+
+          if (usedRoomIds.has(roomId)) {
+            alert("같은 객실을 중복 선택할 수 없습니다.");
+            return;
+          }
+
+          selectedRoomIds[idx] = roomId;
+          usedRoomIds.add(roomId);
+        }
+
+        // 선택하지 않은 줄은 남은 객실 순서대로 자동배정
+        for (let idx = 0; idx < count; idx++) {
+          if (selectedRoomIds[idx]) continue;
+
+          const nextAvailableRoom = availableRooms.find(
+            (room) => !usedRoomIds.has(Number(room.id)),
+          );
+
+          if (!nextAvailableRoom) {
+            alert("예약 가능한 객실이 부족합니다.");
+            return;
+          }
+
+          const roomId = Number(nextAvailableRoom.id);
+
+          selectedRoomIds[idx] = roomId;
+          usedRoomIds.add(roomId);
+        }
+
+        selectedRooms = selectedRoomIds
+          .map((roomId) =>
+            availableRooms.find((room) => Number(room.id) === Number(roomId)),
+          )
+          .filter(Boolean);
+
+        if (selectedRooms.length !== count) {
+          alert("예약할 객실을 모두 선택해 주세요.");
+          return;
         }
 
         console.log(
@@ -1374,6 +1370,44 @@ ${
     }
   };
 
+  const getPreviewAssignedRoomIds = (groupId, count) => {
+    const availableRooms = getAvailableGroupRooms(groupId);
+    const result = Array(Number(count) || 0).fill(null);
+    const usedRoomIds = new Set();
+
+    // 사용자가 직접 선택한 객실을 우선 적용
+    for (let idx = 0; idx < result.length; idx++) {
+      const selectedId = Number(customRoomNo[groupId]?.[idx]);
+
+      if (!selectedId) continue;
+
+      const exists = availableRooms.some(
+        (room) => Number(room.id) === selectedId,
+      );
+
+      if (!exists || usedRoomIds.has(selectedId)) continue;
+
+      result[idx] = selectedId;
+      usedRoomIds.add(selectedId);
+    }
+
+    // 선택하지 않은 객실은 남은 객실 중 순서대로 자동 배정
+    for (let idx = 0; idx < result.length; idx++) {
+      if (result[idx]) continue;
+
+      const nextRoom = availableRooms.find(
+        (room) => !usedRoomIds.has(Number(room.id)),
+      );
+
+      if (!nextRoom) continue;
+
+      result[idx] = Number(nextRoom.id);
+      usedRoomIds.add(Number(nextRoom.id));
+    }
+
+    return result;
+  };
+
   useEffect(() => {
     if (isHistory) {
       getHistory();
@@ -1754,44 +1788,170 @@ ${
                                   <div className="input_wrap">
                                     <div
                                       style={{
-                                        marginBottom: "8px",
-                                        fontSize: "13px",
+                                        padding: "12px",
+                                        marginBottom: "12px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "6px",
+                                        background: "#fafafa",
                                       }}
                                     >
-                                      배정 객실:{" "}
-                                      {getAvailableGroupRooms(group.id)
-                                        .slice(0, manualMap[group.id] || 0)
-                                        .map((room) => room.name)
-                                        .join(", ")}
+                                      <div
+                                        style={{
+                                          marginBottom: "10px",
+                                          fontSize: "13px",
+                                          fontWeight: "bold",
+                                        }}
+                                      >
+                                        전체 객실 공통 정보
+                                      </div>
+
+                                      <div
+                                        style={{
+                                          display: "grid",
+                                          gridTemplateColumns: "1fr 1fr",
+                                          gap: "8px",
+                                        }}
+                                      >
+                                        <input
+                                          type="text"
+                                          placeholder="전체 객실 공통 예약자명"
+                                          value={allCustomName[group.id] || ""}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+
+                                            setAllCustomName((prev) => ({
+                                              ...prev,
+                                              [group.id]: value,
+                                            }));
+                                          }}
+                                        />
+
+                                        <input
+                                          type="text"
+                                          placeholder="전체 객실 공통 세부정보"
+                                          value={allMemos[group.id] || ""}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+
+                                            setAllMemos((prev) => ({
+                                              ...prev,
+                                              [group.id]: value,
+                                            }));
+                                          }}
+                                        />
+                                      </div>
                                     </div>
 
-                                    <input
-                                      type="text"
-                                      placeholder="예약자명 전체 상품"
-                                      value={allCustomName[group.id] || ""}
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-
-                                        setAllCustomName((prev) => ({
-                                          ...prev,
-                                          [group.id]: value,
-                                        }));
+                                    <div
+                                      style={{
+                                        padding: "12px",
+                                        border: "1px solid #ddd",
+                                        borderRadius: "6px",
                                       }}
-                                    />
+                                    >
+                                      <div
+                                        style={{
+                                          marginBottom: "4px",
+                                          fontSize: "13px",
+                                          fontWeight: "bold",
+                                        }}
+                                      >
+                                        객실 번호 배정
+                                      </div>
 
-                                    <input
-                                      type="text"
-                                      placeholder="세부정보 전체 상품"
-                                      value={allMemos[group.id] || ""}
-                                      onChange={(e) => {
-                                        const value = e.target.value;
+                                      <div
+                                        style={{
+                                          marginBottom: "10px",
+                                          fontSize: "12px",
+                                          color: "#777",
+                                        }}
+                                      >
+                                        기본적으로 남은 객실 번호순으로
+                                        배정되며, 필요한 객실만 변경할 수
+                                        있습니다.
+                                      </div>
 
-                                        setAllMemos((prev) => ({
-                                          ...prev,
-                                          [group.id]: value,
-                                        }));
-                                      }}
-                                    />
+                                      {(() => {
+                                        const availableRooms =
+                                          getAvailableGroupRooms(group.id);
+
+                                        const assignedRoomIds =
+                                          getPreviewAssignedRoomIds(
+                                            group.id,
+                                            manualMap[group.id] || 0,
+                                          );
+
+                                        return Array.from({
+                                          length: manualMap[group.id] || 0,
+                                        }).map((_, idx) => {
+                                          const currentSelectedRoomId =
+                                            assignedRoomIds[idx] || "";
+
+                                          const selectedByOtherRows =
+                                            assignedRoomIds
+                                              .filter(
+                                                (_, selectedIdx) =>
+                                                  selectedIdx !== idx,
+                                              )
+                                              .map(Number)
+                                              .filter(Boolean);
+
+                                          return (
+                                            <div
+                                              key={idx}
+                                              style={{
+                                                display: "grid",
+                                                gridTemplateColumns: "80px 1fr",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                                marginBottom: "8px",
+                                              }}
+                                            >
+                                              <div
+                                                style={{
+                                                  fontSize: "13px",
+                                                  fontWeight: "bold",
+                                                }}
+                                              >
+                                                {idx + 1}번 객실
+                                              </div>
+
+                                              <select
+                                                value={currentSelectedRoomId}
+                                                onChange={(e) => {
+                                                  const value = e.target.value;
+
+                                                  setCustomRoomNo((prev) => {
+                                                    const current = [
+                                                      ...(prev[group.id] || []),
+                                                    ];
+
+                                                    current[idx] = value;
+
+                                                    return {
+                                                      ...prev,
+                                                      [group.id]: current,
+                                                    };
+                                                  });
+                                                }}
+                                              >
+                                                {availableRooms.map((room) => (
+                                                  <option
+                                                    key={room.id}
+                                                    value={room.id}
+                                                    disabled={selectedByOtherRows.includes(
+                                                      Number(room.id),
+                                                    )}
+                                                  >
+                                                    {room.name}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </div>
+                                          );
+                                        });
+                                      })()}
+                                    </div>
                                   </div>
                                 ) : (
                                   <div className="input_wrap">
