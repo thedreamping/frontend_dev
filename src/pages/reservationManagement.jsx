@@ -1302,23 +1302,32 @@ function ReservationManagement() {
         ? source.replace("SITE_", "")
         : booking.reservation_id;
 
-      let matchedWebsite = null;
-
-      // SITE_예약ID가 있으면 ID로 정확하게 찾기
+      // SITE_예약ID 또는 reservation_id가 있으면 가장 정확하게 매칭
       if (reservationId) {
-        matchedWebsite = homepageReservations.find(
+        const matchedById = homepageReservations.find(
           (item) => Number(item.id) === Number(reservationId),
         );
+
+        if (matchedById) {
+          return (
+            matchedById.buyer_name ||
+            matchedById.buyerName ||
+            matchedById.guest_name ||
+            matchedById.guestName ||
+            matchedById.name ||
+            "-"
+          );
+        }
       }
 
-      // 구형 website 데이터는 객실·날짜로 보조 검색
       const bookingCheckIn = normalizeKSTDate(booking.check_in);
       const bookingCheckOut = normalizeKSTDate(booking.check_out);
 
-      // 구형 website 데이터: 실제 배정 객실 ID로 먼저 정확히 검색
-      if (!matchedWebsite) {
-        matchedWebsite = homepageReservations.find((item) => {
-          const sameRoom = Number(item.room_id) === Number(room.id);
+      // 같은 상품 그룹 + 같은 기간의 홈페이지 결제 예약들
+      const matchedHomepageReservations = homepageReservations
+        .filter((item) => {
+          const sameGroup =
+            Number(item.room_group_id) === Number(room.room_group_id);
 
           const sameCheckIn =
             normalizeKSTDate(item.check_in) === bookingCheckIn;
@@ -1326,43 +1335,71 @@ function ReservationManagement() {
           const sameCheckOut =
             normalizeKSTDate(item.check_out) === bookingCheckOut;
 
-          return sameRoom && sameCheckIn && sameCheckOut;
-        });
+          const isPaid = !item.status || item.status === "PAID";
+
+          return sameGroup && sameCheckIn && sameCheckOut && isPaid;
+        })
+        .sort((a, b) => Number(a.id) - Number(b.id));
+
+      if (matchedHomepageReservations.length === 0) {
+        return "-";
       }
 
-      // room_id가 없는 아주 오래된 홈페이지 데이터만 그룹 기준 보조 검색
-      if (!matchedWebsite) {
-        matchedWebsite = homepageReservations.find((item) => {
-          if (item.room_id) return false;
+      // 같은 그룹·기간에 홈페이지 예약이 배정된 실제 객실 목록
+      const assignedWebsiteRooms = rooms
+        .filter(
+          (targetRoom) =>
+            Number(targetRoom.room_group_id) === Number(room.room_group_id),
+        )
+        .filter((targetRoom) => {
+          const schedules = getAllSchedules(targetRoom);
 
-          const sameGroup =
-            Number(item.room_group_id) === Number(room.room_group_id);
+          return schedules.some((schedule) => {
+            const scheduleSource = String(schedule.source || "");
 
-          const sameCheckIn =
-            String(item.check_in || "").slice(0, 10) === bookingCheckIn;
+            if (
+              scheduleSource !== "website" &&
+              !scheduleSource.startsWith("SITE_")
+            ) {
+              return false;
+            }
 
-          const sameCheckOut =
-            String(item.check_out || "").slice(0, 10) === bookingCheckOut;
+            return (
+              normalizeKSTDate(schedule.check_in) === bookingCheckIn &&
+              normalizeKSTDate(schedule.check_out) === bookingCheckOut
+            );
+          });
+        })
+        .sort((a, b) =>
+          String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+            numeric: true,
+          }),
+        );
 
-          return sameGroup && sameCheckIn && sameCheckOut;
-        });
-      }
+      const currentRoomIndex = assignedWebsiteRooms.findIndex(
+        (targetRoom) => Number(targetRoom.id) === Number(room.id),
+      );
 
-      console.log("홈페이지 이름 매칭 확인", {
-        source,
-        booking,
-        room,
-        reservationId,
-        bookingCheckIn,
-        bookingCheckOut,
-        homepageReservations,
+      const matchedWebsite =
+        matchedHomepageReservations[currentRoomIndex] ||
+        matchedHomepageReservations[0];
+
+      console.log("홈페이지 최종 순서 매칭", {
+        room: room.name,
+        currentRoomIndex,
+        assignedRooms: assignedWebsiteRooms.map((item) => item.name),
+        matchedReservationId: matchedWebsite?.id,
         matchedWebsite,
       });
 
       return (
         matchedWebsite?.buyer_name ||
-        matchedWebsite?.name ||
+        matchedWebsite?.buyerName ||
         matchedWebsite?.guest_name ||
+        matchedWebsite?.guestName ||
+        matchedWebsite?.name ||
+        matchedWebsite?.customer_name ||
+        matchedWebsite?.reservation_name ||
         "-"
       );
     }
