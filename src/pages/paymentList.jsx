@@ -54,6 +54,117 @@ function PaymentList() {
     return group?.name || "-";
   };
 
+  const normalizeDate = (value) => {
+    if (!value) return "";
+
+    const str = String(value);
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
+
+    return new Date(value).toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Seoul",
+    });
+  };
+
+  const getActualPaidRoomName = (reservation) => {
+    const status = String(reservation.status || "").toUpperCase();
+
+    // PAID가 아니면 기존 room_id 표시
+    if (status !== "PAID") {
+      return getRoomName(reservation.room_id);
+    }
+
+    const reservationCheckIn = normalizeDate(reservation.check_in);
+    const reservationCheckOut = normalizeDate(reservation.check_out);
+    const roomGroupId = Number(reservation.room_group_id);
+
+    // 같은 그룹·날짜에 실제 달력에 배정된 홈페이지 객실
+    const assignedRooms = rooms
+      .filter((room) => Number(room.room_group_id) === roomGroupId)
+      .filter((room) => {
+        const schedules = getRoomSchedules(room);
+
+        return schedules.some((schedule) => {
+          const source = String(schedule.source || "");
+
+          const isWebsite = source === "website" || source.startsWith("SITE_");
+
+          if (!isWebsite) return false;
+
+          const sameCheckIn =
+            normalizeDate(schedule.check_in) === reservationCheckIn;
+
+          const sameCheckOut =
+            normalizeDate(schedule.check_out) === reservationCheckOut;
+
+          return sameCheckIn && sameCheckOut;
+        });
+      })
+      .sort((a, b) =>
+        String(a.name || "").localeCompare(String(b.name || ""), undefined, {
+          numeric: true,
+        }),
+      );
+
+    if (assignedRooms.length === 0) {
+      return getRoomName(reservation.room_id);
+    }
+
+    // 같은 그룹·날짜의 PAID 홈페이지 예약 목록
+    const samePaidReservations = paymentsList
+      .filter((item) => {
+        const itemStatus = String(item.status || "").toUpperCase();
+
+        return (
+          itemStatus === "PAID" &&
+          Number(item.room_group_id) === roomGroupId &&
+          normalizeDate(item.check_in) === reservationCheckIn &&
+          normalizeDate(item.check_out) === reservationCheckOut
+        );
+      })
+      .sort((a, b) => Number(a.id) - Number(b.id));
+
+    const reservationIndex = samePaidReservations.findIndex(
+      (item) => Number(item.id) === Number(reservation.id),
+    );
+
+    if (reservationIndex < 0) {
+      return assignedRooms[0]?.name || getRoomName(reservation.room_id);
+    }
+
+    return (
+      assignedRooms[reservationIndex]?.name ||
+      assignedRooms[0]?.name ||
+      getRoomName(reservation.room_id)
+    );
+  };
+  const getRoomSchedules = (room) => {
+    let normalSchedules = [];
+    let manualSchedules = [];
+
+    try {
+      normalSchedules =
+        typeof room.check_in_and_out === "string"
+          ? JSON.parse(room.check_in_and_out)
+          : room.check_in_and_out || [];
+    } catch {
+      normalSchedules = [];
+    }
+
+    try {
+      manualSchedules =
+        typeof room.check_in_and_out_soogie === "string"
+          ? JSON.parse(room.check_in_and_out_soogie)
+          : room.check_in_and_out_soogie || [];
+    } catch {
+      manualSchedules = [];
+    }
+
+    return [...normalSchedules, ...manualSchedules];
+  };
+
   const getPayments = () => {
     api
       .get(
@@ -272,7 +383,7 @@ function PaymentList() {
                     </td>
                     <td>{data.buyer_name}</td>
                     <td>{getRoomGroupName(data.room_group_id)}</td>
-                    <td>{getRoomName(data.room_id)}</td>
+                    <td>{getActualPaidRoomName(data)}</td>
                     <td>{data.buyer_tel}</td>
 
                     <td>{toKoreanDate(data.check_in)}</td>
