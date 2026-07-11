@@ -105,6 +105,8 @@ function ReservationManagement() {
       const response = await api.get(
         `/api/reservation_infos?page=1&limit=10000&check_in_from=${monthStart}&check_in_to=${monthEnd}`,
       );
+      console.log("홈페이지 예약 API 전체 응답", response.data);
+      console.log("홈페이지 예약 목록", response.data.data);
 
       setHomepageReservations(response.data.data || []);
     } catch (err) {
@@ -1284,11 +1286,29 @@ function ReservationManagement() {
             String(booking.check_out || "").slice(0, 10)
         );
       });
+      console.log("홈페이지 이름 매칭 확인", {
+        source,
+        booking,
+        room: {
+          id: room.id,
+          name: room.name,
+          room_group_id: room.room_group_id,
+        },
+        reservationId,
+        bookingCheckIn,
+        bookingCheckOut,
+        homepageReservations,
+        matchedWebsite,
+      });
 
       return (
-        matchedNaver?.name ||
-        matchedNaver?.guest_name ||
-        matchedNaver?.buyer_name ||
+        matchedWebsite?.buyer_name ||
+        matchedWebsite?.buyerName ||
+        matchedWebsite?.guest_name ||
+        matchedWebsite?.guestName ||
+        matchedWebsite?.name ||
+        matchedWebsite?.custom_name ||
+        matchedWebsite?.reservation_name ||
         "-"
       );
     }
