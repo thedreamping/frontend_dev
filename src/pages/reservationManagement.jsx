@@ -1996,7 +1996,7 @@ function ReservationManagement() {
 
       {isPop && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width: "700px" }}>
+          <div className="popup" style={{ height: "auto", width: "1400px" }}>
             <div className="popup_title">선택한 날짜 수기 예약</div>
             <div
               className="popup_x"
@@ -2010,547 +2010,571 @@ function ReservationManagement() {
             >
               X
             </div>
+            <div style={{ width: "50%", float: "left", height: "auto" }}>
+              <table>
+                <colgroup>
+                  <col style={{ width: "140px" }} />
+                  <col style={{ width: "auto" }} />
+                </colgroup>
 
-            <table>
-              <colgroup>
-                <col style={{ width: "140px" }} />
-                <col style={{ width: "auto" }} />
-              </colgroup>
-
-              <tbody>
-                <tr>
-                  <th>선택한 기간</th>
-                  <td>
-                    {selectedDays.length === 1 ? (
-                      <>
-                        <span>{formatDay(selectedDays[0])}</span>
-                        <span style={{ margin: "0 8px" }}>~</span>
-
-                        {manualBookingType === "stay" ? (
-                          <input
-                            type="date"
-                            value={manualCheckOutDate}
-                            min={addDaysToYmd(formatDay(selectedDays[0]), 1)}
-                            onChange={(e) =>
-                              setManualCheckOutDate(e.target.value)
-                            }
-                          />
-                        ) : (
-                          <span>{formatDay(selectedDays[0])}</span>
-                        )}
-                      </>
-                    ) : (
-                      formatRange(selectedDays)
-                    )}
-                  </td>
-                </tr>
-                {selectedDays.length === 1 && (
+                <tbody>
                   <tr>
-                    <th>예약 유형</th>
+                    <th>선택한 기간</th>
                     <td>
-                      <label style={{ marginRight: "20px" }}>
-                        <input
-                          type="radio"
-                          name="manualBookingType"
-                          value="stay"
-                          checked={manualBookingType === "stay"}
-                          onChange={() => {
-                            setManualBookingType("stay");
-                            resetManualBookingInputs();
-                          }}
-                        />
-                        숙박
-                      </label>
+                      {selectedDays.length === 1 ? (
+                        <>
+                          <span>{formatDay(selectedDays[0])}</span>
+                          <span style={{ margin: "0 8px" }}>~</span>
 
-                      <label>
-                        <input
-                          type="radio"
-                          name="manualBookingType"
-                          value="day"
-                          checked={manualBookingType === "day"}
-                          onChange={() => {
-                            setManualBookingType("day");
-                            resetManualBookingInputs();
-                          }}
-                        />
-                        데이유즈
-                      </label>
+                          {manualBookingType === "stay" ? (
+                            <input
+                              type="date"
+                              value={manualCheckOutDate}
+                              min={addDaysToYmd(formatDay(selectedDays[0]), 1)}
+                              onChange={(e) =>
+                                setManualCheckOutDate(e.target.value)
+                              }
+                            />
+                          ) : (
+                            <span>{formatDay(selectedDays[0])}</span>
+                          )}
+                        </>
+                      ) : (
+                        formatRange(selectedDays)
+                      )}
                     </td>
                   </tr>
-                )}
-                <tr>
-                  <th>객실</th>
-                  <td>
-                    <div
-                      style={{
-                        width: "100%",
-                        maxHeight: "340px",
-                        overflow: "auto",
-                        height: "auto",
-                      }}
-                    >
-                      {groups.map((group) => {
-                        const { available } = getGroupRoomInfo(group.id);
+                  {selectedDays.length === 1 && (
+                    <tr>
+                      <th>예약 유형</th>
+                      <td>
+                        <label style={{ marginRight: "20px" }}>
+                          <input
+                            type="radio"
+                            name="manualBookingType"
+                            value="stay"
+                            checked={manualBookingType === "stay"}
+                            onChange={() => {
+                              setManualBookingType("stay");
+                              resetManualBookingInputs();
+                            }}
+                          />
+                          숙박
+                        </label>
 
-                        return (
-                          <div key={group.id} className="room_controll_cell">
-                            {group.name} (남은 방 수 : {available})
-                            <div className="room_controll_cell_pl_mi">
-                              <button
-                                type="button"
-                                className="plus"
-                                onClick={() => increase(group.id, available)}
-                              >
-                                +
-                              </button>
+                        <label>
+                          <input
+                            type="radio"
+                            name="manualBookingType"
+                            value="day"
+                            checked={manualBookingType === "day"}
+                            onChange={() => {
+                              setManualBookingType("day");
+                              resetManualBookingInputs();
+                            }}
+                          />
+                          데이유즈
+                        </label>
+                      </td>
+                    </tr>
+                  )}
+                  <tr>
+                    <th>객실</th>
+                    <td>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxHeight: "340px",
+                          overflow: "auto",
+                          height: "auto",
+                        }}
+                      >
+                        {groups.map((group) => {
+                          const { available } = getGroupRoomInfo(group.id);
 
-                              {manualMap[group.id] || 0}
+                          return (
+                            <div key={group.id} className="room_controll_cell">
+                              {group.name} (남은 방 수 : {available})
+                              <div className="room_controll_cell_pl_mi">
+                                <button
+                                  type="button"
+                                  className="plus"
+                                  onClick={() => increase(group.id, available)}
+                                >
+                                  +
+                                </button>
 
-                              <button
-                                type="button"
-                                className="minus"
-                                onClick={() => decrease(group.id)}
-                              >
-                                -
-                              </button>
-                            </div>
-                            {(manualMap[group.id] || 0) > 0 && (
-                              <>
-                                <div className="all_or_one">
-                                  <input
-                                    type="radio"
-                                    id={`one-${group.id}`}
-                                    name={`all_or_one-${group.id}`}
-                                    value="one"
-                                    checked={
-                                      (memoInputMode[group.id] || "one") ===
-                                      "one"
-                                    }
-                                    onChange={() => {
-                                      setMemoInputMode((prev) => ({
-                                        ...prev,
-                                        [group.id]: "one",
-                                      }));
-                                    }}
-                                  />
+                                {manualMap[group.id] || 0}
 
-                                  <label htmlFor={`one-${group.id}`}>
-                                    하나씩 기입
-                                  </label>
-
-                                  <input
-                                    type="radio"
-                                    id={`all-${group.id}`}
-                                    name={`all_or_one-${group.id}`}
-                                    value="all"
-                                    checked={memoInputMode[group.id] === "all"}
-                                    onChange={() => {
-                                      setMemoInputMode((prev) => ({
-                                        ...prev,
-                                        [group.id]: "all",
-                                      }));
-                                    }}
-                                  />
-
-                                  <label htmlFor={`all-${group.id}`}>
-                                    해당 상품 전체 기입
-                                  </label>
-                                </div>
-
-                                {memoInputMode[group.id] === "all" ? (
-                                  <div className="input_wrap">
-                                    <div
-                                      style={{
-                                        padding: "12px",
-                                        marginBottom: "12px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "6px",
-                                        background: "#fafafa",
+                                <button
+                                  type="button"
+                                  className="minus"
+                                  onClick={() => decrease(group.id)}
+                                >
+                                  -
+                                </button>
+                              </div>
+                              {(manualMap[group.id] || 0) > 0 && (
+                                <>
+                                  <div className="all_or_one">
+                                    <input
+                                      type="radio"
+                                      id={`one-${group.id}`}
+                                      name={`all_or_one-${group.id}`}
+                                      value="one"
+                                      checked={
+                                        (memoInputMode[group.id] || "one") ===
+                                        "one"
+                                      }
+                                      onChange={() => {
+                                        setMemoInputMode((prev) => ({
+                                          ...prev,
+                                          [group.id]: "one",
+                                        }));
                                       }}
-                                    >
-                                      <div
-                                        style={{
-                                          marginBottom: "10px",
-                                          fontSize: "13px",
-                                          fontWeight: "bold",
-                                        }}
-                                      >
-                                        전체 객실 공통 정보
-                                      </div>
+                                    />
 
-                                      <div
-                                        style={{
-                                          display: "grid",
-                                          gridTemplateColumns: "1fr 1fr",
-                                          gap: "8px",
-                                        }}
-                                      >
-                                        <input
-                                          type="text"
-                                          placeholder="전체 객실 공통 예약자명"
-                                          value={allCustomName[group.id] || ""}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
+                                    <label htmlFor={`one-${group.id}`}>
+                                      하나씩 기입
+                                    </label>
 
-                                            setAllCustomName((prev) => ({
-                                              ...prev,
-                                              [group.id]: value,
-                                            }));
-                                          }}
-                                        />
-
-                                        <input
-                                          type="text"
-                                          placeholder="전체 객실 공통 세부정보"
-                                          value={allMemos[group.id] || ""}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            setAllMemos((prev) => ({
-                                              ...prev,
-                                              [group.id]: value,
-                                            }));
-                                          }}
-                                        />
-                                      </div>
-                                    </div>
-
-                                    <div
-                                      style={{
-                                        padding: "12px",
-                                        border: "1px solid #ddd",
-                                        borderRadius: "6px",
+                                    <input
+                                      type="radio"
+                                      id={`all-${group.id}`}
+                                      name={`all_or_one-${group.id}`}
+                                      value="all"
+                                      checked={
+                                        memoInputMode[group.id] === "all"
+                                      }
+                                      onChange={() => {
+                                        setMemoInputMode((prev) => ({
+                                          ...prev,
+                                          [group.id]: "all",
+                                        }));
                                       }}
-                                    >
-                                      <div
-                                        style={{
-                                          marginBottom: "4px",
-                                          fontSize: "13px",
-                                          fontWeight: "bold",
-                                        }}
-                                      >
-                                        객실 번호 배정
-                                      </div>
+                                    />
 
-                                      <div
-                                        style={{
-                                          marginBottom: "10px",
-                                          fontSize: "12px",
-                                          color: "#777",
-                                        }}
-                                      >
-                                        기본적으로 남은 객실 번호순으로
-                                        배정되며, 필요한 객실만 변경할 수
-                                        있습니다.
-                                      </div>
-
-                                      {(() => {
-                                        const availableRooms =
-                                          getAvailableGroupRooms(group.id);
-
-                                        const assignedRoomIds =
-                                          getPreviewAssignedRoomIds(
-                                            group.id,
-                                            manualMap[group.id] || 0,
-                                          );
-
-                                        return Array.from({
-                                          length: manualMap[group.id] || 0,
-                                        }).map((_, idx) => {
-                                          const currentSelectedRoomId =
-                                            assignedRoomIds[idx] || "";
-
-                                          const selectedByOtherRows =
-                                            assignedRoomIds
-                                              .filter(
-                                                (_, selectedIdx) =>
-                                                  selectedIdx !== idx,
-                                              )
-                                              .map(Number)
-                                              .filter(Boolean);
-
-                                          return (
-                                            <div
-                                              key={idx}
-                                              style={{
-                                                display: "grid",
-                                                gridTemplateColumns: "80px 1fr",
-                                                alignItems: "center",
-                                                gap: "8px",
-                                                marginBottom: "8px",
-                                              }}
-                                            >
-                                              <div
-                                                style={{
-                                                  fontSize: "13px",
-                                                  fontWeight: "bold",
-                                                }}
-                                              >
-                                                {idx + 1}번 객실
-                                              </div>
-
-                                              <select
-                                                value={currentSelectedRoomId}
-                                                onChange={(e) => {
-                                                  const value = e.target.value;
-
-                                                  setCustomRoomNo((prev) => {
-                                                    const current = [
-                                                      ...(prev[group.id] || []),
-                                                    ];
-
-                                                    current[idx] = value;
-
-                                                    return {
-                                                      ...prev,
-                                                      [group.id]: current,
-                                                    };
-                                                  });
-                                                }}
-                                              >
-                                                {availableRooms.map((room) => (
-                                                  <option
-                                                    key={room.id}
-                                                    value={room.id}
-                                                    disabled={selectedByOtherRows.includes(
-                                                      Number(room.id),
-                                                    )}
-                                                  >
-                                                    {room.name}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                            </div>
-                                          );
-                                        });
-                                      })()}
-                                    </div>
+                                    <label htmlFor={`all-${group.id}`}>
+                                      해당 상품 전체 기입
+                                    </label>
                                   </div>
-                                ) : (
-                                  <div className="input_wrap">
-                                    {Array.from({
-                                      length: manualMap[group.id] || 0,
-                                    }).map((_, idx) => {
-                                      const availableRooms =
-                                        getAvailableGroupRooms(group.id);
 
-                                      const currentSelectedRoomId =
-                                        customRoomNo[group.id]?.[idx] ||
-                                        availableRooms[idx]?.id ||
-                                        "";
-
-                                      const selectedByOtherRows = Array.from(
-                                        { length: manualMap[group.id] || 0 },
-                                        (_, selectedIdx) => {
-                                          if (selectedIdx === idx) return null;
-
-                                          return Number(
-                                            customRoomNo[group.id]?.[
-                                              selectedIdx
-                                            ] ||
-                                              availableRooms[selectedIdx]?.id,
-                                          );
-                                        },
-                                      ).filter(Boolean);
-
-                                      return (
+                                  {memoInputMode[group.id] === "all" ? (
+                                    <div className="input_wrap">
+                                      <div
+                                        style={{
+                                          padding: "12px",
+                                          marginBottom: "12px",
+                                          border: "1px solid #ddd",
+                                          borderRadius: "6px",
+                                          background: "#fafafa",
+                                        }}
+                                      >
                                         <div
-                                          key={idx}
                                           style={{
-                                            display: "grid",
-                                            gridTemplateColumns:
-                                              "130px 1fr 1fr",
-                                            gap: "8px",
-                                            marginBottom: "8px",
+                                            marginBottom: "10px",
+                                            fontSize: "13px",
+                                            fontWeight: "bold",
                                           }}
                                         >
-                                          <select
-                                            value={currentSelectedRoomId}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
+                                          전체 객실 공통 정보
+                                        </div>
 
-                                              setCustomRoomNo((prev) => {
-                                                const current = [
-                                                  ...(prev[group.id] || []),
-                                                ];
-
-                                                current[idx] = value;
-
-                                                return {
-                                                  ...prev,
-                                                  [group.id]: current,
-                                                };
-                                              });
-                                            }}
-                                          >
-                                            <option value="">객실 선택</option>
-
-                                            {availableRooms.map((room) => (
-                                              <option
-                                                key={room.id}
-                                                value={room.id}
-                                                disabled={selectedByOtherRows.includes(
-                                                  Number(room.id),
-                                                )}
-                                              >
-                                                {room.name}
-                                              </option>
-                                            ))}
-                                          </select>
-
+                                        <div
+                                          style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "1fr 1fr",
+                                            gap: "8px",
+                                          }}
+                                        >
                                           <input
                                             type="text"
-                                            placeholder={`예약자명 ${idx + 1}`}
+                                            placeholder="전체 객실 공통 예약자명"
                                             value={
-                                              customName[group.id]?.[idx] || ""
+                                              allCustomName[group.id] || ""
                                             }
                                             onChange={(e) => {
                                               const value = e.target.value;
 
-                                              setCustomName((prev) => {
-                                                const current = [
-                                                  ...(prev[group.id] || []),
-                                                ];
-
-                                                current[idx] = value;
-
-                                                return {
-                                                  ...prev,
-                                                  [group.id]: current,
-                                                };
-                                              });
+                                              setAllCustomName((prev) => ({
+                                                ...prev,
+                                                [group.id]: value,
+                                              }));
                                             }}
                                           />
 
                                           <input
                                             type="text"
-                                            placeholder={`세부정보 ${idx + 1}`}
-                                            value={memos[group.id]?.[idx] || ""}
+                                            placeholder="전체 객실 공통 세부정보"
+                                            value={allMemos[group.id] || ""}
                                             onChange={(e) => {
                                               const value = e.target.value;
 
-                                              setMemos((prev) => {
-                                                const current = [
-                                                  ...(prev[group.id] || []),
-                                                ];
-
-                                                current[idx] = value;
-
-                                                return {
-                                                  ...prev,
-                                                  [group.id]: current,
-                                                };
-                                              });
+                                              setAllMemos((prev) => ({
+                                                ...prev,
+                                                [group.id]: value,
+                                              }));
                                             }}
                                           />
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <th>기존 수기예약</th>
-                  <td>
-                    <div
-                      style={{
-                        width: "100%",
-                        maxHeight: "140px",
-                        overflow: "auto",
-                        height: "auto",
-                      }}
-                    >
-                      {getManualReservations().length === 0 ? (
-                        <div>없음</div>
-                      ) : (
-                        getManualReservations().map((room, idx) => {
-                          console.log(room);
-                          return (
-                            <div
-                              key={`${room.room_id}-${room.check_in}-${room.check_out}-${idx}`}
-                              className="room_controll_cell"
-                              style={{ marginBottom: "8px" }}
-                            >
-                              <div
-                                style={{
-                                  display: "inline-block",
-                                  verticalAlign: "top",
-                                  lineHeight: "1.7",
-                                }}
-                              >
-                                <div>
-                                  <b>
-                                    객실 :{" "}
-                                    {Array.isArray(room.custom_room_no)
-                                      ? room.custom_room_no.join(", ")
-                                      : room.custom_room_no ||
-                                        room.room_name ||
-                                        "-"}
-                                  </b>
-                                </div>
+                                      </div>
 
-                                <div>예약자명 : {room.custom_name || "-"}</div>
+                                      <div
+                                        style={{
+                                          padding: "12px",
+                                          border: "1px solid #ddd",
+                                          borderRadius: "6px",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            marginBottom: "4px",
+                                            fontSize: "13px",
+                                            fontWeight: "bold",
+                                          }}
+                                        >
+                                          객실 번호 배정
+                                        </div>
 
-                                <div>
-                                  <small>
-                                    예약기간 :{" "}
-                                    {room.check_in?.slice(0, 10) || "-"} ~{" "}
-                                    {room.check_out?.slice(0, 10) || "-"}
-                                  </small>
-                                </div>
-                              </div>
+                                        <div
+                                          style={{
+                                            marginBottom: "10px",
+                                            fontSize: "12px",
+                                            color: "#777",
+                                          }}
+                                        >
+                                          기본적으로 남은 객실 번호순으로
+                                          배정되며, 필요한 객실만 변경할 수
+                                          있습니다.
+                                        </div>
 
-                              <button
-                                className="minus"
-                                type="button"
-                                style={{
-                                  backgroundColor: "black",
-                                  color: "white",
-                                  marginLeft: "40px",
-                                }}
-                                onClick={() => cancelManualReservation(room)}
-                              >
-                                취소
-                              </button>
-                              <div className="input_wrap">
-                                <div
-                                  style={{
-                                    fontSize: "13px",
-                                    marginBottom: "4px",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  세부정보
-                                </div>
+                                        {(() => {
+                                          const availableRooms =
+                                            getAvailableGroupRooms(group.id);
 
-                                <textarea
-                                  value={room.memo || ""}
-                                  placeholder="메모 없음"
-                                  style={{
-                                    width: "100%",
-                                    height: "80px",
-                                    resize: "none",
-                                  }}
-                                  readOnly
-                                />
-                              </div>
+                                          const assignedRoomIds =
+                                            getPreviewAssignedRoomIds(
+                                              group.id,
+                                              manualMap[group.id] || 0,
+                                            );
+
+                                          return Array.from({
+                                            length: manualMap[group.id] || 0,
+                                          }).map((_, idx) => {
+                                            const currentSelectedRoomId =
+                                              assignedRoomIds[idx] || "";
+
+                                            const selectedByOtherRows =
+                                              assignedRoomIds
+                                                .filter(
+                                                  (_, selectedIdx) =>
+                                                    selectedIdx !== idx,
+                                                )
+                                                .map(Number)
+                                                .filter(Boolean);
+
+                                            return (
+                                              <div
+                                                key={idx}
+                                                style={{
+                                                  display: "grid",
+                                                  gridTemplateColumns:
+                                                    "80px 1fr",
+                                                  alignItems: "center",
+                                                  gap: "8px",
+                                                  marginBottom: "8px",
+                                                }}
+                                              >
+                                                <div
+                                                  style={{
+                                                    fontSize: "13px",
+                                                    fontWeight: "bold",
+                                                  }}
+                                                >
+                                                  {idx + 1}번 객실
+                                                </div>
+
+                                                <select
+                                                  value={currentSelectedRoomId}
+                                                  onChange={(e) => {
+                                                    const value =
+                                                      e.target.value;
+
+                                                    setCustomRoomNo((prev) => {
+                                                      const current = [
+                                                        ...(prev[group.id] ||
+                                                          []),
+                                                      ];
+
+                                                      current[idx] = value;
+
+                                                      return {
+                                                        ...prev,
+                                                        [group.id]: current,
+                                                      };
+                                                    });
+                                                  }}
+                                                >
+                                                  {availableRooms.map(
+                                                    (room) => (
+                                                      <option
+                                                        key={room.id}
+                                                        value={room.id}
+                                                        disabled={selectedByOtherRows.includes(
+                                                          Number(room.id),
+                                                        )}
+                                                      >
+                                                        {room.name}
+                                                      </option>
+                                                    ),
+                                                  )}
+                                                </select>
+                                              </div>
+                                            );
+                                          });
+                                        })()}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="input_wrap">
+                                      {Array.from({
+                                        length: manualMap[group.id] || 0,
+                                      }).map((_, idx) => {
+                                        const availableRooms =
+                                          getAvailableGroupRooms(group.id);
+
+                                        const currentSelectedRoomId =
+                                          customRoomNo[group.id]?.[idx] ||
+                                          availableRooms[idx]?.id ||
+                                          "";
+
+                                        const selectedByOtherRows = Array.from(
+                                          { length: manualMap[group.id] || 0 },
+                                          (_, selectedIdx) => {
+                                            if (selectedIdx === idx)
+                                              return null;
+
+                                            return Number(
+                                              customRoomNo[group.id]?.[
+                                                selectedIdx
+                                              ] ||
+                                                availableRooms[selectedIdx]?.id,
+                                            );
+                                          },
+                                        ).filter(Boolean);
+
+                                        return (
+                                          <div
+                                            key={idx}
+                                            style={{
+                                              display: "grid",
+                                              gridTemplateColumns:
+                                                "130px 1fr 1fr",
+                                              gap: "8px",
+                                              marginBottom: "8px",
+                                            }}
+                                          >
+                                            <select
+                                              value={currentSelectedRoomId}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                setCustomRoomNo((prev) => {
+                                                  const current = [
+                                                    ...(prev[group.id] || []),
+                                                  ];
+
+                                                  current[idx] = value;
+
+                                                  return {
+                                                    ...prev,
+                                                    [group.id]: current,
+                                                  };
+                                                });
+                                              }}
+                                            >
+                                              <option value="">
+                                                객실 선택
+                                              </option>
+
+                                              {availableRooms.map((room) => (
+                                                <option
+                                                  key={room.id}
+                                                  value={room.id}
+                                                  disabled={selectedByOtherRows.includes(
+                                                    Number(room.id),
+                                                  )}
+                                                >
+                                                  {room.name}
+                                                </option>
+                                              ))}
+                                            </select>
+
+                                            <input
+                                              type="text"
+                                              placeholder={`예약자명 ${idx + 1}`}
+                                              value={
+                                                customName[group.id]?.[idx] ||
+                                                ""
+                                              }
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                setCustomName((prev) => {
+                                                  const current = [
+                                                    ...(prev[group.id] || []),
+                                                  ];
+
+                                                  current[idx] = value;
+
+                                                  return {
+                                                    ...prev,
+                                                    [group.id]: current,
+                                                  };
+                                                });
+                                              }}
+                                            />
+
+                                            <input
+                                              type="text"
+                                              placeholder={`세부정보 ${idx + 1}`}
+                                              value={
+                                                memos[group.id]?.[idx] || ""
+                                              }
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+
+                                                setMemos((prev) => {
+                                                  const current = [
+                                                    ...(prev[group.id] || []),
+                                                  ];
+
+                                                  current[idx] = value;
+
+                                                  return {
+                                                    ...prev,
+                                                    [group.id]: current,
+                                                  };
+                                                });
+                                              }}
+                                            />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </>
+                              )}
                             </div>
                           );
-                        })
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                        })}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style={{ float: "left", width: "50%", height: "auto" }}>
+              <table>
+                <tbody>
+                  <tr>
+                    <th>기존 수기예약</th>
+                    <td>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxHeight: "440px",
+                          overflow: "auto",
+                          height: "auto",
+                        }}
+                      >
+                        {getManualReservations().length === 0 ? (
+                          <div>없음</div>
+                        ) : (
+                          getManualReservations().map((room, idx) => {
+                            console.log(room);
+                            return (
+                              <div
+                                key={`${room.room_id}-${room.check_in}-${room.check_out}-${idx}`}
+                                className="room_controll_cell"
+                                style={{ marginBottom: "8px" }}
+                              >
+                                <div
+                                  style={{
+                                    display: "inline-block",
+                                    verticalAlign: "top",
+                                    lineHeight: "1.7",
+                                  }}
+                                >
+                                  <div>
+                                    <b>
+                                      객실 :{" "}
+                                      {Array.isArray(room.custom_room_no)
+                                        ? room.custom_room_no.join(", ")
+                                        : room.custom_room_no ||
+                                          room.room_name ||
+                                          "-"}
+                                    </b>
+                                  </div>
 
+                                  <div>
+                                    예약자명 : {room.custom_name || "-"}
+                                  </div>
+
+                                  <div>
+                                    <small>
+                                      예약기간 :{" "}
+                                      {room.check_in?.slice(0, 10) || "-"} ~{" "}
+                                      {room.check_out?.slice(0, 10) || "-"}
+                                    </small>
+                                  </div>
+                                </div>
+
+                                <button
+                                  className="minus"
+                                  type="button"
+                                  style={{
+                                    backgroundColor: "black",
+                                    color: "white",
+                                    marginLeft: "40px",
+                                  }}
+                                  onClick={() => cancelManualReservation(room)}
+                                >
+                                  취소
+                                </button>
+                                <div className="input_wrap">
+                                  <div
+                                    style={{
+                                      fontSize: "13px",
+                                      marginBottom: "4px",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    세부정보
+                                  </div>
+
+                                  <textarea
+                                    value={room.memo || ""}
+                                    placeholder="메모 없음"
+                                    style={{
+                                      width: "100%",
+                                      height: "80px",
+                                      resize: "none",
+                                    }}
+                                    readOnly
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style={{ clear: "both" }}></div>
             <div className="btn_area">
               <button className="green" onClick={modifyReservationSchedule}>
                 수기 예약 적용
