@@ -1606,7 +1606,18 @@ ${
 
                                   const checkout = booking.check_out.slice(5);
 
-                                  return `(${label}${isDayBooking(booking) ? " 데이" : ` 체크아웃:${checkout}`})`;
+                                  const guestName =
+                                    booking.name ||
+                                    booking.custom_name ||
+                                    booking.guest_name ||
+                                    booking.buyer_name ||
+                                    "-";
+
+                                  return `(${label}${
+                                    isDayBooking(booking)
+                                      ? " 데이"
+                                      : ` 체크아웃:${checkout}`
+                                  }) ${guestName}`;
                                 })()}
                               </div>
                             ),
