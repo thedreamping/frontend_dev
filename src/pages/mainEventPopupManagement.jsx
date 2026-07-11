@@ -354,11 +354,7 @@ function MainEventPopupManagement() {
                       }}
                     >
                       <img
-                        src={
-                          import.meta.env.VITE_API_BASE_URL +
-                          "/" +
-                          data.file_url
-                        }
+                        src={import.meta.env.VITE_API_BASE_URL + data.file_url}
                         alt={data.title || `팝업 ${i + 1}`}
                         style={{
                           maxWidth: "250px",
