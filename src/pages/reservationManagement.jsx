@@ -2474,7 +2474,96 @@ ${
                                 : "-"}
                             </div>
                             <div>예약번호 : {room.booking_id}</div>
-                            <div>옵션 : {room.booking_option}</div>
+                            <div>
+                              옵션 :{" "}
+                              {(() => {
+                                const option = room.booking_option;
+
+                                if (!option) return "-";
+
+                                // 문자열이면 JSON 파싱 시도
+                                if (typeof option === "string") {
+                                  try {
+                                    const parsed = JSON.parse(option);
+
+                                    if (Array.isArray(parsed)) {
+                                      return parsed
+                                        .map((item) => {
+                                          const name = item?.name || "-";
+                                          const qty = item?.qty
+                                            ? ` x${item.qty}`
+                                            : "";
+                                          const price =
+                                            item?.price !== undefined &&
+                                            item?.price !== null
+                                              ? ` (${Number(item.price).toLocaleString()}원)`
+                                              : "";
+
+                                          return `${name}${qty}${price}`;
+                                        })
+                                        .join(", ");
+                                    }
+
+                                    if (
+                                      typeof parsed === "object" &&
+                                      parsed !== null
+                                    ) {
+                                      const name = parsed.name || "-";
+                                      const qty = parsed.qty
+                                        ? ` x${parsed.qty}`
+                                        : "";
+                                      const price =
+                                        parsed.price !== undefined &&
+                                        parsed.price !== null
+                                          ? ` (${Number(parsed.price).toLocaleString()}원)`
+                                          : "";
+
+                                      return `${name}${qty}${price}`;
+                                    }
+
+                                    return String(parsed);
+                                  } catch {
+                                    return option;
+                                  }
+                                }
+
+                                // 배열
+                                if (Array.isArray(option)) {
+                                  return option
+                                    .map((item) => {
+                                      const name = item?.name || "-";
+                                      const qty = item?.qty
+                                        ? ` x${item.qty}`
+                                        : "";
+                                      const price =
+                                        item?.price !== undefined &&
+                                        item?.price !== null
+                                          ? ` (${Number(item.price).toLocaleString()}원)`
+                                          : "";
+
+                                      return `${name}${qty}${price}`;
+                                    })
+                                    .join(", ");
+                                }
+
+                                // 단일 객체
+                                if (typeof option === "object") {
+                                  const name = option.name || "-";
+                                  const qty = option.qty
+                                    ? ` x${option.qty}`
+                                    : "";
+                                  const price =
+                                    option.price !== undefined &&
+                                    option.price !== null
+                                      ? ` (${Number(option.price).toLocaleString()}원)`
+                                      : "";
+
+                                  return `${name}${qty}${price}`;
+                                }
+
+                                return String(option);
+                              })()}
+                            </div>
                             <div>메모 : {room.request_memo}</div>
                           </div>
                         ))
