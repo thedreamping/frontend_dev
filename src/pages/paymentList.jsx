@@ -41,7 +41,7 @@ function PaymentList() {
   };
 
   const getRoomName = (roomId) => {
-    const room = rooms.find((item) => Number(item.id) === Number(roomId));
+    const room = rooms.find((item) => String(item.id) === String(roomId));
 
     return room?.name || "-";
   };

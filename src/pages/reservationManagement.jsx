@@ -80,6 +80,7 @@ function ReservationManagement() {
   // =================================================
   const groupColorMap = useRef({});
   const colorIndex = useRef(0);
+
   const normalizeKSTDate = (value) => {
     if (!value) return "";
 
@@ -115,6 +116,22 @@ function ReservationManagement() {
     }
   };
 
+  const isExtraRoom = (room) => String(room?.id || "").startsWith("EXTRA_");
+
+  const isExtraRoomAvailableForDays = (room, targetDays) => {
+    if (!isExtraRoom(room)) return true;
+
+    const startDate = normalize(room.start_date);
+    const endDate = normalize(room.end_date);
+
+    if (!startDate || !endDate) return false;
+
+    return targetDays.every((day) => {
+      const target = formatDay(day);
+
+      return target >= startDate && target <= endDate;
+    });
+  };
   const loadRoomPriceInfos = () => {
     api.get(`/api/room-price?year=${year}&month=${month}`).then((response) => {
       setRoomPriceInfos(response.data.data || []);
@@ -151,6 +168,14 @@ function ReservationManagement() {
     );
 
     return matchedGroup?.name || "";
+  };
+
+  const getHistoryRoomName = (roomId) => {
+    const matchedRoom = rooms.find(
+      (room) => String(room.id) === String(roomId),
+    );
+
+    return matchedRoom?.name || "";
   };
 
   const renderHistoryDate = (value, source) => {
@@ -323,7 +348,9 @@ function ReservationManagement() {
           const itemCheckIn = toKSTDate(item.check_in);
           const itemCheckOut = toKSTDate(item.check_out);
 
-          if (Number(item.room_id) !== Number(room.id)) return false;
+          if (normalizeRoomId(item.room_id) !== normalizeRoomId(room.id)) {
+            return false;
+          }
           if (itemCheckIn !== start) return false;
           if (itemCheckOut !== end) return false;
 
@@ -665,14 +692,18 @@ function ReservationManagement() {
 
   const normalize = (d) => d?.slice(0, 10);
 
+  const normalizeRoomId = (value) => String(value ?? "");
+
   const toTime = (d) => new Date(d).getTime();
 
   const getAvailableCount = (groupId) => {
-    const groupRooms = rooms.filter(
-      (r) => Number(r.room_group_id) === Number(groupId),
-    );
-
     const targetDays = getManualTargetDays();
+
+    const groupRooms = rooms.filter(
+      (room) =>
+        Number(room.room_group_id) === Number(groupId) &&
+        isExtraRoomAvailableForDays(room, targetDays),
+    );
 
     return groupRooms.filter((room) => isRoomAvailable(room, targetDays))
       .length;
@@ -824,6 +855,7 @@ function ReservationManagement() {
       .filter(
         (room) =>
           Number(room.room_group_id) === Number(groupId) &&
+          isExtraRoomAvailableForDays(room, targetDays) &&
           isRoomAvailable(room, targetDays),
       )
       .sort((a, b) =>
@@ -942,10 +974,10 @@ function ReservationManagement() {
 
           if (!selectedId) continue;
 
-          const roomId = Number(selectedId);
+          const roomId = normalizeRoomId(selectedId);
 
           const exists = availableRooms.some(
-            (room) => Number(room.id) === roomId,
+            (room) => normalizeRoomId(room.id) === roomId,
           );
 
           if (!exists) {
@@ -967,7 +999,7 @@ function ReservationManagement() {
           if (selectedRoomIds[idx]) continue;
 
           const nextAvailableRoom = availableRooms.find(
-            (room) => !usedRoomIds.has(Number(room.id)),
+            (room) => !usedRoomIds.has(normalizeRoomId(room.id)),
           );
 
           if (!nextAvailableRoom) {
@@ -975,7 +1007,7 @@ function ReservationManagement() {
             return;
           }
 
-          const roomId = Number(nextAvailableRoom.id);
+          const roomId = normalizeRoomId(nextAvailableRoom.id);
 
           selectedRoomIds[idx] = roomId;
           usedRoomIds.add(roomId);
@@ -983,7 +1015,9 @@ function ReservationManagement() {
 
         selectedRooms = selectedRoomIds
           .map((roomId) =>
-            availableRooms.find((room) => Number(room.id) === Number(roomId)),
+            availableRooms.find(
+              (room) => normalizeRoomId(room.id) === normalizeRoomId(roomId),
+            ),
           )
           .filter(Boolean);
 
@@ -1298,6 +1332,45 @@ function ReservationManagement() {
     // 홈페이지 예약 원본에서 이름 찾기
     // =====================================
     if (source === "website" || source.startsWith("SITE_")) {
+      let roomReservationInfos = [];
+
+      try {
+        roomReservationInfos =
+          typeof room.naver_crawling_info === "string"
+            ? JSON.parse(room.naver_crawling_info)
+            : room.naver_crawling_info || [];
+      } catch {
+        roomReservationInfos = [];
+      }
+
+      const bookingCheckIn = normalizeKSTDate(booking.check_in);
+      const bookingCheckOut = normalizeKSTDate(booking.check_out);
+
+      const matchedRoomReservation = roomReservationInfos.find((item) => {
+        const itemBookingId = String(item.booking_id || "");
+        const itemSource = String(item.source || "");
+
+        const isWebsiteReservation =
+          itemSource === "website" ||
+          itemBookingId.startsWith("SITE_") ||
+          item.reservation_id;
+
+        if (!isWebsiteReservation) return false;
+
+        return (
+          normalizeKSTDate(item.check_in) === bookingCheckIn &&
+          normalizeKSTDate(item.check_out) === bookingCheckOut
+        );
+      });
+
+      if (matchedRoomReservation) {
+        return (
+          matchedRoomReservation.name ||
+          matchedRoomReservation.buyer_name ||
+          matchedRoomReservation.guest_name ||
+          "-"
+        );
+      }
       const reservationId = source.startsWith("SITE_")
         ? source.replace("SITE_", "")
         : booking.reservation_id;
@@ -1319,9 +1392,6 @@ function ReservationManagement() {
           );
         }
       }
-
-      const bookingCheckIn = normalizeKSTDate(booking.check_in);
-      const bookingCheckOut = normalizeKSTDate(booking.check_out);
 
       // 같은 상품 그룹 + 같은 기간의 홈페이지 결제 예약들
       const matchedHomepageReservations = homepageReservations
@@ -1377,7 +1447,8 @@ function ReservationManagement() {
         );
 
       const currentRoomIndex = assignedWebsiteRooms.findIndex(
-        (targetRoom) => Number(targetRoom.id) === Number(room.id),
+        (targetRoom) =>
+          normalizeRoomId(targetRoom.id) === normalizeRoomId(room.id),
       );
 
       const matchedWebsite =
@@ -1637,6 +1708,7 @@ function ReservationManagement() {
     source,
     roomGroupName,
     roomGroupId,
+    roomName,
   ) => {
     try {
       const data =
@@ -1650,6 +1722,8 @@ function ReservationManagement() {
       const homepageReservation = isWebsite
         ? findHomepageReservationForHistory(data, sourceText, roomGroupId)
         : null;
+
+      const paymentMethod = data.method || homepageReservation?.method || "";
 
       /*
        * 히스토리 payload에 count가 있으면 그것을 우선 사용하고,
@@ -1689,6 +1763,8 @@ function ReservationManagement() {
         }
       </span><br />
 
+      ${sourceText === "naver" ? `방넘버 : ${roomName || "-"}<br />` : ""}
+
       방수 : ${data.qty || "-"}<br />
 
       ${
@@ -1713,7 +1789,7 @@ function ReservationManagement() {
       }
 
       금액 : ${data.price ? Number(data.price).toLocaleString() : "0"}원<br />
-
+      ${isWebsite ? `결제수단 : ${paymentMethod || "-"}<br />` : ""}
       결제일 : ${formatKSTDateTime(paymentDate)}<br />
       체크인 : ${data.check_in || "-"}<br />
       체크아웃 : ${data.check_out || "-"}<br />
@@ -1735,14 +1811,14 @@ function ReservationManagement() {
     const result = Array(Number(count) || 0).fill(null);
     const usedRoomIds = new Set();
 
-    // 사용자가 직접 선택한 객실을 우선 적용
+    // 직접 선택한 객실 우선
     for (let idx = 0; idx < result.length; idx++) {
-      const selectedId = Number(customRoomNo[groupId]?.[idx]);
+      const selectedId = normalizeRoomId(customRoomNo[groupId]?.[idx]);
 
       if (!selectedId) continue;
 
       const exists = availableRooms.some(
-        (room) => Number(room.id) === selectedId,
+        (room) => normalizeRoomId(room.id) === selectedId,
       );
 
       if (!exists || usedRoomIds.has(selectedId)) continue;
@@ -1751,18 +1827,20 @@ function ReservationManagement() {
       usedRoomIds.add(selectedId);
     }
 
-    // 선택하지 않은 객실은 남은 객실 중 순서대로 자동 배정
+    // 선택하지 않은 객실 자동배정
     for (let idx = 0; idx < result.length; idx++) {
       if (result[idx]) continue;
 
       const nextRoom = availableRooms.find(
-        (room) => !usedRoomIds.has(Number(room.id)),
+        (room) => !usedRoomIds.has(normalizeRoomId(room.id)),
       );
 
       if (!nextRoom) continue;
 
-      result[idx] = Number(nextRoom.id);
-      usedRoomIds.add(Number(nextRoom.id));
+      const roomId = normalizeRoomId(nextRoom.id);
+
+      result[idx] = roomId;
+      usedRoomIds.add(roomId);
     }
 
     return result;
@@ -2270,7 +2348,7 @@ function ReservationManagement() {
                                                   (_, selectedIdx) =>
                                                     selectedIdx !== idx,
                                                 )
-                                                .map(Number)
+                                                .map(normalizeRoomId)
                                                 .filter(Boolean);
 
                                             return (
@@ -2321,7 +2399,9 @@ function ReservationManagement() {
                                                         key={room.id}
                                                         value={room.id}
                                                         disabled={selectedByOtherRows.includes(
-                                                          Number(room.id),
+                                                          normalizeRoomId(
+                                                            room.id,
+                                                          ),
                                                         )}
                                                       >
                                                         {room.name}
@@ -2354,7 +2434,7 @@ function ReservationManagement() {
                                             if (selectedIdx === idx)
                                               return null;
 
-                                            return Number(
+                                            return normalizeRoomId(
                                               customRoomNo[group.id]?.[
                                                 selectedIdx
                                               ] ||
@@ -2402,7 +2482,7 @@ function ReservationManagement() {
                                                   key={room.id}
                                                   value={room.id}
                                                   disabled={selectedByOtherRows.includes(
-                                                    Number(room.id),
+                                                    normalizeRoomId(room.id),
                                                   )}
                                                 >
                                                   {room.name}
@@ -2914,6 +2994,7 @@ function ReservationManagement() {
                                 data.source,
                                 getHistoryGroupName(data.room_group_id),
                                 data.room_group_id,
+                                getHistoryRoomName(data.room_id),
                               ),
                             }}
                           ></td>

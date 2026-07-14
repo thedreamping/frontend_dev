@@ -639,18 +639,18 @@ function RoomManagement() {
                   <th>그룹</th>
                   <td>
                     <select
+                      value={roomGroupId}
                       onChange={(e) => {
-                        setRoomGroupId(e.target.id);
+                        setRoomGroupId(e.target.value);
                       }}
                     >
-                      <option id="">선택</option>
-                      {groups.map((data, i) => {
-                        return (
-                          <option id={data.id} key={`kjhk${i}`}>
-                            {data.name}
-                          </option>
-                        );
-                      })}
+                      <option value="">선택</option>
+
+                      {groups.map((data, i) => (
+                        <option value={data.id} key={`kjhk${i}`}>
+                          {data.name}
+                        </option>
+                      ))}
                     </select>
                   </td>
                 </tr>
