@@ -609,12 +609,36 @@ function ReservationManagement() {
 
   const getRooms = () => {
     api.get("/api/rooms").then((response) => {
-      console.log("ROOMS RESPONSE", response.data.data);
+      const roomList = response.data.data || [];
 
-      const cube1 = response.data.data.find((r) => r.name === "큐1");
+      console.log("ROOMS RESPONSE", roomList);
+
+      const cube1 = roomList.find((room) => room.name === "큐1");
+
       console.log("큐1 데이터", cube1);
       console.log("큐1 수기예약", cube1?.check_in_and_out_soogie);
-      setRooms(response.data.data || []);
+
+      const sortedRooms = [...roomList].sort((a, b) => {
+        // 1. 같은 그룹끼리 붙인다.
+        const groupCompare = Number(a.room_group_id) - Number(b.room_group_id);
+
+        if (groupCompare !== 0) {
+          return groupCompare;
+        }
+
+        // 2. 같은 그룹 안에서는 객실명을 숫자 기준으로 정렬한다.
+        // 한1, 한2, 한3 ... 한7 순서
+        return String(a.name || "").localeCompare(
+          String(b.name || ""),
+          "ko-KR",
+          {
+            numeric: true,
+            sensitivity: "base",
+          },
+        );
+      });
+
+      setRooms(sortedRooms);
     });
   };
 
