@@ -173,17 +173,26 @@ function RoomManagement() {
         alert("수정 중 오류가 발생했습니다.");
       });
   };
-
   const roomDelete = () => {
-    const isOk = confirm("삭제하시겠습니까?");
+    const isExtra = String(roomId).startsWith("EXTRA_");
+
+    const isOk = confirm(
+      isExtra ? "이 임시 객실을 삭제하시겠습니까?" : "삭제하시겠습니까?",
+    );
 
     if (!isOk) return;
 
+    const deleteUrl = isExtra
+      ? `/api/extra-room/${roomId}`
+      : `/api/room/${roomId}`;
+
     api
-      .delete(`/api/room/${roomId}`)
+      .delete(deleteUrl)
       .then((response) => {
         console.log(response);
-        alert("삭제되었습니다.");
+
+        alert(isExtra ? "임시 객실이 삭제되었습니다." : "삭제되었습니다.");
+
         setIsDetailPop(false);
         setStartDate("");
         setEndDate("");
@@ -191,7 +200,13 @@ function RoomManagement() {
       })
       .catch((err) => {
         console.error(err);
-        alert("삭제 중 오류가 발생했습니다.");
+
+        alert(
+          err.response?.data?.message ||
+            (isExtra
+              ? "임시 객실 삭제 중 오류가 발생했습니다."
+              : "삭제 중 오류가 발생했습니다."),
+        );
       });
   };
 

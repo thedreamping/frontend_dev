@@ -1734,8 +1734,9 @@ function ReservationManagement() {
       const countSummary = isWebsite ? getCountSummary(countValue) : null;
 
       const paymentDate =
-        data.payment_date ||
-        (isWebsite || sourceText === "manual" ? rowCreatedAt : null);
+        isWebsite || sourceText === "manual"
+          ? rowCreatedAt
+          : data.payment_date || null;
 
       return `
       ${
