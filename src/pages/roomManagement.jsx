@@ -35,6 +35,10 @@ function RoomManagement() {
   const [roomNameForCreateImsi, setRoomNameForCreateImsi] = useState("");
   const [capacityMinImsi, setCapacityMinImsi] = useState(0);
   const [capacityMaxImsi, setCapacityMaxImsi] = useState(0);
+  const [capacityMinDayuse, setCapacityMinDayuse] = useState(0);
+  const [capacityMaxDayuse, setCapacityMaxDayuse] = useState(0);
+  const [capacityMinDayuseImsi, setCapacityMinDayuseImsi] = useState(0);
+  const [capacityMaxDayuseImsi, setCapacityMaxDayuseImsi] = useState(0);
 
   useEffect(() => {
     getAllRooms();
@@ -84,8 +88,13 @@ function RoomManagement() {
   const modifyRoom = () => {
     const isExtra = String(roomId).startsWith("EXTRA_");
 
+    if (!roomDetailName?.trim()) {
+      alert("객실명을 입력해주세요.");
+      return;
+    }
+
     if (!isActive && !roomReason?.trim()) {
-      alert("사유를 입력해주세요");
+      alert("사유를 입력해주세요.");
       return;
     }
 
@@ -99,8 +108,41 @@ function RoomManagement() {
       return;
     }
 
+    const numericMin = Number(capacityMin);
+    const numericMax = Number(capacityMax);
+    const numericMinDayuse = Number(capacityMinDayuse);
+    const numericMaxDayuse = Number(capacityMaxDayuse);
+
+    const capacities = [
+      numericMin,
+      numericMax,
+      numericMinDayuse,
+      numericMaxDayuse,
+    ];
+
+    if (capacities.some(Number.isNaN)) {
+      alert("인원 수는 숫자로 입력해주세요.");
+      return;
+    }
+
+    if (capacities.some((value) => value < 0)) {
+      alert("인원 수는 0보다 작을 수 없습니다.");
+      return;
+    }
+
+    if (numericMin > numericMax) {
+      alert("숙박 최소 인원은 숙박 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    if (numericMinDayuse > numericMaxDayuse) {
+      alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
     const data = {
-      name: roomDetailName,
+      name: roomDetailName.trim(),
+
       is_active: isActive ? 1 : 0,
       reason: isActive ? null : roomReason?.trim(),
 
@@ -112,8 +154,12 @@ function RoomManagement() {
       start_date: isExtra ? startDate : null,
       end_date: isExtra ? endDate : null,
 
-      capacity_max: Number(capacityMax),
-      capacity_min: Number(capacityMin),
+      capacity_min: numericMin,
+      capacity_max: numericMax,
+
+      capacity_min_dayuse: numericMinDayuse,
+      capacity_max_dayuse: numericMaxDayuse,
+
       day_use: Number(isDay),
     };
 
@@ -135,8 +181,10 @@ function RoomManagement() {
         );
 
         setIsDetailPop(false);
+
         setStartDate("");
         setEndDate("");
+
         getAllRooms();
       })
       .catch((err) => {
@@ -148,9 +196,10 @@ function RoomManagement() {
 
   const modifyGroup = () => {
     if (!isActiveGroup && !groupReason?.trim()) {
-      alert("사유를 입력해주세요");
+      alert("사유를 입력해주세요.");
       return;
     }
+
     const data = {
       name: groupName,
       is_active: isActiveGroup ? 1 : 0,
@@ -163,14 +212,18 @@ function RoomManagement() {
       .put(`/api/room-group/${groupId}`, data)
       .then((response) => {
         console.log(response);
+
         setIsDetailPopGroup(false);
         setStartDate("");
         setEndDate("");
+
         getAllRooms();
       })
       .catch((err) => {
         console.error(err);
-        alert("수정 중 오류가 발생했습니다.");
+        alert(
+          err.response?.data?.message || "그룹 수정 중 오류가 발생했습니다.",
+        );
       });
   };
   const roomDelete = () => {
@@ -259,61 +312,95 @@ function RoomManagement() {
   };
 
   const createRoom = () => {
-    // ✅ 이름 체크
-    if (!roomNameForCreate || roomNameForCreate.trim() === "") {
+    if (!roomNameForCreate?.trim()) {
       alert("객실명을 입력해주세요.");
       return;
     }
 
-    // ✅ 그룹 체크
     if (!roomGroupId) {
       alert("객실 그룹을 선택해주세요.");
       return;
     }
 
-    const numericMax = Number(capacityMax);
     const numericMin = Number(capacityMin);
+    const numericMax = Number(capacityMax);
+    const numericMinDayuse = Number(capacityMinDayuse);
+    const numericMaxDayuse = Number(capacityMaxDayuse);
     const numericDayUse = Number(isDay);
 
-    // ✅ 숫자 체크
-    if (isNaN(numericMax) || isNaN(numericMin)) {
+    const capacities = [
+      numericMin,
+      numericMax,
+      numericMinDayuse,
+      numericMaxDayuse,
+    ];
+
+    if (capacities.some(Number.isNaN)) {
       alert("인원 수는 숫자로 입력해주세요.");
       return;
     }
 
-    // ✅ 최소/최대 검증
-    if (numericMin > numericMax) {
-      alert("최소 인원은 최대 인원보다 클 수 없습니다.");
+    if (capacities.some((value) => value < 0)) {
+      alert("인원 수는 0보다 작을 수 없습니다.");
       return;
     }
 
-    // ✅ day_use 체크
-    if (numericDayUse !== 0 && numericDayUse !== 1) {
-      alert("숙박 타입 값이 올바르지 않습니다.");
+    if (numericMin > numericMax) {
+      alert("숙박 최소 인원은 숙박 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    if (numericMinDayuse > numericMaxDayuse) {
+      alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    if (![0, 1, 2].includes(numericDayUse)) {
+      alert("예약 타입 값이 올바르지 않습니다.");
       return;
     }
 
     const data = {
       name: roomNameForCreate.trim(),
       description: roomNameForCreate.trim(),
-      room_group_id: roomGroupId,
-      capacity_max: numericMax,
+      room_group_id: Number(roomGroupId),
+
       capacity_min: numericMin,
+      capacity_max: numericMax,
+
+      capacity_min_dayuse: numericMinDayuse,
+      capacity_max_dayuse: numericMaxDayuse,
+
       day_use: numericDayUse,
     };
+
+    console.log("일반 객실 생성:", data);
 
     api
       .post("/api/room", data)
       .then((response) => {
         console.log(response);
+
+        alert("객실이 추가되었습니다.");
+
         setIsPop(false);
+
+        setRoomNameForCreate("");
+        setRoomGroupId("");
+
+        setCapacityMin(0);
+        setCapacityMax(0);
+        setCapacityMinDayuse(0);
+        setCapacityMaxDayuse(0);
+
         getAllRooms();
-        setStartDate("");
-        setEndDate("");
       })
       .catch((error) => {
         console.error(error);
-        alert("생성 중 오류가 발생했습니다.");
+
+        alert(
+          error.response?.data?.message || "객실 생성 중 오류가 발생했습니다.",
+        );
       });
   };
 
@@ -389,7 +476,6 @@ function RoomManagement() {
       return today >= start && today <= end;
     });
   };
-
   const createExtraRoom = () => {
     if (!roomGroupId) {
       alert("객실 그룹을 선택해주세요.");
@@ -413,26 +499,46 @@ function RoomManagement() {
 
     const numericMin = Number(capacityMinImsi);
     const numericMax = Number(capacityMaxImsi);
+    const numericMinDayuse = Number(capacityMinDayuseImsi);
+    const numericMaxDayuse = Number(capacityMaxDayuseImsi);
 
-    if (Number.isNaN(numericMin) || Number.isNaN(numericMax)) {
+    const capacities = [
+      numericMin,
+      numericMax,
+      numericMinDayuse,
+      numericMaxDayuse,
+    ];
+
+    if (capacities.some(Number.isNaN)) {
       alert("인원 수는 숫자로 입력해주세요.");
       return;
     }
 
-    if (numericMin < 0 || numericMax < 0) {
+    if (capacities.some((value) => value < 0)) {
       alert("인원 수는 0보다 작을 수 없습니다.");
       return;
     }
+
     if (numericMin > numericMax) {
-      alert("최소 인원은 최대 인원보다 클 수 없습니다.");
+      alert("숙박 최소 인원은 숙박 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    if (numericMinDayuse > numericMaxDayuse) {
+      alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
       return;
     }
 
     const data = {
       name: roomNameForCreateImsi.trim(),
       room_group_id: Number(roomGroupId),
+
       capacity_min: numericMin,
       capacity_max: numericMax,
+
+      capacity_min_dayuse: numericMinDayuse,
+      capacity_max_dayuse: numericMaxDayuse,
+
       start_date: startDate,
       end_date: endDate,
     };
@@ -447,11 +553,11 @@ function RoomManagement() {
         alert("임시 객실이 추가되었습니다.");
 
         closeExtraRoomPopup();
-
         getAllRooms();
       })
       .catch((error) => {
         console.error(error);
+
         alert(
           error.response?.data?.message ||
             "임시 객실 생성 중 오류가 발생했습니다.",
@@ -461,10 +567,16 @@ function RoomManagement() {
 
   const closeExtraRoomPopup = () => {
     setIsPop3(false);
+
     setRoomGroupId("");
     setRoomNameForCreateImsi("");
+
     setCapacityMinImsi(0);
     setCapacityMaxImsi(0);
+
+    setCapacityMinDayuseImsi(0);
+    setCapacityMaxDayuseImsi(0);
+
     setStartDate("");
     setEndDate("");
   };
@@ -485,8 +597,13 @@ function RoomManagement() {
             <button
               onClick={() => {
                 setIsDay(1);
+
                 setCapacityMax(0);
                 setCapacityMin(0);
+
+                setCapacityMaxDayuse(0);
+                setCapacityMinDayuse(0);
+
                 setRoomGroupId("");
                 setRoomNameForCreate("");
                 setIsPop(true);
@@ -498,10 +615,16 @@ function RoomManagement() {
               onClick={() => {
                 setRoomGroupId("");
                 setRoomNameForCreateImsi("");
+
                 setCapacityMinImsi(0);
                 setCapacityMaxImsi(0);
+
+                setCapacityMinDayuseImsi(0);
+                setCapacityMaxDayuseImsi(0);
+
                 setStartDate("");
                 setEndDate("");
+
                 setIsPop3(true);
               }}
             >
@@ -572,8 +695,15 @@ function RoomManagement() {
                                     setRoomId(data2.id);
                                     setRoomDetailGroupName(data.name);
                                     setIsDay(data2.day_use);
-                                    setCapacityMax(data2.capacity_max);
-                                    setCapacityMin(data2.capacity_min);
+                                    setCapacityMax(data2.capacity_max ?? 0);
+                                    setCapacityMin(data2.capacity_min ?? 0);
+
+                                    setCapacityMaxDayuse(
+                                      data2.capacity_max_dayuse ?? 0,
+                                    );
+                                    setCapacityMinDayuse(
+                                      data2.capacity_min_dayuse ?? 0,
+                                    );
 
                                     setIsActive(data2.is_active === 1);
 
@@ -742,6 +872,33 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
+                <tr>
+                  <th>데이유즈 최소인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMinDayuse}
+                      onChange={(e) => {
+                        setCapacityMinDayuse(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>데이유즈 최대인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMaxDayuse}
+                      onChange={(e) => {
+                        setCapacityMaxDayuse(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
             <div className="btn_area">
@@ -872,6 +1029,33 @@ function RoomManagement() {
                       value={capacityMax}
                       onChange={(e) => {
                         setCapacityMax(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>데이유즈 최소인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMinDayuse}
+                      onChange={(e) => {
+                        setCapacityMinDayuse(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>데이유즈 최대인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMaxDayuse}
+                      onChange={(e) => {
+                        setCapacityMaxDayuse(e.target.value);
                       }}
                     />
                   </td>
@@ -1107,6 +1291,33 @@ function RoomManagement() {
                       value={capacityMaxImsi}
                       onChange={(e) => {
                         setCapacityMaxImsi(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <th>데이유즈 최소인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMinDayuseImsi}
+                      onChange={(e) => {
+                        setCapacityMinDayuseImsi(e.target.value);
+                      }}
+                    />
+                  </td>
+                </tr>
+
+                <tr>
+                  <th>데이유즈 최대인원</th>
+                  <td>
+                    <input
+                      type="number"
+                      min="0"
+                      value={capacityMaxDayuseImsi}
+                      onChange={(e) => {
+                        setCapacityMaxDayuseImsi(e.target.value);
                       }}
                     />
                   </td>
