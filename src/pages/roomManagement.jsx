@@ -39,6 +39,11 @@ function RoomManagement() {
   const [capacityMaxDayuse, setCapacityMaxDayuse] = useState(0);
   const [capacityMinDayuseImsi, setCapacityMinDayuseImsi] = useState(0);
   const [capacityMaxDayuseImsi, setCapacityMaxDayuseImsi] = useState(0);
+  const [isPet, setIsPet] = useState(0);
+  const [isPetImsi, setIsPetImsi] = useState(0);
+  const [optionList, setOptionList] = useState([]);
+  const [unusedOptionIds, setUnusedOptionIds] = useState([]);
+  const [isOptionLoading, setIsOptionLoading] = useState(false);
 
   useEffect(() => {
     getAllRooms();
@@ -84,6 +89,33 @@ function RoomManagement() {
       ...group,
       rooms: roomMap.get(group.id) || [],
     }));
+  };
+
+  const parseUnusedOptionIds = (value) => {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value.map((id) => Number(id)).filter((id) => Number.isFinite(id));
+    }
+
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .map((id) => Number(id))
+          .filter((id) => Number.isFinite(id));
+      } catch (error) {
+        console.error("unused_option_ids 파싱 오류:", error);
+        return [];
+      }
+    }
+
+    return [];
   };
   const modifyRoom = () => {
     const isExtra = String(roomId).startsWith("EXTRA_");
@@ -161,6 +193,7 @@ function RoomManagement() {
       capacity_max_dayuse: numericMaxDayuse,
 
       day_use: Number(isDay),
+      is_pet: Number(isPet),
     };
 
     console.log("객실 수정:", {
@@ -181,6 +214,7 @@ function RoomManagement() {
         );
 
         setIsDetailPop(false);
+        setIsPet(0);
 
         setStartDate("");
         setEndDate("");
@@ -204,8 +238,7 @@ function RoomManagement() {
       name: groupName,
       is_active: isActiveGroup ? 1 : 0,
       reason: isActiveGroup ? null : groupReason,
-      disable_start: isActiveGroup ? null : startDate,
-      disable_end: isActiveGroup ? null : endDate,
+      unused_option_ids: unusedOptionIds,
     };
 
     api
@@ -218,6 +251,7 @@ function RoomManagement() {
         setEndDate("");
 
         getAllRooms();
+        alert("그룹이 수정되었습니다.");
       })
       .catch((err) => {
         console.error(err);
@@ -247,6 +281,7 @@ function RoomManagement() {
         alert(isExtra ? "임시 객실이 삭제되었습니다." : "삭제되었습니다.");
 
         setIsDetailPop(false);
+        setIsPet(0);
         setStartDate("");
         setEndDate("");
         getAllRooms();
@@ -311,6 +346,72 @@ function RoomManagement() {
       });
   };
 
+  const getOptionsForGroup = async () => {
+    setIsOptionLoading(true);
+
+    try {
+      const response = await api.get("/api/options");
+
+      const options = Array.isArray(response.data.data)
+        ? response.data.data
+        : [];
+
+      const sortedOptions = [...options].sort((a, b) => {
+        const sortA = Number(a.sort_order);
+        const sortB = Number(b.sort_order);
+
+        if (Number.isFinite(sortA) && Number.isFinite(sortB)) {
+          return sortA - sortB;
+        }
+
+        return Number(a.id) - Number(b.id);
+      });
+
+      setOptionList(sortedOptions);
+    } catch (error) {
+      console.error("옵션 목록 조회 오류:", error);
+
+      setOptionList([]);
+
+      alert(
+        error.response?.data?.message || "옵션 목록을 불러오지 못했습니다.",
+      );
+    } finally {
+      setIsOptionLoading(false);
+    }
+  };
+
+  const toggleGroupOption = (optionId) => {
+    const numericOptionId = Number(optionId);
+
+    if (!Number.isFinite(numericOptionId)) {
+      return;
+    }
+
+    setUnusedOptionIds((prev) => {
+      if (prev.includes(numericOptionId)) {
+        return prev.filter((id) => id !== numericOptionId);
+      }
+
+      return [...prev, numericOptionId];
+    });
+  };
+
+  const openGroupDetail = async (group) => {
+    setGroupName(group?.name || "");
+    setGroupId(group?.id || "");
+    setGroupReason(group?.reason || "");
+
+    setIsActiveGroup(Number(group?.is_active) === 1);
+
+    setUnusedOptionIds(parseUnusedOptionIds(group?.unused_option_ids));
+
+    setOptionList([]);
+    setIsDetailPopGroup(true);
+
+    await getOptionsForGroup();
+  };
+
   const createRoom = () => {
     if (!roomNameForCreate?.trim()) {
       alert("객실명을 입력해주세요.");
@@ -372,6 +473,7 @@ function RoomManagement() {
       capacity_max_dayuse: numericMaxDayuse,
 
       day_use: numericDayUse,
+      is_pet: Number(isPet),
     };
 
     console.log("일반 객실 생성:", data);
@@ -384,7 +486,7 @@ function RoomManagement() {
         alert("객실이 추가되었습니다.");
 
         setIsPop(false);
-
+        setIsPet(0);
         setRoomNameForCreate("");
         setRoomGroupId("");
 
@@ -541,6 +643,7 @@ function RoomManagement() {
 
       start_date: startDate,
       end_date: endDate,
+      is_pet: Number(isPetImsi),
     };
 
     console.log("임시 객실 생성:", data);
@@ -573,7 +676,7 @@ function RoomManagement() {
 
     setCapacityMinImsi(0);
     setCapacityMaxImsi(0);
-
+    setIsPetImsi(0);
     setCapacityMinDayuseImsi(0);
     setCapacityMaxDayuseImsi(0);
 
@@ -597,7 +700,7 @@ function RoomManagement() {
             <button
               onClick={() => {
                 setIsDay(1);
-
+                setIsPet(0);
                 setCapacityMax(0);
                 setCapacityMin(0);
 
@@ -615,7 +718,7 @@ function RoomManagement() {
               onClick={() => {
                 setRoomGroupId("");
                 setRoomNameForCreateImsi("");
-
+                setIsPetImsi(0);
                 setCapacityMinImsi(0);
                 setCapacityMaxImsi(0);
 
@@ -647,17 +750,7 @@ function RoomManagement() {
                         style={{ verticalAlign: "top" }}
                         className={data.is_active !== 1 ? "dimed_td" : ""}
                       >
-                        <h4
-                          onClick={() => {
-                            setIsDetailPopGroup(true);
-                            setGroupName(data?.name);
-                            setGroupId(data?.id);
-                            setGroupReason(data?.reason);
-                            setIsActiveGroup(
-                              data.is_active === 1 ? true : false,
-                            );
-                          }}
-                        >
+                        <h4 onClick={() => openGroupDetail(data)}>
                           {data?.name}{" "}
                           {data.is_active === 1 ? (
                             <span className="green">Active</span>
@@ -697,6 +790,12 @@ function RoomManagement() {
                                     setIsDay(data2.day_use);
                                     setCapacityMax(data2.capacity_max ?? 0);
                                     setCapacityMin(data2.capacity_min ?? 0);
+                                    setIsPet(
+                                      data2.is_pet == null ||
+                                        Number(data2.is_pet) === 1
+                                        ? 1
+                                        : 0,
+                                    );
 
                                     setCapacityMaxDayuse(
                                       data2.capacity_max_dayuse ?? 0,
@@ -772,6 +871,7 @@ function RoomManagement() {
               className="popup_x"
               onClick={() => {
                 setIsPop(false);
+                setIsPet(0);
                 setStartDate("");
                 setEndDate("");
               }}
@@ -809,6 +909,32 @@ function RoomManagement() {
                         setRoomNameForCreate(e.target.value);
                       }}
                     />
+                  </td>
+                </tr>
+                <tr>
+                  <th>반려동물 수용</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="create_pet_able"
+                        name="create_is_pet"
+                        checked={isPet === 1}
+                        onChange={() => setIsPet(1)}
+                      />
+                      <label htmlFor="create_pet_able">가능</label>
+                    </div>
+
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="create_pet_disable"
+                        name="create_is_pet"
+                        checked={isPet === 0}
+                        onChange={() => setIsPet(0)}
+                      />
+                      <label htmlFor="create_pet_disable">불가능</label>
+                    </div>
                   </td>
                 </tr>
                 {/* <tr>
@@ -908,6 +1034,7 @@ function RoomManagement() {
               <button
                 onClick={() => {
                   setIsPop(false);
+                  setIsPet(0);
                   setStartDate("");
                   setEndDate("");
                 }}
@@ -975,6 +1102,7 @@ function RoomManagement() {
               onClick={() => {
                 setIsDetailPop(false);
                 setIsActive(true);
+                setIsPet(0);
                 setStartDate("");
                 setEndDate("");
               }}
@@ -999,6 +1127,32 @@ function RoomManagement() {
                         setRoomDetailName(e.target.value);
                       }}
                     />
+                  </td>
+                </tr>
+                <tr>
+                  <th>반려동물 수용</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="detail_pet_able"
+                        name="detail_is_pet"
+                        checked={isPet === 1}
+                        onChange={() => setIsPet(1)}
+                      />
+                      <label htmlFor="detail_pet_able">가능</label>
+                    </div>
+
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="detail_pet_disable"
+                        name="detail_is_pet"
+                        checked={isPet === 0}
+                        onChange={() => setIsPet(0)}
+                      />
+                      <label htmlFor="detail_pet_disable">불가능</label>
+                    </div>
                   </td>
                 </tr>
                 {String(roomId).includes("EXTRA_") && (
@@ -1083,6 +1237,11 @@ function RoomManagement() {
               onClick={() => {
                 setIsDetailPopGroup(false);
                 setIsActiveGroup(true);
+
+                setOptionList([]);
+                setUnusedOptionIds([]);
+                setIsOptionLoading(false);
+
                 setStartDate("");
                 setEndDate("");
               }}
@@ -1101,41 +1260,58 @@ function RoomManagement() {
                     />
                   </td>
                 </tr>
+                <tr>
+                  <th>사용 옵션</th>
 
-                {/* <tr>
-                  <th>숙박</th>
                   <td>
-                    <div className="checks">
-                      <input
-                        type="radio"
-                        name="ac"
-                        id="active"
-                        defaultChecked
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsActiveGroup(true);
-                          }
-                        }}
-                        checked={isActiveGroup}
-                      />
-                      <label htmlFor="active">숙박아님</label>
+                    <div className="group_option_description">
+                      체크된 옵션만 이 객실 그룹에서 사용할 수 있습니다.
                     </div>
-                    <div className="checks">
-                      <input
-                        type="radio"
-                        name="ac"
-                        id="non-active"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setIsActiveGroup(false);
-                          }
-                        }}
-                        checked={!isActiveGroup}
-                      />
-                      <label htmlFor="non-active">숙박</label>
-                    </div>
+
+                    {isOptionLoading ? (
+                      <div className="group_option_message">
+                        옵션 목록을 불러오는 중입니다.
+                      </div>
+                    ) : optionList.length === 0 ? (
+                      <div className="group_option_message">
+                        현재 사용 중인 옵션이 없습니다.
+                      </div>
+                    ) : (
+                      <div className="group_option_list">
+                        {optionList.map((option) => {
+                          const optionId = Number(option.id);
+
+                          const isUsed = !unusedOptionIds.includes(optionId);
+
+                          return (
+                            <label
+                              className={`group_option_item ${
+                                isUsed ? "active" : ""
+                              }`}
+                              key={optionId}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isUsed}
+                                onChange={() => toggleGroupOption(optionId)}
+                              />
+
+                              <span className="group_option_checkbox"></span>
+
+                              <span className="group_option_info">
+                                <strong>{option.name}</strong>
+
+                                <small>
+                                  {Number(option.price || 0).toLocaleString()}원
+                                </small>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
                   </td>
-                </tr> */}
+                </tr>
               </tbody>
             </table>
             <div className="btn_area">
@@ -1250,6 +1426,32 @@ function RoomManagement() {
                         setRoomNameForCreateImsi(e.target.value);
                       }}
                     />
+                  </td>
+                </tr>
+                <tr>
+                  <th>반려동물 수용</th>
+                  <td>
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="extra_pet_able"
+                        name="extra_is_pet"
+                        checked={isPetImsi === 1}
+                        onChange={() => setIsPetImsi(1)}
+                      />
+                      <label htmlFor="extra_pet_able">가능</label>
+                    </div>
+
+                    <div className="checks">
+                      <input
+                        type="radio"
+                        id="extra_pet_disable"
+                        name="extra_is_pet"
+                        checked={isPetImsi === 0}
+                        onChange={() => setIsPetImsi(0)}
+                      />
+                      <label htmlFor="extra_pet_disable">불가능</label>
+                    </div>
                   </td>
                 </tr>
                 <tr>
