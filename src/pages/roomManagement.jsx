@@ -44,6 +44,7 @@ function RoomManagement() {
   const [optionList, setOptionList] = useState([]);
   const [unusedOptionIds, setUnusedOptionIds] = useState([]);
   const [isOptionLoading, setIsOptionLoading] = useState(false);
+  const [contractSections, setContractSections] = useState([]);
 
   useEffect(() => {
     getAllRooms();
@@ -116,6 +117,188 @@ function RoomManagement() {
     }
 
     return [];
+  };
+
+  const parseContractSections = (value) => {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value);
+
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed;
+      } catch (error) {
+        console.error("contract_txt 파싱 오류:", error);
+        return [];
+      }
+    }
+
+    return [];
+  };
+
+  const createEmptyContractSection = () => ({
+    type: "section",
+    title: "",
+    intro: "",
+    items: [""],
+  });
+
+  const addContractSection = () => {
+    setContractSections((prev) => [...prev, createEmptyContractSection()]);
+  };
+
+  const removeContractSection = (sectionIndex) => {
+    const isOk = confirm("이 안내사항 영역을 삭제하시겠습니까?");
+
+    if (!isOk) return;
+
+    setContractSections((prev) =>
+      prev.filter((_, index) => index !== sectionIndex),
+    );
+  };
+
+  const updateContractSection = (sectionIndex, field, value) => {
+    setContractSections((prev) =>
+      prev.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+
+        return {
+          ...section,
+          [field]: value,
+        };
+      }),
+    );
+  };
+
+  const addContractItem = (sectionIndex) => {
+    setContractSections((prev) =>
+      prev.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+
+        return {
+          ...section,
+          items: [...(section.items || []), ""],
+        };
+      }),
+    );
+  };
+
+  const updateContractItem = (sectionIndex, itemIndex, value) => {
+    setContractSections((prev) =>
+      prev.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+
+        const nextItems = [...(section.items || [])];
+
+        nextItems[itemIndex] = value;
+
+        return {
+          ...section,
+          items: nextItems,
+        };
+      }),
+    );
+  };
+
+  const removeContractItem = (sectionIndex, itemIndex) => {
+    setContractSections((prev) =>
+      prev.map((section, index) => {
+        if (index !== sectionIndex) {
+          return section;
+        }
+
+        return {
+          ...section,
+          items: (section.items || []).filter(
+            (_, index2) => index2 !== itemIndex,
+          ),
+        };
+      }),
+    );
+  };
+
+  const moveContractSection = (sectionIndex, direction) => {
+    setContractSections((prev) => {
+      const targetIndex = sectionIndex + direction;
+
+      if (targetIndex < 0 || targetIndex >= prev.length) {
+        return prev;
+      }
+
+      const nextSections = [...prev];
+
+      [nextSections[sectionIndex], nextSections[targetIndex]] = [
+        nextSections[targetIndex],
+        nextSections[sectionIndex],
+      ];
+
+      return nextSections;
+    });
+  };
+
+  const cleanContractSections = (sections) => {
+    return sections
+      .map((section) => {
+        const type = ["section", "star", "privacy"].includes(section?.type)
+          ? section.type
+          : "section";
+
+        const title = String(section?.title || "").trim();
+        const intro = String(section?.intro || "").trim();
+
+        const items = Array.isArray(section?.items)
+          ? section.items
+              .map((item) => String(item || "").trim())
+              .filter(Boolean)
+          : [];
+
+        return {
+          type,
+          title,
+          intro,
+          items,
+        };
+      })
+      .filter((section) => {
+        return section.title || section.intro || section.items.length > 0;
+      })
+      .map((section) => {
+        if (section.type === "star") {
+          return {
+            type: "star",
+            items: section.items,
+          };
+        }
+
+        if (section.type === "privacy") {
+          return {
+            type: "privacy",
+            title: section.title,
+            intro: section.intro,
+            items: section.items,
+          };
+        }
+
+        return {
+          type: "section",
+          title: section.title,
+          items: section.items,
+        };
+      });
   };
   const modifyRoom = () => {
     const isExtra = String(roomId).startsWith("EXTRA_");
@@ -229,16 +412,24 @@ function RoomManagement() {
   };
 
   const modifyGroup = () => {
+    if (!groupName?.trim()) {
+      alert("그룹명을 입력해주세요.");
+      return;
+    }
     if (!isActiveGroup && !groupReason?.trim()) {
       alert("사유를 입력해주세요.");
       return;
     }
 
+    const cleanedContractSections = cleanContractSections(contractSections);
+
     const data = {
-      name: groupName,
+      name: groupName.trim(),
       is_active: isActiveGroup ? 1 : 0,
-      reason: isActiveGroup ? null : groupReason,
+      reason: isActiveGroup ? null : groupReason?.trim(),
       unused_option_ids: unusedOptionIds,
+
+      contract_txt: JSON.stringify(cleanedContractSections),
     };
 
     api
@@ -247,6 +438,7 @@ function RoomManagement() {
         console.log(response);
 
         setIsDetailPopGroup(false);
+        setContractSections([]);
         setStartDate("");
         setEndDate("");
 
@@ -405,6 +597,10 @@ function RoomManagement() {
     setIsActiveGroup(Number(group?.is_active) === 1);
 
     setUnusedOptionIds(parseUnusedOptionIds(group?.unused_option_ids));
+
+    const parsedContractSections = parseContractSections(group?.contract_txt);
+
+    setContractSections(parsedContractSections);
 
     setOptionList([]);
     setIsDetailPopGroup(true);
@@ -1230,12 +1426,19 @@ function RoomManagement() {
 
       {isDetailPopGroup && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width: "1000px" }}>
+          <div
+            className="popup"
+            style={{
+              height: "auto",
+              width: "1000px",
+            }}
+          >
             <div className="popup_title">그룹 디테일</div>
             <div
               className="popup_x"
               onClick={() => {
                 setIsDetailPopGroup(false);
+                setContractSections([]);
                 setIsActiveGroup(true);
 
                 setOptionList([]);
@@ -1248,72 +1451,281 @@ function RoomManagement() {
             >
               X
             </div>
-            <table>
-              <tbody>
-                <tr>
-                  <th>그룹명</th>
-                  <td>
-                    <input
-                      type="text"
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <th>사용 옵션</th>
+            <div style={{ height: "650px", overflow: "auto" }}>
+              <table>
+                <tbody>
+                  <tr>
+                    <th>그룹명</th>
+                    <td>
+                      <input
+                        type="text"
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>사용 옵션</th>
 
-                  <td>
-                    <div className="group_option_description">
-                      체크된 옵션만 이 객실 그룹에서 사용할 수 있습니다.
-                    </div>
-
-                    {isOptionLoading ? (
-                      <div className="group_option_message">
-                        옵션 목록을 불러오는 중입니다.
+                    <td>
+                      <div className="group_option_description">
+                        체크된 옵션만 이 객실 그룹에서 사용할 수 있습니다.
                       </div>
-                    ) : optionList.length === 0 ? (
-                      <div className="group_option_message">
-                        현재 사용 중인 옵션이 없습니다.
+
+                      {isOptionLoading ? (
+                        <div className="group_option_message">
+                          옵션 목록을 불러오는 중입니다.
+                        </div>
+                      ) : optionList.length === 0 ? (
+                        <div className="group_option_message">
+                          현재 사용 중인 옵션이 없습니다.
+                        </div>
+                      ) : (
+                        <div className="group_option_list">
+                          {optionList.map((option) => {
+                            const optionId = Number(option.id);
+
+                            const isUsed = !unusedOptionIds.includes(optionId);
+
+                            return (
+                              <label
+                                className={`group_option_item ${
+                                  isUsed ? "active" : ""
+                                }`}
+                                key={optionId}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isUsed}
+                                  onChange={() => toggleGroupOption(optionId)}
+                                />
+
+                                <span className="group_option_checkbox"></span>
+
+                                <span className="group_option_info">
+                                  <strong>{option.name}</strong>
+
+                                  <small>
+                                    {Number(option.price || 0).toLocaleString()}
+                                    원
+                                  </small>
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>안내사항</th>
+
+                    <td>
+                      <div className="contract_editor">
+                        <div className="contract_editor_top">
+                          <div>
+                            객실 예약과 결제 단계에서 표시될 안내사항입니다.
+                          </div>
+
+                          <button
+                            type="button"
+                            className="green"
+                            onClick={addContractSection}
+                          >
+                            안내 영역 추가
+                          </button>
+                        </div>
+
+                        {contractSections.length === 0 ? (
+                          <div className="contract_editor_empty">
+                            등록된 안내사항이 없습니다.
+                            <br />
+                            안내 영역 추가 버튼을 눌러 내용을 입력해주세요.
+                          </div>
+                        ) : (
+                          <div className="contract_section_list">
+                            {contractSections.map((section, sectionIndex) => (
+                              <div
+                                className="contract_section_box"
+                                key={`contract-section-${sectionIndex}`}
+                              >
+                                <div className="contract_section_header">
+                                  <strong>안내 영역 {sectionIndex + 1}</strong>
+
+                                  <div className="contract_section_buttons">
+                                    <button
+                                      type="button"
+                                      disabled={sectionIndex === 0}
+                                      onClick={() =>
+                                        moveContractSection(sectionIndex, -1)
+                                      }
+                                    >
+                                      위로
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      disabled={
+                                        sectionIndex ===
+                                        contractSections.length - 1
+                                      }
+                                      onClick={() =>
+                                        moveContractSection(sectionIndex, 1)
+                                      }
+                                    >
+                                      아래로
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      className="red"
+                                      onClick={() =>
+                                        removeContractSection(sectionIndex)
+                                      }
+                                    >
+                                      영역 삭제
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="contract_field">
+                                  <label>출력 형식</label>
+
+                                  <select
+                                    value={section.type || "section"}
+                                    onChange={(e) =>
+                                      updateContractSection(
+                                        sectionIndex,
+                                        "type",
+                                        e.target.value,
+                                      )
+                                    }
+                                  >
+                                    <option value="section">일반 안내</option>
+
+                                    <option value="star">별표 강조 문구</option>
+
+                                    <option value="privacy">
+                                      개인정보 활용 동의
+                                    </option>
+                                  </select>
+                                </div>
+
+                                {section.type !== "star" && (
+                                  <div className="contract_field">
+                                    <label>제목</label>
+
+                                    <input
+                                      type="text"
+                                      value={section.title || ""}
+                                      placeholder={
+                                        section.type === "privacy"
+                                          ? "예: 개인정보 활용 동의"
+                                          : "예: 입실 및 퇴실 시간 안내"
+                                      }
+                                      onChange={(e) =>
+                                        updateContractSection(
+                                          sectionIndex,
+                                          "title",
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                )}
+
+                                {section.type === "privacy" && (
+                                  <div className="contract_field">
+                                    <label>도입 문구</label>
+
+                                    <textarea
+                                      value={section.intro || ""}
+                                      placeholder="개인정보 활용 동의 본문 위에 표시할 설명을 입력해주세요."
+                                      onChange={(e) =>
+                                        updateContractSection(
+                                          sectionIndex,
+                                          "intro",
+                                          e.target.value,
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="contract_item_title">
+                                  <strong>
+                                    {section.type === "star"
+                                      ? "강조 문구"
+                                      : "안내 항목"}
+                                  </strong>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      addContractItem(sectionIndex)
+                                    }
+                                  >
+                                    항목 추가
+                                  </button>
+                                </div>
+
+                                <div className="contract_item_list">
+                                  {(section.items || []).map(
+                                    (item, itemIndex) => (
+                                      <div
+                                        className="contract_item_row"
+                                        key={`contract-item-${sectionIndex}-${itemIndex}`}
+                                      >
+                                        <span className="contract_item_number">
+                                          {itemIndex + 1}
+                                        </span>
+
+                                        <textarea
+                                          value={item}
+                                          placeholder="안내 내용을 입력해주세요."
+                                          style={{ height: "50px" }}
+                                          onChange={(e) =>
+                                            updateContractItem(
+                                              sectionIndex,
+                                              itemIndex,
+                                              e.target.value,
+                                            )
+                                          }
+                                        />
+
+                                        <button
+                                          type="button"
+                                          className="red"
+                                          onClick={() =>
+                                            removeContractItem(
+                                              sectionIndex,
+                                              itemIndex,
+                                            )
+                                          }
+                                        >
+                                          삭제
+                                        </button>
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+
+                                {(section.items || []).length === 0 && (
+                                  <div className="contract_item_empty">
+                                    등록된 항목이 없습니다. 항목 추가 버튼을
+                                    눌러주세요.
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="group_option_list">
-                        {optionList.map((option) => {
-                          const optionId = Number(option.id);
-
-                          const isUsed = !unusedOptionIds.includes(optionId);
-
-                          return (
-                            <label
-                              className={`group_option_item ${
-                                isUsed ? "active" : ""
-                              }`}
-                              key={optionId}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isUsed}
-                                onChange={() => toggleGroupOption(optionId)}
-                              />
-
-                              <span className="group_option_checkbox"></span>
-
-                              <span className="group_option_info">
-                                <strong>{option.name}</strong>
-
-                                <small>
-                                  {Number(option.price || 0).toLocaleString()}원
-                                </small>
-                              </span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
             <div className="btn_area">
               <button className="green" onClick={modifyGroup}>
                 수정내역 저장
@@ -1328,7 +1740,14 @@ function RoomManagement() {
 
       {workPopForSelectedIds && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "auto", width: "1000px" }}>
+          <div
+            className="popup group_detail_popup"
+            style={{
+              width: "1100px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
             <div className="popup_title">비활성화 일괄 편집</div>
             <div
               className="popup_x"
@@ -1390,7 +1809,7 @@ function RoomManagement() {
       )}
       {isPop3 && (
         <div className="popup_wrap">
-          <div className="popup" style={{ height: "600px" }}>
+          <div className="popup" style={{ height: "700px" }}>
             <div className="popup_title">임시 객실추가(기간)</div>
             <div className="popup_x" onClick={closeExtraRoomPopup}>
               X
