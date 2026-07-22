@@ -55,6 +55,14 @@ function ReservationManagement() {
 
   const [homepageReservations, setHomepageReservations] = useState([]);
 
+  const [isManagerMemoPop, setIsManagerMemoPop] = useState(false);
+
+  const [selectedHistoryRecord, setSelectedHistoryRecord] = useState(null);
+
+  const [managerMemoText, setManagerMemoText] = useState("");
+
+  const [isManagerMemoSaving, setIsManagerMemoSaving] = useState(false);
+
   const colorPalette = [
     "#ffe5e5",
     "#e5f3ff",
@@ -95,6 +103,85 @@ function ReservationManagement() {
     });
   };
 
+  const openManagerMemoPopup = (historyRecord) => {
+    setSelectedHistoryRecord(historyRecord);
+
+    // 기존 manager_memo가 있으면 textarea 초기값으로 사용
+    setManagerMemoText(historyRecord?.manager_memo || "");
+
+    setIsManagerMemoPop(true);
+  };
+
+  const closeManagerMemoPopup = () => {
+    if (isManagerMemoSaving) return;
+
+    setIsManagerMemoPop(false);
+    setSelectedHistoryRecord(null);
+    setManagerMemoText("");
+  };
+  const saveManagerMemo = async () => {
+    if (!selectedHistoryRecord?.id) {
+      alert("선택된 예약 히스토리 정보가 없습니다.");
+      return;
+    }
+
+    if (isManagerMemoSaving) {
+      return;
+    }
+
+    try {
+      setIsManagerMemoSaving(true);
+
+      const historyId = selectedHistoryRecord.id;
+
+      const response = await api.post(
+        `/api/reservation_history/${historyId}/manager-memo`,
+        {
+          manager_memo: managerMemoText,
+        },
+      );
+
+      /*
+       * 백엔드가 저장된 manager_memo를 반환하면 그 값을 사용하고,
+       * 아직 응답 형식이 다르거나 값이 없으면 입력값을 사용한다.
+       */
+      const savedManagerMemo =
+        response.data?.manager_memo ??
+        response.data?.data?.manager_memo ??
+        managerMemoText;
+
+      /*
+       * 현재 예약 히스토리 팝업의 해당 레코드를 즉시 갱신한다.
+       * 별도의 목록 재조회 없이 화면에 바로 반영된다.
+       */
+      setHistoryData((prev) =>
+        prev.map((item) =>
+          String(item.id) === String(historyId)
+            ? {
+                ...item,
+                manager_memo: savedManagerMemo,
+              }
+            : item,
+        ),
+      );
+
+      alert(response.data?.message || "관리자 메모가 저장되었습니다.");
+
+      setIsManagerMemoPop(false);
+      setSelectedHistoryRecord(null);
+      setManagerMemoText("");
+    } catch (err) {
+      console.error("관리자 메모 저장 실패:", err.response?.data || err);
+
+      alert(
+        err.response?.data?.message ||
+          "관리자 메모 저장 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setIsManagerMemoSaving(false);
+    }
+  };
+
   const getHomepageReservations = async () => {
     try {
       const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -118,18 +205,50 @@ function ReservationManagement() {
 
   const isExtraRoom = (room) => String(room?.id || "").startsWith("EXTRA_");
 
+  const normalizeYmd = (value) => {
+    if (!value) return "";
+
+    const str = String(value);
+
+    // 이미 순수 YYYY-MM-DD라면 그대로 사용
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
+
+    // ISO 날짜/Date 객체는 한국시간 날짜로 변환
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "";
+    }
+
+    return date.toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Seoul",
+    });
+  };
+
+  const dayToYmd = (day) => {
+    return [
+      day.year,
+      String(day.month).padStart(2, "0"),
+      String(day.day).padStart(2, "0"),
+    ].join("-");
+  };
+
   const isExtraRoomAvailableForDays = (room, targetDays) => {
-    if (!isExtraRoom(room)) return true;
+    if (!room?.is_extra) return true;
+    if (!targetDays?.length) return false;
 
-    const startDate = normalize(room.start_date);
-    const endDate = normalize(room.end_date);
+    const startYmd = normalizeYmd(room.start_date);
+    const endYmd = normalizeYmd(room.end_date);
 
-    if (!startDate || !endDate) return false;
+    if (!startYmd || !endYmd) return false;
 
     return targetDays.every((day) => {
-      const target = formatDay(day);
+      const targetYmd = dayToYmd(day);
 
-      return target >= startDate && target <= endDate;
+      // start_date 포함, end_date 미포함
+      return targetYmd >= startYmd && targetYmd < endYmd;
     });
   };
   const loadRoomPriceInfos = () => {
@@ -1733,6 +1852,7 @@ function ReservationManagement() {
     roomGroupName,
     roomGroupId,
     roomName,
+    managerMemo,
   ) => {
     try {
       const data =
@@ -1820,7 +1940,29 @@ function ReservationManagement() {
       체크아웃 : ${data.check_out || "-"}<br />
       예약번호 : ${data.booking_id || "-"}<br />
       옵션 : ${renderOptions(data.booking_option || data.options)}<br />
-      메모 : ${data.request_memo || ""}
+      메모 : ${data.request_memo || ""}<br/>
+     ${
+       sourceText === "naver" ||
+       sourceText === "website" ||
+       sourceText.startsWith("SITE_")
+         ? `
+        <div style="
+          margin-top:8px;
+          padding-top:8px;
+          border-top:1px solid #ddd;
+        ">
+          <strong>관리자메모 :</strong><br />
+          <div style="
+            margin-top:4px;
+            word-break:break-all;
+          ">
+            ${managerMemo || "-"}
+          </div>
+        </div>
+      `
+         : ""
+     }
+     
     `;
     } catch (err) {
       console.error("renderPayload error:", err, payload);
@@ -3001,7 +3143,7 @@ function ReservationManagement() {
                   <tbody>
                     {historyData.map((data, i) => {
                       return (
-                        <tr key={i}>
+                        <tr key={data.id || i}>
                           <td>{data.source}</td>
                           <td>{data.guest_name}</td>
                           <td>{data.guest_phone}</td>
@@ -3020,10 +3162,38 @@ function ReservationManagement() {
                                 getHistoryGroupName(data.room_group_id),
                                 data.room_group_id,
                                 getHistoryRoomName(data.room_id),
+                                data.manager_memo,
                               ),
                             }}
                           ></td>
-                          <td>{data.memo}</td>
+                          <td>
+                            {data.memo}
+                            <br />
+                            {(data.source === "website" ||
+                              data.source === "naver" ||
+                              String(data.source || "").startsWith(
+                                "SITE_",
+                              )) && (
+                              <div style={{ marginTop: "10px" }}>
+                                <button
+                                  type="button"
+                                  style={{
+                                    background: "black",
+                                    color: "white",
+                                    padding: "6px 10px",
+                                    border: "none",
+                                    borderRadius: "3px",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() => openManagerMemoPopup(data)}
+                                >
+                                  {data.manager_memo
+                                    ? "관리자 메모 수정"
+                                    : "관리자 메모하기"}
+                                </button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
@@ -3084,6 +3254,137 @@ function ReservationManagement() {
             </div>
           </div>
         </>
+      )}
+      {isManagerMemoPop && selectedHistoryRecord && (
+        <div
+          className="popup_wrap"
+          style={{
+            background: "rgba(0, 0, 0, 0.5)",
+          }}
+          id="zpop"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              closeManagerMemoPopup();
+            }
+          }}
+        >
+          <div
+            className="popup"
+            style={{
+              width: "600px",
+              height: "auto",
+              minHeight: "330px",
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+          >
+            <div className="popup_title">관리자 메모</div>
+
+            <button
+              type="button"
+              className="popup_x"
+              disabled={isManagerMemoSaving}
+              onClick={closeManagerMemoPopup}
+            >
+              X
+            </button>
+
+            <div
+              style={{
+                padding: "20px",
+              }}
+            >
+              <div
+                style={{
+                  marginBottom: "15px",
+                  padding: "12px",
+                  background: "#f7f7f7",
+                  border: "1px solid #ddd",
+                  lineHeight: "1.7",
+                }}
+              >
+                <div>
+                  <strong>예약자 :</strong>{" "}
+                  {selectedHistoryRecord.guest_name || "-"}
+                </div>
+
+                <div>
+                  <strong>연락처 :</strong>{" "}
+                  {selectedHistoryRecord.guest_phone || "-"}
+                </div>
+
+                <div>
+                  <strong>예약기간 :</strong>{" "}
+                  {renderHistoryDate(
+                    selectedHistoryRecord.check_in,
+                    selectedHistoryRecord.source,
+                  )}{" "}
+                  ~{" "}
+                  {renderHistoryDate(
+                    selectedHistoryRecord.check_out,
+                    selectedHistoryRecord.source,
+                  )}
+                </div>
+
+                <div>
+                  <strong>예약경로 :</strong>{" "}
+                  {selectedHistoryRecord.source || "-"}
+                </div>
+              </div>
+
+              <textarea
+                value={managerMemoText}
+                placeholder="관리자 메모를 입력해 주세요."
+                disabled={isManagerMemoSaving}
+                autoFocus
+                onChange={(e) => {
+                  setManagerMemoText(e.target.value);
+                }}
+                style={{
+                  width: "100%",
+                  height: "150px",
+                  padding: "10px",
+                  border: "1px solid #bbb",
+                  borderRadius: "4px",
+                  resize: "vertical",
+                  boxSizing: "border-box",
+                  fontFamily: "inherit",
+                  fontSize: "14px",
+                  lineHeight: "1.5",
+                }}
+              />
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "8px",
+                  marginTop: "15px",
+                }}
+              >
+                <button
+                  type="button"
+                  className="green"
+                  disabled={isManagerMemoSaving}
+                  onClick={saveManagerMemo}
+                  style={{ background: "black", color: "white" }}
+                >
+                  {isManagerMemoSaving ? "저장 중..." : "저장"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isManagerMemoSaving}
+                  onClick={closeManagerMemoPopup}
+                  style={{ background: "black", color: "white" }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
