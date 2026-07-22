@@ -308,10 +308,10 @@ function RoomManagement() {
       return;
     }
 
-    if (!isActive && !roomReason?.trim()) {
-      alert("사유를 입력해주세요.");
-      return;
-    }
+    /*
+     * 임시객실은 is_active와 비활성화 사유 정책을 사용하지 않는다.
+     * 일반객실 중 기존에 비활성화된 객실만 기존 사유를 유지한다.
+     */
 
     if (isExtra && (!startDate || !endDate)) {
       alert("임시 객실 운영 기간을 입력해주세요.");
@@ -325,15 +325,37 @@ function RoomManagement() {
 
     const numericMin = Number(capacityMin);
     const numericMax = Number(capacityMax);
-    const numericMinDayuse = Number(capacityMinDayuse);
-    const numericMaxDayuse = Number(capacityMaxDayuse);
+
+    /*
+     * 데이유즈 값이 비어 있으면 null로 저장한다.
+     * 클라이언트에서는 null일 때 숙박 인원값을 fallback으로 사용한다.
+     */
+    const numericMinDayuse =
+      capacityMinDayuse === "" ||
+      capacityMinDayuse === null ||
+      capacityMinDayuse === undefined
+        ? null
+        : Number(capacityMinDayuse);
+
+    const numericMaxDayuse =
+      capacityMaxDayuse === "" ||
+      capacityMaxDayuse === null ||
+      capacityMaxDayuse === undefined
+        ? null
+        : Number(capacityMaxDayuse);
+
+    /*
+     * 임시객실 API 응답에 day_use가 없어도
+     * 기본적으로 숙박 + 데이유즈 가능인 1을 사용한다.
+     */
+    const numericDayUse = isExtra ? 1 : Number(isDay ?? 1);
 
     const capacities = [
       numericMin,
       numericMax,
       numericMinDayuse,
       numericMaxDayuse,
-    ];
+    ].filter((value) => value !== null);
 
     if (capacities.some(Number.isNaN)) {
       alert("인원 수는 숫자로 입력해주세요.");
@@ -350,23 +372,43 @@ function RoomManagement() {
       return;
     }
 
-    if (numericMinDayuse > numericMaxDayuse) {
+    if (
+      numericMinDayuse !== null &&
+      numericMaxDayuse !== null &&
+      numericMinDayuse > numericMaxDayuse
+    ) {
       alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
+      return;
+    }
+
+    if (![0, 1, 2].includes(numericDayUse)) {
+      alert("예약 타입 값이 올바르지 않습니다.");
       return;
     }
 
     const data = {
       name: roomDetailName.trim(),
 
-      is_active: isActive ? 1 : 0,
-      reason: isActive ? null : roomReason?.trim(),
+      /*
+       * 임시객실은 기존 active 정책에 막히지 않도록
+       * 항상 활성 상태로 전송한다.
+       */
+      is_active: isExtra ? 1 : isActive ? 1 : 0,
 
-      // 일반 객실 비활성 기간
-      disable_start: isExtra ? null : isActive ? null : startDate,
-      disable_end: isExtra ? null : isActive ? null : endDate,
+      reason: isExtra ? null : isActive ? null : roomReason?.trim() || null,
 
-      // 임시 객실 운영 기간
+      /*
+       * 일반객실 비활성 기간
+       */
+      disable_start: isExtra || isActive ? null : startDate || null,
+
+      disable_end: isExtra || isActive ? null : endDate || null,
+
+      /*
+       * 임시객실 운영 기간
+       */
       start_date: isExtra ? startDate : null,
+
       end_date: isExtra ? endDate : null,
 
       capacity_min: numericMin,
@@ -375,7 +417,7 @@ function RoomManagement() {
       capacity_min_dayuse: numericMinDayuse,
       capacity_max_dayuse: numericMaxDayuse,
 
-      day_use: Number(isDay),
+      day_use: numericDayUse,
       is_pet: Number(isPet),
     };
 
@@ -397,7 +439,12 @@ function RoomManagement() {
         );
 
         setIsDetailPop(false);
+        setIsActive(true);
         setIsPet(0);
+        setRoomReason("");
+
+        setCapacityMinDayuse(0);
+        setCapacityMaxDayuse(0);
 
         setStartDate("");
         setEndDate("");
@@ -416,19 +463,14 @@ function RoomManagement() {
       alert("그룹명을 입력해주세요.");
       return;
     }
-    if (!isActiveGroup && !groupReason?.trim()) {
-      alert("사유를 입력해주세요.");
-      return;
-    }
 
     const cleanedContractSections = cleanContractSections(contractSections);
 
     const data = {
       name: groupName.trim(),
       is_active: isActiveGroup ? 1 : 0,
-      reason: isActiveGroup ? null : groupReason?.trim(),
+      reason: isActiveGroup ? null : groupReason?.trim() || null,
       unused_option_ids: unusedOptionIds,
-
       contract_txt: JSON.stringify(cleanedContractSections),
     };
 
@@ -447,6 +489,7 @@ function RoomManagement() {
       })
       .catch((err) => {
         console.error(err);
+
         alert(
           err.response?.data?.message || "그룹 수정 중 오류가 발생했습니다.",
         );
@@ -594,7 +637,7 @@ function RoomManagement() {
     setGroupId(group?.id || "");
     setGroupReason(group?.reason || "");
 
-    setIsActiveGroup(Number(group?.is_active) === 1);
+    setIsActiveGroup(getIsActive(group?.is_active));
 
     setUnusedOptionIds(parseUnusedOptionIds(group?.unused_option_ids));
 
@@ -647,7 +690,11 @@ function RoomManagement() {
       return;
     }
 
-    if (numericMinDayuse > numericMaxDayuse) {
+    if (
+      numericMinDayuse !== null &&
+      numericMaxDayuse !== null &&
+      numericMinDayuse > numericMaxDayuse
+    ) {
       alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
       return;
     }
@@ -774,6 +821,14 @@ function RoomManagement() {
       return today >= start && today <= end;
     });
   };
+
+  const getIsActive = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return true;
+    }
+
+    return Number(value) === 1;
+  };
   const createExtraRoom = () => {
     if (!roomGroupId) {
       alert("객실 그룹을 선택해주세요.");
@@ -822,7 +877,11 @@ function RoomManagement() {
       return;
     }
 
-    if (numericMinDayuse > numericMaxDayuse) {
+    if (
+      numericMinDayuse !== null &&
+      numericMaxDayuse !== null &&
+      numericMinDayuse > numericMaxDayuse
+    ) {
       alert("데이유즈 최소 인원은 데이유즈 최대 인원보다 클 수 없습니다.");
       return;
     }
@@ -944,11 +1003,13 @@ function RoomManagement() {
                       <td
                         key={`kjbk${i}`}
                         style={{ verticalAlign: "top" }}
-                        className={data.is_active !== 1 ? "dimed_td" : ""}
+                        className={
+                          !getIsActive(data.is_active) ? "dimed_td" : ""
+                        }
                       >
                         <h4 onClick={() => openGroupDetail(data)}>
                           {data?.name}{" "}
-                          {data.is_active === 1 ? (
+                          {getIsActive(data.is_active) ? (
                             <span className="green">Active</span>
                           ) : (
                             <span className="red">비활성화</span>
@@ -963,14 +1024,14 @@ function RoomManagement() {
                                   key={`iji${ii}`}
                                   style={{
                                     opacity:
-                                      data2.is_active === 0 &&
+                                      !getIsActive(data2.is_active) &&
                                       data2.disable_start != null &&
                                       data2.disable_end != null &&
                                       todayKST >=
                                         toKSTDate(data2.disable_start) &&
                                       todayKST <= toKSTDate(data2.disable_end)
-                                        ? "0.3"
-                                        : "1",
+                                        ? 0.3
+                                        : 1,
                                   }}
                                   onClick={() => {
                                     console.log(data2);
@@ -983,7 +1044,7 @@ function RoomManagement() {
                                     setRoomDetailName(data2.name);
                                     setRoomId(data2.id);
                                     setRoomDetailGroupName(data.name);
-                                    setIsDay(data2.day_use);
+                                    setIsDay(Number(data2.day_use ?? 1));
                                     setCapacityMax(data2.capacity_max ?? 0);
                                     setCapacityMin(data2.capacity_min ?? 0);
                                     setIsPet(
@@ -994,13 +1055,14 @@ function RoomManagement() {
                                     );
 
                                     setCapacityMaxDayuse(
-                                      data2.capacity_max_dayuse ?? 0,
-                                    );
-                                    setCapacityMinDayuse(
-                                      data2.capacity_min_dayuse ?? 0,
+                                      data2.capacity_max_dayuse ?? "",
                                     );
 
-                                    setIsActive(data2.is_active === 1);
+                                    setCapacityMinDayuse(
+                                      data2.capacity_min_dayuse ?? "",
+                                    );
+
+                                    setIsActive(getIsActive(data2.is_active));
 
                                     if (isExtra) {
                                       setStartDate(data2.start_date || "");
@@ -1036,7 +1098,7 @@ function RoomManagement() {
                                         : "room_cell_active"
                                     }
                                   ></div>{" "}
-                                  {data2.is_active === 0 &&
+                                  {!getIsActive(data2.is_active) &&
                                   data2.disable_start != null &&
                                   data2.disable_end != null &&
                                   todayKST >= toKSTDate(data2.disable_start) &&
